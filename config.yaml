@@ -1,0 +1,12 @@
+server:
+  host: "localhost"
+  port: "8080"
+  mode: "debug"  # debug, release, test
+
+database:
+  driver: "sqlite3"
+  dsn: "./data/admin.db"
+
+jwt:
+  secret: "your-secret-key-change-this-in-production"
+  expire_time: 24  # hours
