@@ -26,7 +26,7 @@ func InitializeApp(configPath string) (*App, func(), error) {
 		ProvideLogger,
 
 		// 数据库
-		database.NewConnection,
+		ProvideDatabase,
 
 		// JWT管理器
 		ProvideJWTManager,

@@ -2,15 +2,20 @@
 // versions:
 //   sqlc v1.30.0
 
-package database
+package users
 
 import (
 	"context"
 )
 
 type Querier interface {
+	CountUsers(ctx context.Context) (int64, error)
+	CountUsersByEmail(ctx context.Context, email string) (int64, error)
+	CountUsersByUsername(ctx context.Context, username string) (int64, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUser(ctx context.Context, id int64) error
+	GetActiveUsers(ctx context.Context, arg GetActiveUsersParams) ([]User, error)
+	GetAdminUsers(ctx context.Context) ([]User, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)

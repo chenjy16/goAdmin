@@ -29,7 +29,7 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	db, err := database.NewConnection(config)
+	db, err := ProvideDatabase(config)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -1,15 +1,21 @@
 version: "2"
 sql:
   - engine: "sqlite"
-    queries: "./internal/database/queries"
-    schema: "./migrations"
+    queries: "./internal/database/curd/users.sql"
+    schema: "./schemas/users/*.sql"
     gen:
       go:
-        package: "database"
-        out: "./internal/database"
+        package: "users"
+        out: "./internal/database/generated/users"
         sql_package: "database/sql"
         emit_json_tags: true
         emit_prepared_queries: false
         emit_interface: true
         emit_exact_table_names: false
         emit_empty_slices: true
+  # 未来可以添加其他模块 
+  # - engine: "sqlite" 
+  # queries: "./internal/database/queries/products" 
+  # schema: "./schemas/products/*.sql"
+  # package: "products" 
+  # out: "./internal/database/models/products"

@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.30.0
 
-package database
+package users
 
 import (
 	"database/sql"
@@ -13,8 +13,10 @@ type User struct {
 	Username     string         `json:"username"`
 	Email        string         `json:"email"`
 	PasswordHash string         `json:"password_hash"`
-	FullName     sql.NullString `json:"full_name"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
 	IsActive     sql.NullBool   `json:"is_active"`
+	IsAdmin      sql.NullBool   `json:"is_admin"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
 }

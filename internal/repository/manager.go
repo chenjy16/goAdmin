@@ -32,5 +32,5 @@ func (rm *repositoryManager) Close() error {
 
 // Ping 检查数据库连接
 func (rm *repositoryManager) Ping(ctx context.Context) error {
-	return rm.db.Ping(ctx)
+	return rm.db.Ping()
 }

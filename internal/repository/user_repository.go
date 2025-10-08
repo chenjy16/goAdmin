@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"admin/internal/database"
+	"admin/internal/database/generated/users"
 	"admin/internal/dto"
 	"admin/internal/errors"
 	"admin/internal/utils"
@@ -28,18 +29,34 @@ func (r *userRepository) Create(ctx context.Context, req dto.CreateUserRequest) 
 		return nil, errors.NewInternalError("Failed to hash password").WithCause(err)
 	}
 
-	// 创建用户
-	var fullName sql.NullString
+	// 解析 FullName 为 FirstName 和 LastName
+	var firstName, lastName *string
 	if req.FullName != "" {
-		fullName = sql.NullString{String: req.FullName, Valid: true}
+		// 简单的分割逻辑，可以根据需要改进
+		parts := splitFullName(req.FullName)
+		if len(parts) > 0 {
+			firstName = &parts[0]
+		}
+		if len(parts) > 1 {
+			lastName = &parts[1]
+		}
 	}
 
-	user, err := r.db.CreateUser(ctx, database.CreateUserParams{
+	// 创建用户参数
+	params := users.CreateUserParams{
 		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
-		FullName:     fullName,
-	})
+	}
+	
+	if firstName != nil {
+		params.FirstName = sql.NullString{String: *firstName, Valid: true}
+	}
+	if lastName != nil {
+		params.LastName = sql.NullString{String: *lastName, Valid: true}
+	}
+
+	user, err := r.db.Users.CreateUser(ctx, params)
 	if err != nil {
 		return nil, errors.NewDatabaseError("Failed to create user", err)
 	}
@@ -49,7 +66,7 @@ func (r *userRepository) Create(ctx context.Context, req dto.CreateUserRequest) 
 
 // GetByID 根据ID获取用户
 func (r *userRepository) GetByID(ctx context.Context, id int64) (*dto.UserResponse, error) {
-	user, err := r.db.GetUser(ctx, id)
+	user, err := r.db.Users.GetUser(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewUserNotFoundError()
@@ -62,7 +79,7 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*dto.UserRespon
 
 // GetByUsername 根据用户名获取用户
 func (r *userRepository) GetByUsername(ctx context.Context, username string) (*dto.UserResponse, error) {
-	user, err := r.db.GetUserByUsername(ctx, username)
+	user, err := r.db.Users.GetUserByUsername(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewUserNotFoundError()
@@ -75,7 +92,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*d
 
 // GetByEmail 根据邮箱获取用户
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*dto.UserResponse, error) {
-	user, err := r.db.GetUserByEmail(ctx, email)
+	user, err := r.db.Users.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewUserNotFoundError()
@@ -88,7 +105,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*dto.Use
 
 // List 获取用户列表
 func (r *userRepository) List(ctx context.Context, params *PaginationParams) ([]*dto.UserResponse, error) {
-	users, err := r.db.ListUsers(ctx, database.ListUsersParams{
+	userList, err := r.db.Users.ListUsers(ctx, users.ListUsersParams{
 		Limit:  params.Limit,
 		Offset: params.Offset,
 	})
@@ -97,7 +114,7 @@ func (r *userRepository) List(ctx context.Context, params *PaginationParams) ([]
 	}
 
 	var responses []*dto.UserResponse
-	for _, user := range users {
+	for _, user := range userList {
 		responses = append(responses, r.toUserResponse(user))
 	}
 
@@ -106,12 +123,8 @@ func (r *userRepository) List(ctx context.Context, params *PaginationParams) ([]
 
 // Update 更新用户
 func (r *userRepository) Update(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
-	var email string
-	var fullName sql.NullString
-	var isActive sql.NullBool
-
 	// 先获取当前用户信息
-	currentUser, err := r.db.GetUser(ctx, id)
+	currentUser, err := r.db.Users.GetUser(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewUserNotFoundError()
@@ -120,30 +133,37 @@ func (r *userRepository) Update(ctx context.Context, id int64, req dto.UpdateUse
 	}
 
 	// 设置更新参数
+	params := users.UpdateUserParams{
+		ID: id,
+	}
+
 	if req.Email != nil {
-		email = *req.Email
+		params.Email = *req.Email
 	} else {
-		email = currentUser.Email
+		params.Email = currentUser.Email
 	}
 
 	if req.FullName != nil {
-		fullName = sql.NullString{String: *req.FullName, Valid: true}
+		// 解析 FullName 为 FirstName 和 LastName
+		parts := splitFullName(*req.FullName)
+		if len(parts) > 0 {
+			params.FirstName = sql.NullString{String: parts[0], Valid: true}
+		}
+		if len(parts) > 1 {
+			params.LastName = sql.NullString{String: parts[1], Valid: true}
+		}
 	} else {
-		fullName = currentUser.FullName
+		params.FirstName = currentUser.FirstName
+		params.LastName = currentUser.LastName
 	}
 
 	if req.IsActive != nil {
-		isActive = sql.NullBool{Bool: *req.IsActive, Valid: true}
+		params.IsActive = sql.NullBool{Bool: *req.IsActive, Valid: true}
 	} else {
-		isActive = currentUser.IsActive
+		params.IsActive = currentUser.IsActive
 	}
 
-	user, err := r.db.UpdateUser(ctx, database.UpdateUserParams{
-		ID:       id,
-		Email:    email,
-		FullName: fullName,
-		IsActive: isActive,
-	})
+	user, err := r.db.Users.UpdateUser(ctx, params)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.NewUserNotFoundError()
@@ -156,11 +176,8 @@ func (r *userRepository) Update(ctx context.Context, id int64, req dto.UpdateUse
 
 // Delete 删除用户
 func (r *userRepository) Delete(ctx context.Context, id int64) error {
-	err := r.db.DeleteUser(ctx, id)
+	err := r.db.Users.DeleteUser(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return errors.NewUserNotFoundError()
-		}
 		return errors.NewDatabaseError("Failed to delete user", err)
 	}
 
@@ -169,35 +186,42 @@ func (r *userRepository) Delete(ctx context.Context, id int64) error {
 
 // ExistsByUsername 检查用户名是否存在
 func (r *userRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
-	_, err := r.db.GetUserByUsername(ctx, username)
-	if err == nil {
-		return true, nil
+	count, err := r.db.Users.CountUsersByUsername(ctx, username)
+	if err != nil {
+		return false, errors.NewDatabaseError("Failed to check username existence", err)
 	}
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	return false, errors.NewDatabaseError("Failed to check username existence", err)
+	return count > 0, nil
 }
 
 // ExistsByEmail 检查邮箱是否存在
 func (r *userRepository) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	_, err := r.db.GetUserByEmail(ctx, email)
-	if err == nil {
-		return true, nil
+	count, err := r.db.Users.CountUsersByEmail(ctx, email)
+	if err != nil {
+		return false, errors.NewDatabaseError("Failed to check email existence", err)
 	}
-	if err == sql.ErrNoRows {
-		return false, nil
-	}
-	return false, errors.NewDatabaseError("Failed to check email existence", err)
+	return count > 0, nil
 }
 
-
-
 // toUserResponse 将数据库用户模型转换为响应模型
-func (r *userRepository) toUserResponse(user database.User) *dto.UserResponse {
+func (r *userRepository) toUserResponse(user users.User) *dto.UserResponse {
 	var fullName *string
-	if user.FullName.Valid {
-		fullName = &user.FullName.String
+	
+	// 组合 FirstName 和 LastName 为 FullName
+	if user.FirstName.Valid || user.LastName.Valid {
+		var name string
+		if user.FirstName.Valid {
+			name = user.FirstName.String
+		}
+		if user.LastName.Valid {
+			if name != "" {
+				name += " " + user.LastName.String
+			} else {
+				name = user.LastName.String
+			}
+		}
+		if name != "" {
+			fullName = &name
+		}
 	}
 
 	return &dto.UserResponse{
@@ -209,4 +233,32 @@ func (r *userRepository) toUserResponse(user database.User) *dto.UserResponse {
 		CreatedAt: user.CreatedAt.Time,
 		UpdatedAt: user.UpdatedAt.Time,
 	}
+}
+
+// splitFullName 将全名分割为名和姓
+func splitFullName(fullName string) []string {
+	if fullName == "" {
+		return []string{}
+	}
+	
+	// 简单的分割逻辑，按空格分割
+	parts := make([]string, 0)
+	current := ""
+	
+	for _, char := range fullName {
+		if char == ' ' {
+			if current != "" {
+				parts = append(parts, current)
+				current = ""
+			}
+		} else {
+			current += string(char)
+		}
+	}
+	
+	if current != "" {
+		parts = append(parts, current)
+	}
+	
+	return parts
 }

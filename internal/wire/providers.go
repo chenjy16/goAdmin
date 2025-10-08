@@ -2,6 +2,7 @@ package wire
 
 import (
 	"admin/internal/config"
+	"admin/internal/database"
 	"admin/internal/repository"
 	"admin/internal/route"
 	"admin/internal/services"
@@ -37,6 +38,11 @@ func ProvideLogger(cfg *config.Config) (*zap.Logger, error) {
 	zap.ReplaceGlobals(logger)
 
 	return logger, nil
+}
+
+// ProvideDatabase 提供数据库连接
+func ProvideDatabase(cfg *config.Config) (*database.DB, error) {
+	return database.NewConnection(cfg.Database.Driver, cfg.Database.DSN)
 }
 
 // ProvideJWTManager 提供JWT管理器

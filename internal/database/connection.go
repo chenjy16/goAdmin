@@ -4,51 +4,62 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 
-	"admin/internal/config"
+	"admin/internal/database/generated/users"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// DB wraps the database connection and provides access to generated queries
 type DB struct {
-	*sql.DB
-	*Queries
+	conn  *sql.DB
+	Users *users.Queries
 }
 
-func NewConnection(cfg *config.Config) (*DB, error) {
-	// 确保数据目录存在
-	dsn := cfg.GetDatabaseDSN()
-	dir := filepath.Dir(dsn)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create data directory: %w", err)
-	}
-
-	db, err := sql.Open(cfg.GetDatabaseDriver(), dsn)
+// NewConnection creates a new database connection
+func NewConnection(driverName, dataSourceName string) (*DB, error) {
+	conn, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	if err := db.Ping(); err != nil {
+	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	queries := New(db)
-
-	log.Println("Database connection established successfully")
-
 	return &DB{
-		DB:      db,
-		Queries: queries,
+		conn:  conn,
+		Users: users.New(conn),
 	}, nil
 }
 
+// Close closes the database connection
 func (db *DB) Close() error {
-	return db.DB.Close()
+	return db.conn.Close()
 }
 
-func (db *DB) Ping(ctx context.Context) error {
-	return db.DB.PingContext(ctx)
+// Ping verifies the database connection is still alive
+func (db *DB) Ping() error {
+	return db.conn.Ping()
+}
+
+// GetConnection returns the underlying sql.DB connection
+func (db *DB) GetConnection() *sql.DB {
+	return db.conn
+}
+
+// WithTx executes a function within a database transaction
+func (db *DB) WithTx(ctx context.Context, fn func(*users.Queries) error) error {
+	tx, err := db.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	qtx := db.Users.WithTx(tx)
+	if err := fn(qtx); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
