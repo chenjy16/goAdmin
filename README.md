@@ -1,14 +1,17 @@
-# MCP 服务器
+# AI API Gateway
 
-一个基于 Go 语言开发的高性能 MCP（Model Context Protocol）服务器，采用清洁架构设计，提供完整的工具系统、实时通信和结构化日志功能。
+一个基于 Go 语言开发的高性能 AI API 网关，集成 OpenAI 和 Google AI，支持 MCP（Model Context Protocol）协议，采用清洁架构设计，提供统一的 AI 服务接口、完整的工具系统、实时通信和结构化日志功能。
 
 ## ✨ 特性
 
 - 🚀 **高性能**: 基于 Gin 框架，提供高性能的 HTTP 服务
 - 🏗️ **清洁架构**: 采用分层架构设计，代码结构清晰，易于维护
+- 🤖 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，支持统一的 API 接口
+- 🔄 **统一 AI API**: 提供统一的聊天完成、模型管理和配置接口
 - 🔧 **MCP 协议支持**: 完整实现 Model Context Protocol 规范
-- 🛠️ **工具系统**: 内置可扩展的工具注册和执行系统
-- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送
+- 🛠️ **AI 工具系统**: 内置 OpenAI 和 Google AI 工具，支持可扩展的工具注册和执行
+- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送和流式响应
+- 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能
 - 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
 - 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
 - ⚡ **依赖注入**: 使用 Google Wire 进行依赖注入管理
@@ -16,6 +19,7 @@
 - 🔧 **配置管理**: 使用 Viper 进行灵活的配置管理
 - 🛡️ **错误处理**: 统一的错误处理和安全日志记录
 - 🔍 **监控支持**: 完整的请求/响应日志和性能监控
+- 🧪 **完整测试**: 包含单元测试和集成测试，确保代码质量
 
 ## 🛠️ 技术栈
 
@@ -24,18 +28,29 @@
 - **Gin v1.11.0** - HTTP Web 框架
 - **SQLite3** - 轻量级数据库
 
+### AI 集成
+- **Google AI SDK v1.28.0** - Google AI 服务集成
+- **OpenAI API** - OpenAI 服务集成（通过 HTTP 客户端）
+
 ### 主要依赖
 - **SQLC** - 类型安全的 SQL 代码生成器
 - **Google Wire v0.7.0** - 依赖注入框架
 - **Zap v1.27.0** - 结构化日志库
 - **Viper v1.17.0** - 配置管理
 - **Validator v10.28.0** - 数据验证
-- **Crypto** - 密码加密
-- **Gorilla WebSocket** - WebSocket 和 SSE 支持
+- **JWT v5.3.0** - JWT 令牌处理
+- **UUID v1.6.0** - UUID 生成
+- **Crypto v0.42.0** - 密码加密
+- **Gorilla WebSocket v1.5.3** - WebSocket 和 SSE 支持
+
+### 测试框架
+- **Testify v1.11.1** - 测试断言和模拟框架
+- **Go Mock** - 接口模拟生成
 
 ### 开发工具
 - **Air** - 热重载开发工具（推荐）
 - **Wire** - 依赖注入代码生成
+- **SQLC** - SQL 代码生成
 
 ## 📁 项目结构
 
@@ -46,39 +61,86 @@ admin/
 ├── internal/               # 内部包（不对外暴露）
 │   ├── config/            # 配置管理
 │   ├── controllers/       # 控制器层
-│   │   ├── base_controller.go
-│   │   └── mcp_controller.go  # MCP 协议控制器
+│   │   ├── base_controller.go      # 基础控制器
+│   │   ├── ai_controller.go        # 统一AI控制器
+│   │   ├── openai_controller.go    # OpenAI控制器
+│   │   ├── googleai_controller.go  # Google AI控制器
+│   │   ├── mcp_controller.go       # MCP协议控制器
+│   │   └── *_test.go              # 控制器测试文件
 │   ├── database/          # 数据库相关
 │   │   ├── connection.go  # 数据库连接
 │   │   ├── curd/         # SQL 查询文件
 │   │   └── generated/    # SQLC 生成的代码
 │   ├── dto/              # 数据传输对象
 │   │   ├── mcp.go        # MCP 协议相关 DTO
+│   │   ├── openai.go     # OpenAI 相关 DTO
+│   │   ├── googleai.go   # Google AI 相关 DTO
+│   │   ├── unified.go    # 统一 AI DTO
 │   │   └── user.go       # 用户相关 DTO
 │   ├── errors/           # 错误处理
+│   ├── googleai/         # Google AI 集成
+│   │   ├── client.go     # Google AI 客户端
+│   │   ├── config.go     # 配置管理
+│   │   ├── key_manager.go    # API 密钥管理
+│   │   ├── model_manager.go  # 模型管理
+│   │   ├── stream.go     # 流式响应处理
+│   │   └── types.go      # 类型定义
 │   ├── logger/           # 日志系统
 │   │   ├── constants.go
 │   │   └── logger.go
 │   ├── mcp/              # MCP 工具系统
-│   │   └── tool.go       # 工具定义和注册
+│   │   ├── tool.go           # 基础工具定义
+│   │   ├── openai_tool.go    # OpenAI 工具
+│   │   ├── googleai_tool.go  # Google AI 工具
+│   │   └── *_test.go        # 工具测试文件
 │   ├── middleware/       # 中间件
 │   │   ├── cors.go
 │   │   ├── error_handler.go
 │   │   ├── logger.go
 │   │   ├── recovery.go
 │   │   └── validation.go
+│   ├── mocks/            # 测试模拟对象
+│   │   ├── generate.go
+│   │   └── *_mock.go
+│   ├── openai/           # OpenAI 集成
+│   │   ├── client.go     # OpenAI 客户端
+│   │   ├── config.go     # 配置管理
+│   │   ├── key_manager.go    # API 密钥管理
+│   │   ├── model_manager.go  # 模型管理
+│   │   └── types.go      # 类型定义
+│   ├── provider/         # AI 提供商抽象层
+│   │   ├── manager.go        # 提供商管理器
+│   │   ├── openai_provider.go    # OpenAI 提供商
+│   │   ├── googleai_provider.go  # Google AI 提供商
+│   │   └── types.go      # 提供商接口定义
 │   ├── repository/       # 数据访问层
+│   │   ├── manager.go
+│   │   ├── user_interfaces.go
+│   │   ├── user_repository.go
+│   │   └── *_test.go
 │   ├── response/         # 响应格式化
 │   ├── route/           # 路由配置
 │   ├── service/         # 业务逻辑层
-│   │   └── mcp_service.go  # MCP 服务实现
+│   │   ├── mcp_service.go      # MCP 服务实现
+│   │   ├── openai_service.go   # OpenAI 服务
+│   │   ├── googleai_service.go # Google AI 服务
+│   │   ├── user_service.go     # 用户服务
+│   │   └── *_test.go          # 服务测试文件
+│   ├── testutil/         # 测试工具
 │   ├── utils/           # 工具函数
+│   │   ├── jwt.go       # JWT 处理
+│   │   ├── password.go  # 密码处理
+│   │   └── validator.go # 验证器
 │   └── wire/            # 依赖注入配置
-├── docs/               # 文档目录
+│       ├── providers.go # 提供商定义
+│       ├── wire.go      # Wire 配置
+│       └── wire_gen.go  # Wire 生成代码
 ├── schemas/             # 数据库模式文件
 │   └── users/
+│       └── 001_create_users_table.sql
 ├── config.yaml         # 配置文件
 ├── sqlc.yaml          # SQLC 配置
+├── Makefile           # 构建脚本
 └── go.mod             # Go 模块文件
 ```
 
@@ -153,6 +215,13 @@ admin/
    jwt:
      secret: "your-secret-key-change-this-in-production"
      expire_time: 24  # hours
+   
+   openai:
+     api_key: ""  # 设置你的 OpenAI API 密钥
+     base_url: "https://api.openai.com/v1"
+   
+   googleai:
+     api_key: ""  # 设置你的 Google AI API 密钥
    ```
 
 7. **运行应用**
@@ -182,6 +251,70 @@ curl http://localhost:8080/health
 ```
 
 ## 💡 使用示例
+
+### AI 聊天完成示例
+
+#### 1. 使用统一 AI 接口
+```bash
+# OpenAI 聊天完成
+curl -X POST http://localhost:8080/api/v1/ai/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "openai",
+    "model": "gpt-3.5-turbo",
+    "messages": [
+      {
+        "role": "user",
+        "content": "你好，请介绍一下你自己"
+      }
+    ],
+    "stream": false
+  }' | jq
+
+# Google AI 聊天完成
+curl -X POST http://localhost:8080/api/v1/ai/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "googleai",
+    "model": "gemini-pro",
+    "messages": [
+      {
+        "role": "user",
+        "content": "你好，请介绍一下你自己"
+      }
+    ],
+    "stream": false
+  }' | jq
+```
+
+#### 2. 设置 API 密钥
+```bash
+# 设置 OpenAI API 密钥
+curl -X POST http://localhost:8080/api/v1/openai/api-key \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "sk-your-openai-api-key"
+  }' | jq
+
+# 设置 Google AI API 密钥
+curl -X POST http://localhost:8080/api/v1/googleai/api-key \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_key": "your-google-ai-api-key"
+  }' | jq
+```
+
+#### 3. 获取可用模型
+```bash
+# 获取 OpenAI 模型列表
+curl -X GET http://localhost:8080/api/v1/openai/models | jq
+
+# 获取 Google AI 模型列表
+curl -X GET http://localhost:8080/api/v1/googleai/models | jq
+
+# 使用统一接口获取模型列表
+curl -X GET "http://localhost:8080/api/v1/ai/models?provider=openai" | jq
+```
 
 ### 基本 MCP 工具调用
 
@@ -423,6 +556,86 @@ GET /api/v1/mcp/logs
     }
   ]
 }
+```
+
+### AI API
+
+#### 1. 统一 AI 聊天完成
+```http
+POST /api/v1/ai/chat/completions
+Content-Type: application/json
+
+{
+  "provider": "openai",  // 或 "googleai"
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, how are you?"
+    }
+  ],
+  "stream": false
+}
+```
+
+#### 2. OpenAI 聊天完成
+```http
+POST /api/v1/openai/chat/completions
+Content-Type: application/json
+
+{
+  "model": "gpt-3.5-turbo",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, how are you?"
+    }
+  ],
+  "stream": false
+}
+```
+
+#### 3. Google AI 聊天完成
+```http
+POST /api/v1/googleai/chat/completions
+Content-Type: application/json
+
+{
+  "model": "gemini-pro",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, how are you?"
+    }
+  ],
+  "stream": false
+}
+```
+
+#### 4. 获取模型列表
+```http
+GET /api/v1/ai/models?provider=openai
+GET /api/v1/openai/models
+GET /api/v1/googleai/models
+```
+
+#### 5. API 密钥管理
+```http
+POST /api/v1/ai/api-key
+POST /api/v1/openai/api-key
+POST /api/v1/googleai/api-key
+Content-Type: application/json
+
+{
+  "api_key": "your-api-key-here"
+}
+```
+
+#### 6. 验证 API 密钥
+```http
+POST /api/v1/ai/validate?provider=openai
+POST /api/v1/openai/validate
+POST /api/v1/googleai/validate
 ```
 
 ### 响应格式

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"admin/internal/errors"
+	"admin/internal/response"
 	"admin/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -29,14 +30,12 @@ func (bc *BaseController) HandleValidationError(c *gin.Context, err error) {
 		for _, e := range validationErrors {
 			errorMessages = append(errorMessages, utils.GetValidationErrorMessage(e))
 		}
-		appErr := errors.NewValidationError("Validation failed").WithDetails(strings.Join(errorMessages, "; "))
-		c.Error(appErr)
+		response.BadRequest(c, "Validation failed", strings.Join(errorMessages, "; "))
 		return
 	}
 
 	// 其他类型的绑定错误
-	appErr := errors.NewValidationError("Invalid request data").WithDetails(err.Error())
-	c.Error(appErr)
+	response.BadRequest(c, "Invalid request data", err.Error())
 }
 
 

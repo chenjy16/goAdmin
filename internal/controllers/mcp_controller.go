@@ -135,7 +135,7 @@ func (mc *MCPController) ExecuteTool(c *gin.Context) {
 			logger.Operation("execute_tool"),
 			logger.String("toolName", req.Name),
 			logger.ZapError(err))
-		c.Error(err)
+		mc.HandleError(c, err)
 		return
 	}
 

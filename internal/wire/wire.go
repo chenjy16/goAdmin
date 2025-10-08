@@ -7,6 +7,7 @@ import (
 	"admin/internal/config"
 	"admin/internal/controllers"
 	"admin/internal/database"
+	"admin/internal/provider"
 	"admin/internal/repository"
 	"admin/internal/service"
 	"admin/internal/utils"
@@ -39,9 +40,19 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 		// Services
 		ProvideMCPService,
+		ProvideOpenAIService,
+		ProvideGoogleAIService,
 
 		// Controllers
 		ProvideMCPController,
+		ProvideOpenAIController,
+		ProvideGoogleAIController,
+
+		// Provider Manager
+		ProvideProviderManager,
+
+		// AI Controller
+		ProvideAIController,
 
 		// Router
 		ProvideRouter,
@@ -54,15 +65,21 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 // App 应用程序结构
 type App struct {
-	Config        *config.Config
-	Logger        *zap.Logger
-	DB            *database.DB
-	JWTManager    *utils.JWTManager
-	Validator     *utils.CustomValidator
-	RepoManager   repository.RepositoryManager
-	MCPService    service.MCPService
-	MCPController *controllers.MCPController
-	Router        *gin.Engine
+	Config              *config.Config
+	Logger              *zap.Logger
+	DB                  *database.DB
+	JWTManager          *utils.JWTManager
+	Validator           *utils.CustomValidator
+	RepoManager         repository.RepositoryManager
+	MCPService          service.MCPService
+	OpenAIService       *service.OpenAIService
+	GoogleAIService     *service.GoogleAIService
+	MCPController       *controllers.MCPController
+	OpenAIController    *controllers.OpenAIController
+	GoogleAIController  *controllers.GoogleAIController
+	ProviderManager     *provider.Manager
+	AIController        *controllers.AIController
+	Router              *gin.Engine
 }
 
 // NewApp 创建应用程序实例
@@ -74,19 +91,31 @@ func NewApp(
 	validator *utils.CustomValidator,
 	repoManager repository.RepositoryManager,
 	mcpService service.MCPService,
+	openaiService *service.OpenAIService,
+	googleaiService *service.GoogleAIService,
 	mcpController *controllers.MCPController,
+	openaiController *controllers.OpenAIController,
+	googleaiController *controllers.GoogleAIController,
+	providerManager *provider.Manager,
+	aiController *controllers.AIController,
 	router *gin.Engine,
 ) (*App, func()) {
 	app := &App{
-		Config:        config,
-		Logger:        logger,
-		DB:            db,
-		JWTManager:    jwtManager,
-		Validator:     validator,
-		RepoManager:   repoManager,
-		MCPService:    mcpService,
-		MCPController: mcpController,
-		Router:        router,
+		Config:             config,
+		Logger:             logger,
+		DB:                 db,
+		JWTManager:         jwtManager,
+		Validator:          validator,
+		RepoManager:        repoManager,
+		MCPService:         mcpService,
+		OpenAIService:      openaiService,
+		GoogleAIService:    googleaiService,
+		MCPController:      mcpController,
+		OpenAIController:   openaiController,
+		GoogleAIController: googleaiController,
+		ProviderManager:    providerManager,
+		AIController:       aiController,
+		Router:             router,
 	}
 
 	// 清理函数

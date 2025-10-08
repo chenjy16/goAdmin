@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	"admin/internal/database"
 	"admin/internal/database/generated/users"
@@ -148,9 +149,15 @@ func (r *userRepository) Update(ctx context.Context, id int64, req dto.UpdateUse
 		parts := splitFullName(*req.FullName)
 		if len(parts) > 0 {
 			params.FirstName = sql.NullString{String: parts[0], Valid: true}
+		} else {
+			params.FirstName = sql.NullString{Valid: false}
 		}
 		if len(parts) > 1 {
-			params.LastName = sql.NullString{String: parts[1], Valid: true}
+			// 将除第一个部分外的所有部分作为LastName
+			lastName := strings.Join(parts[1:], " ")
+			params.LastName = sql.NullString{String: lastName, Valid: true}
+		} else {
+			params.LastName = sql.NullString{Valid: false}
 		}
 	} else {
 		params.FirstName = currentUser.FirstName
@@ -176,7 +183,17 @@ func (r *userRepository) Update(ctx context.Context, id int64, req dto.UpdateUse
 
 // Delete 删除用户
 func (r *userRepository) Delete(ctx context.Context, id int64) error {
-	err := r.db.Users.DeleteUser(ctx, id)
+	// 首先检查用户是否存在
+	_, err := r.db.Users.GetUser(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.NewUserNotFoundError()
+		}
+		return errors.NewDatabaseError("Failed to check user existence", err)
+	}
+
+	// 删除用户
+	err = r.db.Users.DeleteUser(ctx, id)
 	if err != nil {
 		return errors.NewDatabaseError("Failed to delete user", err)
 	}
@@ -241,24 +258,6 @@ func splitFullName(fullName string) []string {
 		return []string{}
 	}
 	
-	// 简单的分割逻辑，按空格分割
-	parts := make([]string, 0)
-	current := ""
-	
-	for _, char := range fullName {
-		if char == ' ' {
-			if current != "" {
-				parts = append(parts, current)
-				current = ""
-			}
-		} else {
-			current += string(char)
-		}
-	}
-	
-	if current != "" {
-		parts = append(parts, current)
-	}
-	
-	return parts
+	// 使用strings.Fields来分割，它会自动处理多个空格
+	return strings.Fields(fullName)
 }

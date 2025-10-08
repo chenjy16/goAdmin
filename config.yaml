@@ -10,3 +10,10 @@ database:
 jwt:
   secret: "your-secret-key-change-this-in-production"
   expire_time: 24  # hours
+
+openai:
+  api_key: ""  # Set your OpenAI API key here
+  base_url: "https://api.openai.com/v1"
+
+googleai:
+  api_key: ""  # Set your Google AI API key here

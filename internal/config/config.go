@@ -10,6 +10,8 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
+	OpenAI   OpenAIConfig   `mapstructure:"openai"`
+	GoogleAI GoogleAIConfig `mapstructure:"googleai"`
 }
 
 type ServerConfig struct {
@@ -26,6 +28,23 @@ type DatabaseConfig struct {
 type JWTConfig struct {
 	Secret     string `mapstructure:"secret"`
 	ExpireTime int    `mapstructure:"expire_time"`
+}
+
+type OpenAIConfig struct {
+	APIKey       string `mapstructure:"api_key"`
+	BaseURL      string `mapstructure:"base_url"`
+	Timeout      int    `mapstructure:"timeout"`
+	MaxRetries   int    `mapstructure:"max_retries"`
+	DefaultModel string `mapstructure:"default_model"`
+}
+
+type GoogleAIConfig struct {
+	APIKey       string `mapstructure:"api_key"`
+	ProjectID    string `mapstructure:"project_id"`
+	Location     string `mapstructure:"location"`
+	Timeout      int    `mapstructure:"timeout"`
+	MaxRetries   int    `mapstructure:"max_retries"`
+	DefaultModel string `mapstructure:"default_model"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -63,6 +82,19 @@ func setDefaults() {
 
 	viper.SetDefault("jwt.secret", "your-secret-key")
 	viper.SetDefault("jwt.expire_time", 24)
+
+	viper.SetDefault("openai.api_key", "")
+	viper.SetDefault("openai.base_url", "https://api.openai.com/v1")
+	viper.SetDefault("openai.timeout", 30)
+	viper.SetDefault("openai.max_retries", 3)
+	viper.SetDefault("openai.default_model", "gpt-3.5-turbo")
+
+	viper.SetDefault("googleai.api_key", "")
+	viper.SetDefault("googleai.project_id", "")
+	viper.SetDefault("googleai.location", "us-central1")
+	viper.SetDefault("googleai.timeout", 30)
+	viper.SetDefault("googleai.max_retries", 3)
+	viper.SetDefault("googleai.default_model", "gemini-1.5-flash")
 }
 
 func (c *Config) GetDatabaseDSN() string {
