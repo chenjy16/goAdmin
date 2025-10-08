@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; fill: #2c3e50; }
+      .subtitle { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; fill: #34495e; }
+      .text { font-family: Arial, sans-serif; font-size: 12px; fill: #2c3e50; }
+      .small-text { font-family: Arial, sans-serif; font-size: 10px; fill: #7f8c8d; }
+      .layer-bg { fill: #ecf0f1; stroke: #bdc3c7; stroke-width: 2; }
+      .component { fill: #3498db; stroke: #2980b9; stroke-width: 2; }
+      .service { fill: #e74c3c; stroke: #c0392b; stroke-width: 2; }
+      .data { fill: #f39c12; stroke: #e67e22; stroke-width: 2; }
+      .external { fill: #9b59b6; stroke: #8e44ad; stroke-width: 2; }
+      .middleware { fill: #1abc9c; stroke: #16a085; stroke-width: 2; }
+      .arrow { stroke: #34495e; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .flow-arrow { stroke: #e74c3c; stroke-width: 3; fill: none; marker-end: url(#redarrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34495e" />
+    </marker>
+    <marker id="redarrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#e74c3c" />
+    </marker>
+  </defs>
+
+  <!-- 标题 -->
+  <text x="700" y="30" text-anchor="middle" class="title">AI API Gateway - 功能组件关系流程图</text>
+  <text x="700" y="55" text-anchor="middle" class="subtitle">基于清洁架构的多AI提供商集成系统</text>
+
+  <!-- 客户端层 -->
+  <rect x="50" y="80" width="1300" height="80" class="layer-bg" rx="5"/>
+  <text x="70" y="105" class="subtitle">客户端层 (Client Layer)</text>
+  
+  <rect x="100" y="115" width="120" height="35" class="external" rx="3"/>
+  <text x="160" y="135" text-anchor="middle" class="text">HTTP 客户端</text>
+  
+  <rect x="250" y="115" width="120" height="35" class="external" rx="3"/>
+  <text x="310" y="135" text-anchor="middle" class="text">MCP 客户端</text>
+  
+  <rect x="400" y="115" width="120" height="35" class="external" rx="3"/>
+  <text x="460" y="135" text-anchor="middle" class="text">Web 应用</text>
+  
+  <rect x="550" y="115" width="120" height="35" class="external" rx="3"/>
+  <text x="610" y="135" text-anchor="middle" class="text">移动应用</text>
+
+  <!-- 网关层 -->
+  <rect x="50" y="180" width="1300" height="100" class="layer-bg" rx="5"/>
+  <text x="70" y="205" class="subtitle">API 网关层 (Gateway Layer)</text>
+  
+  <rect x="100" y="220" width="150" height="45" class="middleware" rx="3"/>
+  <text x="175" y="240" text-anchor="middle" class="text">Gin Router</text>
+  <text x="175" y="255" text-anchor="middle" class="small-text">路由管理</text>
+  
+  <rect x="280" y="220" width="120" height="45" class="middleware" rx="3"/>
+  <text x="340" y="240" text-anchor="middle" class="text">CORS</text>
+  <text x="340" y="255" text-anchor="middle" class="small-text">跨域处理</text>
+  
+  <rect x="430" y="220" width="120" height="45" class="middleware" rx="3"/>
+  <text x="490" y="240" text-anchor="middle" class="text">Logger</text>
+  <text x="490" y="255" text-anchor="middle" class="small-text">日志记录</text>
+  
+  <rect x="580" y="220" width="120" height="45" class="middleware" rx="3"/>
+  <text x="640" y="240" text-anchor="middle" class="text">Recovery</text>
+  <text x="640" y="255" text-anchor="middle" class="small-text">错误恢复</text>
+  
+  <rect x="730" y="220" width="120" height="45" class="middleware" rx="3"/>
+  <text x="790" y="240" text-anchor="middle" class="text">Validation</text>
+  <text x="790" y="255" text-anchor="middle" class="small-text">数据验证</text>
+
+  <!-- 控制器层 -->
+  <rect x="50" y="300" width="1300" height="120" class="layer-bg" rx="5"/>
+  <text x="70" y="325" class="subtitle">控制器层 (Controller Layer)</text>
+  
+  <rect x="100" y="345" width="140" height="60" class="component" rx="3"/>
+  <text x="170" y="365" text-anchor="middle" class="text">MCP Controller</text>
+  <text x="170" y="380" text-anchor="middle" class="small-text">MCP协议处理</text>
+  <text x="170" y="395" text-anchor="middle" class="small-text">工具管理</text>
+  
+  <rect x="270" y="345" width="140" height="60" class="component" rx="3"/>
+  <text x="340" y="365" text-anchor="middle" class="text">AI Controller</text>
+  <text x="340" y="380" text-anchor="middle" class="small-text">统一AI接口</text>
+  <text x="340" y="395" text-anchor="middle" class="small-text">提供商路由</text>
+  
+  <rect x="440" y="345" width="140" height="60" class="component" rx="3"/>
+  <text x="510" y="365" text-anchor="middle" class="text">OpenAI Controller</text>
+  <text x="510" y="380" text-anchor="middle" class="small-text">OpenAI专用</text>
+  <text x="510" y="395" text-anchor="middle" class="small-text">聊天/模型管理</text>
+  
+  <rect x="610" y="345" width="140" height="60" class="component" rx="3"/>
+  <text x="680" y="365" text-anchor="middle" class="text">GoogleAI Controller</text>
+  <text x="680" y="380" text-anchor="middle" class="small-text">GoogleAI专用</text>
+  <text x="680" y="395" text-anchor="middle" class="small-text">聊天/模型管理</text>
+  
+  <rect x="780" y="345" width="140" height="60" class="component" rx="3"/>
+  <text x="850" y="365" text-anchor="middle" class="text">Base Controller</text>
+  <text x="850" y="380" text-anchor="middle" class="small-text">公共方法</text>
+  <text x="850" y="395" text-anchor="middle" class="small-text">数据绑定验证</text>
+
+  <!-- 服务层 -->
+  <rect x="50" y="440" width="1300" height="140" class="layer-bg" rx="5"/>
+  <text x="70" y="465" class="subtitle">服务层 (Service Layer)</text>
+  
+  <rect x="100" y="485" width="140" height="80" class="service" rx="3"/>
+  <text x="170" y="510" text-anchor="middle" class="text">MCP Service</text>
+  <text x="170" y="525" text-anchor="middle" class="small-text">工具注册</text>
+  <text x="170" y="540" text-anchor="middle" class="small-text">工具执行</text>
+  <text x="170" y="555" text-anchor="middle" class="small-text">SSE事件</text>
+  
+  <rect x="270" y="485" width="140" height="80" class="service" rx="3"/>
+  <text x="340" y="510" text-anchor="middle" class="text">Provider Manager</text>
+  <text x="340" y="525" text-anchor="middle" class="small-text">提供商管理</text>
+  <text x="340" y="540" text-anchor="middle" class="small-text">统一接口</text>
+  <text x="340" y="555" text-anchor="middle" class="small-text">负载均衡</text>
+  
+  <rect x="440" y="485" width="140" height="80" class="service" rx="3"/>
+  <text x="510" y="510" text-anchor="middle" class="text">OpenAI Service</text>
+  <text x="510" y="525" text-anchor="middle" class="small-text">聊天完成</text>
+  <text x="510" y="540" text-anchor="middle" class="small-text">模型管理</text>
+  <text x="510" y="555" text-anchor="middle" class="small-text">密钥管理</text>
+  
+  <rect x="610" y="485" width="140" height="80" class="service" rx="3"/>
+  <text x="680" y="510" text-anchor="middle" class="text">GoogleAI Service</text>
+  <text x="680" y="525" text-anchor="middle" class="small-text">聊天完成</text>
+  <text x="680" y="540" text-anchor="middle" class="small-text">模型管理</text>
+  <text x="680" y="555" text-anchor="middle" class="small-text">密钥管理</text>
+  
+  <rect x="780" y="485" width="140" height="80" class="service" rx="3"/>
+  <text x="850" y="510" text-anchor="middle" class="text">Repository Manager</text>
+  <text x="850" y="525" text-anchor="middle" class="small-text">数据访问</text>
+  <text x="850" y="540" text-anchor="middle" class="small-text">用户管理</text>
+  <text x="850" y="555" text-anchor="middle" class="small-text">CRUD操作</text>
+
+  <!-- 工具系统层 -->
+  <rect x="50" y="600" width="650" height="120" class="layer-bg" rx="5"/>
+  <text x="70" y="625" class="subtitle">工具系统层 (Tool System)</text>
+  
+  <rect x="100" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="160" y="670" text-anchor="middle" class="text">Tool Registry</text>
+  <text x="160" y="685" text-anchor="middle" class="small-text">工具注册表</text>
+  <text x="160" y="700" text-anchor="middle" class="small-text">动态注册</text>
+  
+  <rect x="250" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="310" y="670" text-anchor="middle" class="text">Echo Tool</text>
+  <text x="310" y="685" text-anchor="middle" class="small-text">回显工具</text>
+  <text x="310" y="700" text-anchor="middle" class="small-text">测试用</text>
+  
+  <rect x="400" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="460" y="670" text-anchor="middle" class="text">OpenAI Tools</text>
+  <text x="460" y="685" text-anchor="middle" class="small-text">聊天/模型/配置</text>
+  <text x="460" y="700" text-anchor="middle" class="small-text">工具适配器</text>
+  
+  <rect x="550" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="610" y="670" text-anchor="middle" class="text">GoogleAI Tools</text>
+  <text x="610" y="685" text-anchor="middle" class="small-text">聊天/模型/配置</text>
+  <text x="610" y="700" text-anchor="middle" class="small-text">工具适配器</text>
+
+  <!-- 数据层 -->
+  <rect x="720" y="600" width="630" height="120" class="layer-bg" rx="5"/>
+  <text x="740" y="625" class="subtitle">数据层 (Data Layer)</text>
+  
+  <rect x="750" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="810" y="670" text-anchor="middle" class="text">SQLite DB</text>
+  <text x="810" y="685" text-anchor="middle" class="small-text">用户数据</text>
+  <text x="810" y="700" text-anchor="middle" class="small-text">执行日志</text>
+  
+  <rect x="900" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="960" y="670" text-anchor="middle" class="text">SQLC Generated</text>
+  <text x="960" y="685" text-anchor="middle" class="small-text">类型安全</text>
+  <text x="960" y="700" text-anchor="middle" class="small-text">SQL代码</text>
+  
+  <rect x="1050" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="1110" y="670" text-anchor="middle" class="text">Config</text>
+  <text x="1110" y="685" text-anchor="middle" class="small-text">配置管理</text>
+  <text x="1110" y="700" text-anchor="middle" class="small-text">Viper</text>
+  
+  <rect x="1200" y="645" width="120" height="60" class="data" rx="3"/>
+  <text x="1260" y="670" text-anchor="middle" class="text">Logger</text>
+  <text x="1260" y="685" text-anchor="middle" class="small-text">结构化日志</text>
+  <text x="1260" y="700" text-anchor="middle" class="small-text">Zap</text>
+
+  <!-- 外部服务层 -->
+  <rect x="50" y="740" width="1300" height="100" class="layer-bg" rx="5"/>
+  <text x="70" y="765" class="subtitle">外部服务层 (External Services)</text>
+  
+  <rect x="200" y="780" width="150" height="45" class="external" rx="3"/>
+  <text x="275" y="800" text-anchor="middle" class="text">OpenAI API</text>
+  <text x="275" y="815" text-anchor="middle" class="small-text">api.openai.com</text>
+  
+  <rect x="400" y="780" width="150" height="45" class="external" rx="3"/>
+  <text x="475" y="800" text-anchor="middle" class="text">Google AI API</text>
+  <text x="475" y="815" text-anchor="middle" class="small-text">generativelanguage</text>
+  
+  <rect x="600" y="780" width="150" height="45" class="external" rx="3"/>
+  <text x="675" y="800" text-anchor="middle" class="text">HTTP Client</text>
+  <text x="675" y="815" text-anchor="middle" class="small-text">网络通信</text>
+  
+  <rect x="800" y="780" width="150" height="45" class="external" rx="3"/>
+  <text x="875" y="800" text-anchor="middle" class="text">Wire DI</text>
+  <text x="875" y="815" text-anchor="middle" class="small-text">依赖注入</text>
+
+  <!-- 主要数据流箭头 -->
+  <line x1="160" y1="150" x2="175" y2="220" class="flow-arrow"/>
+  <line x1="310" y1="150" x2="170" y2="345" class="flow-arrow"/>
+  <line x1="175" y1="265" x2="175" y2="345" class="flow-arrow"/>
+  
+  <line x1="170" y1="405" x2="170" y2="485" class="flow-arrow"/>
+  <line x1="340" y1="405" x2="340" y2="485" class="flow-arrow"/>
+  <line x1="510" y1="405" x2="510" y2="485" class="flow-arrow"/>
+  <line x1="680" y1="405" x2="680" y2="485" class="flow-arrow"/>
+  
+  <line x1="170" y1="565" x2="160" y2="645" class="flow-arrow"/>
+  <line x1="510" y1="565" x2="460" y2="645" class="flow-arrow"/>
+  <line x1="680" y1="565" x2="610" y2="645" class="flow-arrow"/>
+  
+  <line x1="850" y1="565" x2="810" y2="645" class="flow-arrow"/>
+  
+  <line x1="510" y1="565" x2="275" y2="780" class="flow-arrow"/>
+  <line x1="680" y1="565" x2="475" y2="780" class="flow-arrow"/>
+
+  <!-- 组件间连接线 -->
+  <line x1="240" y1="525" x2="270" y2="525" class="arrow"/>
+  <line x1="410" y1="525" x2="440" y2="525" class="arrow"/>
+  <line x1="580" y1="525" x2="610" y2="525" class="arrow"/>
+  <line x1="750" y1="525" x2="780" y2="525" class="arrow"/>
+
+  <!-- 图例 -->
+  <rect x="50" y="860" width="1300" height="120" class="layer-bg" rx="5"/>
+  <text x="70" y="885" class="subtitle">图例说明</text>
+  
+  <rect x="100" y="900" width="20" height="15" class="component"/>
+  <text x="130" y="912" class="text">控制器组件</text>
+  
+  <rect x="250" y="900" width="20" height="15" class="service"/>
+  <text x="280" y="912" class="text">服务组件</text>
+  
+  <rect x="400" y="900" width="20" height="15" class="data"/>
+  <text x="430" y="912" class="text">数据/工具组件</text>
+  
+  <rect x="550" y="900" width="20" height="15" class="external"/>
+  <text x="580" y="912" class="text">外部服务</text>
+  
+  <rect x="700" y="900" width="20" height="15" class="middleware"/>
+  <text x="730" y="912" class="text">中间件</text>
+  
+  <line x1="850" y1="907" x2="890" y2="907" class="arrow"/>
+  <text x="900" y="912" class="text">依赖关系</text>
+  
+  <line x1="1000" y1="907" x2="1040" y2="907" class="flow-arrow"/>
+  <text x="1050" y="912" class="text">数据流向</text>
+
+  <!-- 架构特点说明 -->
+  <text x="100" y="940" class="text">架构特点：</text>
+  <text x="100" y="955" class="small-text">• 清洁架构设计，分层明确，职责单一</text>
+  <text x="100" y="970" class="small-text">• 支持多AI提供商（OpenAI、GoogleAI）统一接口</text>
+  
+  <text x="500" y="940" class="text">核心功能：</text>
+  <text x="500" y="955" class="small-text">• MCP协议完整实现，支持工具注册和执行</text>
+  <text x="500" y="970" class="small-text">• SSE实时通信，流式响应处理</text>
+  
+  <text x="900" y="940" class="text">技术栈：</text>
+  <text x="900" y="955" class="small-text">• Gin + Wire + SQLC + Zap + Viper</text>
+  <text x="900" y="970" class="small-text">• 依赖注入，类型安全，结构化日志</text>
+</svg>
