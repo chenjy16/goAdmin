@@ -10,11 +10,84 @@ import (
 	"admin/internal/googleai"
 	"admin/internal/logger"
 	"admin/internal/mcp"
+	"admin/internal/openai"
 	"admin/internal/repository"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
+
+// OpenAIServiceAdapter OpenAI服务适配器，将OpenAIService适配为mcp.OpenAIService
+type OpenAIServiceAdapter struct {
+	service *OpenAIService
+}
+
+// NewOpenAIServiceAdapter 创建OpenAI服务适配器
+func NewOpenAIServiceAdapter(service *OpenAIService) *OpenAIServiceAdapter {
+	return &OpenAIServiceAdapter{service: service}
+}
+
+// ChatCompletion 聊天完成
+func (a *OpenAIServiceAdapter) ChatCompletion(ctx context.Context, req *mcp.ChatCompletionRequest) (*mcp.ChatCompletionResponse, error) {
+	// 转换请求类型
+	serviceReq := &ChatCompletionRequest{
+		Model:       req.Model,
+		Messages:    req.Messages,
+		MaxTokens:   req.MaxTokens,
+		Temperature: req.Temperature,
+		TopP:        req.TopP,
+		Stream:      req.Stream,
+		Options:     req.Options,
+	}
+
+	// 调用实际服务
+	serviceResp, err := a.service.ChatCompletion(ctx, serviceReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换响应类型
+	mcpResp := &mcp.ChatCompletionResponse{
+		ID:      serviceResp.ID,
+		Object:  serviceResp.Object,
+		Created: serviceResp.Created,
+		Model:   serviceResp.Model,
+		Choices: serviceResp.Choices,
+		Usage:   serviceResp.Usage,
+	}
+
+	return mcpResp, nil
+}
+
+// ListModels 列出模型
+func (a *OpenAIServiceAdapter) ListModels(ctx context.Context) (map[string]*openai.ModelConfig, error) {
+	return a.service.ListModels(ctx)
+}
+
+// ValidateAPIKey 验证API密钥
+func (a *OpenAIServiceAdapter) ValidateAPIKey(ctx context.Context) error {
+	return a.service.ValidateAPIKey(ctx)
+}
+
+// SetAPIKey 设置API密钥
+func (a *OpenAIServiceAdapter) SetAPIKey(key string) error {
+	return a.service.SetAPIKey(key)
+}
+
+// GetModelConfig 获取模型配置
+func (a *OpenAIServiceAdapter) GetModelConfig(name string) (*openai.ModelConfig, error) {
+	return a.service.GetModelConfig(name)
+}
+
+// EnableModel 启用模型
+func (a *OpenAIServiceAdapter) EnableModel(name string) error {
+	return a.service.EnableModel(name)
+}
+
+// DisableModel 禁用模型
+func (a *OpenAIServiceAdapter) DisableModel(name string) error {
+	return a.service.DisableModel(name)
+}
 
 // GoogleAIServiceAdapter Google AI服务适配器，将GoogleAIService适配为mcp.GoogleAIService
 type GoogleAIServiceAdapter struct {
@@ -155,6 +228,7 @@ type MCPServiceImpl struct {
 	toolRegistry    *mcp.ToolRegistry
 	userService     MCPUserService
 	googleaiService *GoogleAIService
+	openaiService   *OpenAIService
 	executionLogs   map[string]*dto.MCPToolExecutionLog
 	executionMutex  sync.RWMutex
 	sseClients      map[string]chan *dto.MCPSSEEvent
@@ -163,11 +237,12 @@ type MCPServiceImpl struct {
 }
 
 // NewMCPService 创建MCP服务
-func NewMCPService(userService MCPUserService, googleaiService *GoogleAIService, logger *zap.Logger) MCPService {
+func NewMCPService(userService MCPUserService, googleaiService *GoogleAIService, openaiService *OpenAIService, logger *zap.Logger) MCPService {
 	service := &MCPServiceImpl{
 		toolRegistry:    mcp.NewToolRegistry(),
 		userService:     userService,
 		googleaiService: googleaiService,
+		openaiService:   openaiService,
 		executionLogs:   make(map[string]*dto.MCPToolExecutionLog),
 		sseClients:      make(map[string]chan *dto.MCPSSEEvent),
 		logger:          logger,
@@ -205,6 +280,24 @@ func (s *MCPServiceImpl) registerDefaultTools() {
 		// 注册Google AI配置工具
 		googleaiConfigTool := mcp.NewGoogleAIConfigTool(adapter)
 		s.toolRegistry.Register(googleaiConfigTool)
+	}
+
+	// 注册OpenAI工具
+	if s.openaiService != nil {
+		// 创建适配器
+		adapter := NewOpenAIServiceAdapter(s.openaiService)
+
+		// 注册OpenAI聊天工具
+		openaiChatTool := mcp.NewOpenAIChatTool(adapter)
+		s.toolRegistry.Register(openaiChatTool)
+
+		// 注册OpenAI模型工具
+		openaiModelsTool := mcp.NewOpenAIModelsTool(adapter)
+		s.toolRegistry.Register(openaiModelsTool)
+
+		// 注册OpenAI配置工具
+		openaiConfigTool := mcp.NewOpenAIConfigTool(adapter)
+		s.toolRegistry.Register(openaiConfigTool)
 	}
 
 	s.logger.Info("Default MCP tools registered",

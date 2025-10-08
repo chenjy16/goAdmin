@@ -41,8 +41,8 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	mcpService := ProvideMCPService(repositoryManager, googleAIService, logger)
 	openAIService := ProvideOpenAIService(config, logger)
+	mcpService := ProvideMCPService(repositoryManager, googleAIService, openAIService, logger)
 	mcpController := ProvideMCPController(mcpService, logger)
 	openAIController := ProvideOpenAIController(openAIService, logger)
 	googleAIController := ProvideGoogleAIController(googleAIService, logger)
