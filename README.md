@@ -1,17 +1,21 @@
-# Admin 管理系统
+# MCP 服务器
 
-一个基于 Go 语言开发的现代化后端管理系统，采用清洁架构设计，提供用户管理、身份验证等核心功能。
+一个基于 Go 语言开发的高性能 MCP（Model Context Protocol）服务器，采用清洁架构设计，提供完整的工具系统、实时通信和结构化日志功能。
 
 ## ✨ 特性
 
 - 🚀 **高性能**: 基于 Gin 框架，提供高性能的 HTTP 服务
 - 🏗️ **清洁架构**: 采用分层架构设计，代码结构清晰，易于维护
-- 🔐 **安全认证**: 集成 JWT 身份验证机制
-- 📊 **结构化日志**: 使用 Zap 提供结构化日志记录
+- 🔧 **MCP 协议支持**: 完整实现 Model Context Protocol 规范
+- 🛠️ **工具系统**: 内置可扩展的工具注册和执行系统
+- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送
+- 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
 - 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
 - ⚡ **依赖注入**: 使用 Google Wire 进行依赖注入管理
 - ✅ **数据验证**: 集成强大的数据验证功能
 - 🔧 **配置管理**: 使用 Viper 进行灵活的配置管理
+- 🛡️ **错误处理**: 统一的错误处理和安全日志记录
+- 🔍 **监控支持**: 完整的请求/响应日志和性能监控
 
 ## 🛠️ 技术栈
 
@@ -25,9 +29,9 @@
 - **Google Wire v0.7.0** - 依赖注入框架
 - **Zap v1.27.0** - 结构化日志库
 - **Viper v1.17.0** - 配置管理
-- **JWT v5.3.0** - JSON Web Token 认证
 - **Validator v10.28.0** - 数据验证
 - **Crypto** - 密码加密
+- **Gorilla WebSocket** - WebSocket 和 SSE 支持
 
 ### 开发工具
 - **Air** - 热重载开发工具（推荐）
@@ -42,19 +46,35 @@ admin/
 ├── internal/               # 内部包（不对外暴露）
 │   ├── config/            # 配置管理
 │   ├── controllers/       # 控制器层
+│   │   ├── base_controller.go
+│   │   └── mcp_controller.go  # MCP 协议控制器
 │   ├── database/          # 数据库相关
 │   │   ├── connection.go  # 数据库连接
 │   │   ├── curd/         # SQL 查询文件
 │   │   └── generated/    # SQLC 生成的代码
 │   ├── dto/              # 数据传输对象
+│   │   ├── mcp.go        # MCP 协议相关 DTO
+│   │   └── user.go       # 用户相关 DTO
 │   ├── errors/           # 错误处理
+│   ├── logger/           # 日志系统
+│   │   ├── constants.go
+│   │   └── logger.go
+│   ├── mcp/              # MCP 工具系统
+│   │   └── tool.go       # 工具定义和注册
 │   ├── middleware/       # 中间件
+│   │   ├── cors.go
+│   │   ├── error_handler.go
+│   │   ├── logger.go
+│   │   ├── recovery.go
+│   │   └── validation.go
 │   ├── repository/       # 数据访问层
 │   ├── response/         # 响应格式化
 │   ├── route/           # 路由配置
-│   ├── services/        # 业务逻辑层
+│   ├── service/         # 业务逻辑层
+│   │   └── mcp_service.go  # MCP 服务实现
 │   ├── utils/           # 工具函数
 │   └── wire/            # 依赖注入配置
+├── docs/               # 文档目录
 ├── schemas/             # 数据库模式文件
 │   └── users/
 ├── config.yaml         # 配置文件
@@ -161,53 +181,248 @@ curl http://localhost:8080/health
 }
 ```
 
+## 💡 使用示例
+
+### 基本 MCP 工具调用
+
+#### 1. 获取可用工具列表
+```bash
+curl -X GET http://localhost:8080/api/v1/mcp/tools | jq
+```
+
+#### 2. 调用 Echo 工具
+```bash
+curl -X POST http://localhost:8080/api/v1/mcp/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "echo",
+    "arguments": {
+      "message": "Hello MCP Server!"
+    }
+  }' | jq
+```
+
+#### 3. 调用用户信息工具
+```bash
+curl -X POST http://localhost:8080/api/v1/mcp/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "get_user_info",
+    "arguments": {
+      "user_id": "12345"
+    }
+  }' | jq
+```
+
+### SSE 事件流连接
+
+#### JavaScript 客户端示例
+```javascript
+// 建立 SSE 连接
+const eventSource = new EventSource('http://localhost:8080/api/v1/mcp/sse');
+
+// 监听消息事件
+eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    console.log('收到事件:', data);
+};
+
+// 监听错误事件
+eventSource.onerror = function(event) {
+    console.error('SSE 连接错误:', event);
+};
+
+// 关闭连接
+// eventSource.close();
+```
+
+#### curl 测试 SSE 连接
+```bash
+curl -N -H "Accept: text/event-stream" http://localhost:8080/api/v1/mcp/sse
+```
+
+### Python 客户端示例
+
+```python
+import requests
+import json
+
+class MCPClient:
+    def __init__(self, base_url="http://localhost:8080"):
+        self.base_url = base_url
+        
+    def get_tools(self):
+        """获取可用工具列表"""
+        response = requests.get(f"{self.base_url}/api/v1/mcp/tools")
+        return response.json()
+    
+    def execute_tool(self, tool_name, arguments):
+        """执行工具"""
+        payload = {
+            "name": tool_name,
+            "arguments": arguments
+        }
+        response = requests.post(
+            f"{self.base_url}/api/v1/mcp/execute",
+            json=payload,
+            headers={"Content-Type": "application/json"}
+        )
+        return response.json()
+    
+    def get_logs(self):
+        """获取执行日志"""
+        response = requests.get(f"{self.base_url}/api/v1/mcp/logs")
+        return response.json()
+
+# 使用示例
+client = MCPClient()
+
+# 获取工具列表
+tools = client.get_tools()
+print("可用工具:", json.dumps(tools, indent=2, ensure_ascii=False))
+
+# 执行 echo 工具
+result = client.execute_tool("echo", {"message": "Hello from Python!"})
+print("执行结果:", json.dumps(result, indent=2, ensure_ascii=False))
+
+# 获取执行日志
+logs = client.get_logs()
+print("执行日志:", json.dumps(logs, indent=2, ensure_ascii=False))
+```
+
 ## 📚 API 文档
 
 ### 基础信息
 
-- **Base URL**: `http://localhost:8080/api/v1`
+- **Base URL**: `http://localhost:8080`
 - **Content-Type**: `application/json`
 
-### 用户管理 API
+### 健康检查 API
 
-#### 1. 创建用户
+#### 服务器状态检查
 ```http
-POST /api/v1/users
-Content-Type: application/json
+GET /health
+```
 
+响应：
+```json
 {
-  "username": "testuser",
-  "email": "test@example.com",
-  "password": "password123",
-  "full_name": "Test User"
+  "status": "ok",
+  "message": "Server is running"
 }
 ```
 
-#### 2. 获取用户列表
-```http
-GET /api/v1/users?page=1&limit=10
-```
+### MCP 协议 API
 
-#### 3. 获取单个用户
+#### 1. MCP 初始化
 ```http
-GET /api/v1/users/{id}
-```
-
-#### 4. 更新用户
-```http
-PUT /api/v1/users/{id}
+POST /api/v1/mcp/initialize
 Content-Type: application/json
 
 {
-  "email": "newemail@example.com",
-  "full_name": "New Name",
-  "is_active": true
+  "protocolVersion": "2024-11-05",
+  "capabilities": {
+    "tools": {}
+  },
+  "clientInfo": {
+    "name": "example-client",
+    "version": "1.0.0"
+  }
 }
 ```
 
-#### 5. 删除用户
+#### 2. 获取可用工具列表
 ```http
-DELETE /api/v1/users/{id}
+GET /api/v1/mcp/tools
+```
+
+响应：
+```json
+{
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echo back the input message",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "The message to echo back"
+          }
+        },
+        "required": ["message"]
+      }
+    },
+    {
+      "name": "get_user_info",
+      "description": "Get user information by user ID",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The user ID to get information for"
+          }
+        },
+        "required": ["user_id"]
+      }
+    }
+  ]
+}
+```
+
+#### 3. 执行工具
+```http
+POST /api/v1/mcp/execute
+Content-Type: application/json
+
+{
+  "name": "echo",
+  "arguments": {
+    "message": "Hello World"
+  }
+}
+```
+
+响应：
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Echo: Hello World"
+    }
+  ]
+}
+```
+
+#### 4. SSE 事件流
+```http
+GET /api/v1/mcp/sse
+```
+
+建立 Server-Sent Events 连接，接收实时事件推送。
+
+#### 5. 获取执行日志
+```http
+GET /api/v1/mcp/logs
+```
+
+响应：
+```json
+{
+  "logs": [
+    {
+      "id": "log-id",
+      "tool_name": "echo",
+      "arguments": {"message": "Hello World"},
+      "result": {"content": [{"type": "text", "text": "Echo: Hello World"}]},
+      "timestamp": "2024-01-01T00:00:00Z",
+      "duration_ms": 5
+    }
+  ]
+}
 ```
 
 ### 响应格式
@@ -246,40 +461,93 @@ sqlc generate
 cd internal/wire && wire
 ```
 
-### 添加新的数据库模块
+### 添加新的 MCP 工具
 
-1. 在 `schemas/` 目录下创建新的模块目录
-2. 在 `internal/database/curd/` 目录下创建对应的 SQL 查询文件
-3. 更新 `sqlc.yaml` 配置文件
-4. 运行 `sqlc generate` 生成代码
-5. 在 `internal/database/connection.go` 中添加新的查询字段
+1. 在 `internal/mcp/tool.go` 中定义新的工具结构体
+2. 实现 `Tool` 接口的方法：
+   - `GetDefinition()`: 返回工具定义
+   - `Execute()`: 执行工具逻辑
+   - `Validate()`: 验证输入参数
+3. 在 `registerDefaultTools()` 函数中注册新工具
+4. 重新生成依赖注入代码
+
+示例工具实现：
+```go
+type MyTool struct {
+    BaseTool
+}
+
+func (t *MyTool) GetDefinition() MCPTool {
+    return MCPTool{
+        Name:        "my_tool",
+        Description: "My custom tool description",
+        InputSchema: map[string]interface{}{
+            "type": "object",
+            "properties": map[string]interface{}{
+                "param": map[string]interface{}{
+                    "type":        "string",
+                    "description": "Parameter description",
+                },
+            },
+            "required": []string{"param"},
+        },
+    }
+}
+
+func (t *MyTool) Execute(arguments map[string]interface{}) (interface{}, error) {
+    // 实现工具逻辑
+    return map[string]interface{}{
+        "content": []map[string]interface{}{
+            {
+                "type": "text",
+                "text": "Tool result",
+            },
+        },
+    }, nil
+}
+```
 
 ### 项目架构说明
 
 本项目采用清洁架构（Clean Architecture）设计：
 
-- **Controllers**: 处理 HTTP 请求和响应
-- **Services**: 业务逻辑层
+- **Controllers**: 处理 HTTP 请求和响应，包括 MCP 协议端点
+- **Services**: 业务逻辑层，包括 MCP 服务实现
 - **Repository**: 数据访问层
-- **Models/DTO**: 数据传输对象
-- **Middleware**: 中间件（认证、日志、错误处理等）
+- **Models/DTO**: 数据传输对象，包括 MCP 协议相关结构
+- **Middleware**: 中间件（CORS、日志、错误处理、恢复等）
+- **MCP Tools**: 可扩展的工具系统
+
+### MCP 协议支持
+
+项目完整实现了 Model Context Protocol 规范：
+
+- **工具注册和发现**: 动态工具注册系统
+- **工具执行**: 安全的工具执行环境
+- **SSE 流式通信**: 实时事件推送
+- **执行日志**: 完整的工具执行历史记录
+- **错误处理**: 统一的 MCP 错误响应格式
 
 ### 错误处理
 
 项目使用统一的错误处理机制：
 
 - 自定义错误类型 `AppError`
+- MCP 特定错误类型（工具未找到、执行失败等）
 - 错误中间件自动处理和格式化错误响应
 - 结构化错误日志记录
+- 安全日志记录（记录潜在的安全威胁）
 
 ### 日志记录
 
 使用 Zap 进行结构化日志记录：
 
-- 请求/响应日志
-- 错误日志
-- 业务操作日志
-- 支持不同日志级别
+- API 请求/响应日志
+- MCP 工具执行日志
+- 性能监控日志
+- 安全事件日志
+- 错误和异常日志
+- 支持不同日志级别（DEBUG、INFO、WARN、ERROR）
 
 ## 🧪 测试
 
@@ -361,11 +629,12 @@ docker run -p 8080:8080 admin-system
 
 感谢以下开源项目：
 
-- [Gin](https://github.com/gin-gonic/gin) - HTTP Web 框架
-- [SQLC](https://github.com/sqlc-dev/sqlc) - SQL 代码生成器
-- [Wire](https://github.com/google/wire) - 依赖注入框架
-- [Zap](https://github.com/uber-go/zap) - 日志库
-- [Viper](https://github.com/spf13/viper) - 配置管理
+- [Gin](https://github.com/gin-gonic/gin) - 高性能 HTTP Web 框架
+- [SQLC](https://github.com/sqlc-dev/sqlc) - 类型安全的 SQL 代码生成器
+- [Wire](https://github.com/google/wire) - 编译时依赖注入框架
+- [Zap](https://github.com/uber-go/zap) - 高性能结构化日志库
+- [Viper](https://github.com/spf13/viper) - 灵活的配置管理库
+- [Model Context Protocol](https://modelcontextprotocol.io/) - MCP 协议规范
 
 ---
 

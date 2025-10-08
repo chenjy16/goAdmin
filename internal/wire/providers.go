@@ -2,10 +2,12 @@ package wire
 
 import (
 	"admin/internal/config"
+	"admin/internal/controllers"
 	"admin/internal/database"
+	"admin/internal/logger"
 	"admin/internal/repository"
 	"admin/internal/route"
-	"admin/internal/services"
+	"admin/internal/service"
 	"admin/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -19,15 +21,23 @@ func ProvideConfig(configPath string) (*config.Config, error) {
 
 // ProvideLogger 提供日志器
 func ProvideLogger(cfg *config.Config) (*zap.Logger, error) {
-	var logger *zap.Logger
-	var err error
+	// 初始化全局日志器
+	if err := logger.InitGlobalLogger(cfg.Server.Mode); err != nil {
+		return nil, err
+	}
 
+	// 记录配置加载成功
+	logger.Info(logger.MsgConfigLoaded,
+		logger.Module(logger.ModuleConfig),
+		logger.String("mode", cfg.Server.Mode))
+
+	// 为了兼容现有代码，仍然返回zap.Logger
+	var zapLogger *zap.Logger
+	var err error
 	if cfg.Server.Mode == "release" {
-		// 生产环境使用JSON格式日志
-		logger, err = zap.NewProduction()
+		zapLogger, err = zap.NewProduction()
 	} else {
-		// 开发环境使用开发者友好的格式
-		logger, err = zap.NewDevelopment()
+		zapLogger, err = zap.NewDevelopment()
 	}
 
 	if err != nil {
@@ -35,9 +45,9 @@ func ProvideLogger(cfg *config.Config) (*zap.Logger, error) {
 	}
 
 	// 设置全局日志器
-	zap.ReplaceGlobals(logger)
+	zap.ReplaceGlobals(zapLogger)
 
-	return logger, nil
+	return zapLogger, nil
 }
 
 // ProvideDatabase 提供数据库连接
@@ -50,12 +60,18 @@ func ProvideJWTManager(cfg *config.Config) *utils.JWTManager {
 	return utils.NewJWTManager(cfg.JWT.Secret, cfg.JWT.ExpireTime)
 }
 
-// ProvideUserService 提供用户服务
-func ProvideUserService(repoManager repository.RepositoryManager) *services.UserService {
-	return services.NewUserService(repoManager.User())
+// ProvideMCPService 提供MCP服务
+func ProvideMCPService(repoManager repository.RepositoryManager, logger *zap.Logger) service.MCPService {
+	userService := service.NewUserServiceAdapter(repoManager)
+	return service.NewMCPService(userService, logger)
+}
+
+// ProvideMCPController 提供MCP控制器
+func ProvideMCPController(mcpService service.MCPService, logger *zap.Logger) *controllers.MCPController {
+	return controllers.NewMCPController(mcpService, logger)
 }
 
 // ProvideRouter 提供路由器
-func ProvideRouter(userService *services.UserService, logger *zap.Logger) *gin.Engine {
-	return route.SetupRoutes(userService, logger)
+func ProvideRouter(mcpController *controllers.MCPController, logger *zap.Logger) *gin.Engine {
+	return route.SetupRoutes(logger, mcpController)
 }

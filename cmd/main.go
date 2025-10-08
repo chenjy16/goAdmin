@@ -2,19 +2,21 @@ package main
 
 import (
 	"fmt"
-	"log"
 
+	"admin/internal/logger"
 	"admin/internal/wire"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 func main() {
 	// 使用wire初始化应用
 	app, cleanup, err := wire.InitializeApp(".")
 	if err != nil {
-		log.Fatalf("Failed to initialize app: %v", err)
+		logger.Fatal(logger.MsgServerError,
+			logger.ZapError(err),
+			logger.Module(logger.ModuleServer),
+			logger.Operation(logger.OpStart))
 	}
 	defer cleanup()
 
@@ -26,11 +28,19 @@ func main() {
 
 	// 启动服务器
 	addr := fmt.Sprintf("%s:%s", app.Config.Server.Host, app.Config.Server.Port)
-	app.Logger.Info("Server starting",
-		zap.String("address", addr),
-		zap.String("mode", app.Config.Server.Mode))
+	
+	// 使用统一日志记录服务器启动
+	logger.Info(logger.MsgServerStarting,
+		logger.String("address", addr),
+		logger.String("mode", app.Config.Server.Mode),
+		logger.Module(logger.ModuleServer),
+		logger.Operation(logger.OpStart))
 
 	if err := router.Run(addr); err != nil {
-		app.Logger.Fatal("Failed to start server", zap.Error(err))
+		logger.Fatal(logger.MsgServerError,
+			logger.ZapError(err),
+			logger.String("address", addr),
+			logger.Module(logger.ModuleServer),
+			logger.Operation(logger.OpStart))
 	}
 }

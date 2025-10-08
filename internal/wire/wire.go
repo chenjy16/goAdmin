@@ -8,7 +8,7 @@ import (
 	"admin/internal/controllers"
 	"admin/internal/database"
 	"admin/internal/repository"
-	"admin/internal/services"
+	"admin/internal/service"
 	"admin/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -38,10 +38,10 @@ func InitializeApp(configPath string) (*App, func(), error) {
 		repository.NewRepositoryManager,
 
 		// Services
-		ProvideUserService,
+		ProvideMCPService,
 
 		// Controllers
-		controllers.NewUserController,
+		ProvideMCPController,
 
 		// Router
 		ProvideRouter,
@@ -54,15 +54,15 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 // App 应用程序结构
 type App struct {
-	Config         *config.Config
-	Logger         *zap.Logger
-	DB             *database.DB
-	JWTManager     *utils.JWTManager
-	Validator      *utils.CustomValidator
-	RepoManager    repository.RepositoryManager
-	UserService    *services.UserService
-	UserController *controllers.UserController
-	Router         *gin.Engine
+	Config        *config.Config
+	Logger        *zap.Logger
+	DB            *database.DB
+	JWTManager    *utils.JWTManager
+	Validator     *utils.CustomValidator
+	RepoManager   repository.RepositoryManager
+	MCPService    service.MCPService
+	MCPController *controllers.MCPController
+	Router        *gin.Engine
 }
 
 // NewApp 创建应用程序实例
@@ -73,20 +73,20 @@ func NewApp(
 	jwtManager *utils.JWTManager,
 	validator *utils.CustomValidator,
 	repoManager repository.RepositoryManager,
-	userService *services.UserService,
-	userController *controllers.UserController,
+	mcpService service.MCPService,
+	mcpController *controllers.MCPController,
 	router *gin.Engine,
 ) (*App, func()) {
 	app := &App{
-		Config:         config,
-		Logger:         logger,
-		DB:             db,
-		JWTManager:     jwtManager,
-		Validator:      validator,
-		RepoManager:    repoManager,
-		UserService:    userService,
-		UserController: userController,
-		Router:         router,
+		Config:        config,
+		Logger:        logger,
+		DB:            db,
+		JWTManager:    jwtManager,
+		Validator:     validator,
+		RepoManager:   repoManager,
+		MCPService:    mcpService,
+		MCPController: mcpController,
+		Router:        router,
 	}
 
 	// 清理函数

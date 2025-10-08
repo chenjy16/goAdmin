@@ -11,7 +11,7 @@ import (
 	"admin/internal/controllers"
 	"admin/internal/database"
 	"admin/internal/repository"
-	"admin/internal/services"
+	"admin/internal/service"
 	"admin/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -36,10 +36,10 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	jwtManager := ProvideJWTManager(config)
 	customValidator := utils.NewCustomValidator()
 	repositoryManager := repository.NewRepositoryManager(db)
-	userService := ProvideUserService(repositoryManager)
-	userController := controllers.NewUserController(userService)
-	engine := ProvideRouter(userService, logger)
-	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, userService, userController, engine)
+	mcpService := ProvideMCPService(repositoryManager, logger)
+	mcpController := ProvideMCPController(mcpService, logger)
+	engine := ProvideRouter(mcpController, logger)
+	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, mcpController, engine)
 	return app, func() {
 		cleanup()
 	}, nil
@@ -49,15 +49,15 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 // App 应用程序结构
 type App struct {
-	Config         *config.Config
-	Logger         *zap.Logger
-	DB             *database.DB
-	JWTManager     *utils.JWTManager
-	Validator      *utils.CustomValidator
-	RepoManager    repository.RepositoryManager
-	UserService    *services.UserService
-	UserController *controllers.UserController
-	Router         *gin.Engine
+	Config        *config.Config
+	Logger        *zap.Logger
+	DB            *database.DB
+	JWTManager    *utils.JWTManager
+	Validator     *utils.CustomValidator
+	RepoManager   repository.RepositoryManager
+	MCPService    service.MCPService
+	MCPController *controllers.MCPController
+	Router        *gin.Engine
 }
 
 // NewApp 创建应用程序实例
@@ -67,20 +67,20 @@ func NewApp(config2 *config.Config,
 	jwtManager *utils.JWTManager,
 	validator *utils.CustomValidator,
 	repoManager repository.RepositoryManager,
-	userService *services.UserService,
-	userController *controllers.UserController,
+	mcpService service.MCPService,
+	mcpController *controllers.MCPController,
 	router *gin.Engine,
 ) (*App, func()) {
 	app := &App{
-		Config:         config2,
-		Logger:         logger,
-		DB:             db,
-		JWTManager:     jwtManager,
-		Validator:      validator,
-		RepoManager:    repoManager,
-		UserService:    userService,
-		UserController: userController,
-		Router:         router,
+		Config:        config2,
+		Logger:        logger,
+		DB:            db,
+		JWTManager:    jwtManager,
+		Validator:     validator,
+		RepoManager:   repoManager,
+		MCPService:    mcpService,
+		MCPController: mcpController,
+		Router:        router,
 	}
 
 	cleanup := func() {

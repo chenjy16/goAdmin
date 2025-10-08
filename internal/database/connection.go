@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"admin/internal/database/generated/users"
+	"admin/internal/logger"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -18,14 +19,34 @@ type DB struct {
 
 // NewConnection creates a new database connection
 func NewConnection(driverName, dataSourceName string) (*DB, error) {
+	logger.Info(logger.MsgDBConnecting,
+		logger.Module(logger.ModuleDatabase),
+		logger.Operation(logger.OpConnect),
+		logger.String("driver", driverName))
+
 	conn, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
+		logger.LogError(logger.MsgDBError,
+			logger.Module(logger.ModuleDatabase),
+			logger.Operation(logger.OpConnect),
+			logger.String("driver", driverName),
+			logger.ZapError(err))
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	if err := conn.Ping(); err != nil {
+		logger.LogError(logger.MsgDBError,
+			logger.Module(logger.ModuleDatabase),
+			logger.Operation("ping"),
+			logger.String("driver", driverName),
+			logger.ZapError(err))
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+
+	logger.Info(logger.MsgDBConnected,
+		logger.Module(logger.ModuleDatabase),
+		logger.Operation(logger.OpConnect),
+		logger.String("driver", driverName))
 
 	return &DB{
 		conn:  conn,
@@ -50,16 +71,40 @@ func (db *DB) GetConnection() *sql.DB {
 
 // WithTx executes a function within a database transaction
 func (db *DB) WithTx(ctx context.Context, fn func(*users.Queries) error) error {
+	logger.DebugCtx(ctx, logger.MsgDBTransaction,
+		logger.Module(logger.ModuleDatabase),
+		logger.Operation("begin"))
+
 	tx, err := db.conn.BeginTx(ctx, nil)
 	if err != nil {
+		logger.ErrorCtx(ctx, logger.MsgDBError,
+			logger.Module(logger.ModuleDatabase),
+			logger.Operation("begin_tx"),
+			logger.ZapError(err))
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	qtx := db.Users.WithTx(tx)
 	if err := fn(qtx); err != nil {
+		logger.ErrorCtx(ctx, logger.MsgDBError,
+			logger.Module(logger.ModuleDatabase),
+			logger.Operation("execute_tx"),
+			logger.ZapError(err))
 		return err
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		logger.ErrorCtx(ctx, logger.MsgDBError,
+			logger.Module(logger.ModuleDatabase),
+			logger.Operation("commit_tx"),
+			logger.ZapError(err))
+		return err
+	}
+
+	logger.DebugCtx(ctx, logger.MsgDBTransaction,
+		logger.Module(logger.ModuleDatabase),
+		logger.Operation("commit"))
+
+	return nil
 }

@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/viper"
 )
@@ -41,7 +40,9 @@ func LoadConfig(path string) (*Config, error) {
 	setDefaults()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Warning: Could not read config file: %v", err)
+		// 注意：这里不能使用统一日志工具，因为日志器还未初始化
+		// 使用fmt.Printf作为临时解决方案
+		fmt.Printf("Warning: Could not read config file: %v\n", err)
 	}
 
 	var config Config
