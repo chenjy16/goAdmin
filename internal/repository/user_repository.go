@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"strings"
 
-	"goMcp/internal/database"
-	"goMcp/internal/database/generated/users"
-	"goMcp/internal/dto"
-	"goMcp/internal/errors"
-	"goMcp/internal/utils"
+	"go-springAi/internal/database"
+	"go-springAi/internal/database/generated/users"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/errors"
+	"go-springAi/internal/utils"
 )
 
 // userRepository 用户数据访问层实现

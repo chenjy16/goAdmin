@@ -5,7 +5,7 @@ server:
 
 database:
   driver: "sqlite3"
-  dsn: "./data/goMcp.db"
+  dsn: "./data/go-springAi.db"
 
 jwt:
   secret: "your-secret-key-change-this-in-production"

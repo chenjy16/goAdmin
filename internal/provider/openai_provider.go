@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"goMcp/internal/openai"
-	"goMcp/internal/service"
+	"go-springAi/internal/openai"
+	"go-springAi/internal/service"
 )
 
 // OpenAIProvider OpenAI提供商实现

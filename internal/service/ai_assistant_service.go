@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/mcp"
-	"goMcp/internal/openai"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/mcp"
+	"go-springAi/internal/openai"
 
 	"go.uber.org/zap"
 )

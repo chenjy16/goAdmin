@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"goMcp/internal/googleai"
+	"go-springAi/internal/googleai"
 )
 
 // GoogleAIChatRequest Google AI 聊天完成请求

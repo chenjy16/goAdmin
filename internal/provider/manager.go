@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"goMcp/internal/logger"
+	"go-springAi/internal/logger"
 )
 
 // Manager Provider管理器

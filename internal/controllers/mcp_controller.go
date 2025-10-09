@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/logger"
-	"goMcp/internal/response"
-	"goMcp/internal/service"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/response"
+	"go-springAi/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

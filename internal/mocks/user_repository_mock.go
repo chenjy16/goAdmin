@@ -10,8 +10,8 @@
 package mocks
 
 import (
-	dto "goMcp/internal/dto"
-	repository "goMcp/internal/repository"
+	dto "go-springAi/internal/dto"
+	repository "go-springAi/internal/repository"
 	context "context"
 	reflect "reflect"
 

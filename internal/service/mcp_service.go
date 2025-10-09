@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/googleai"
-	"goMcp/internal/logger"
-	"goMcp/internal/mcp"
-	"goMcp/internal/openai"
-	"goMcp/internal/repository"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/googleai"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/mcp"
+	"go-springAi/internal/openai"
+	"go-springAi/internal/repository"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"goMcp/internal/errors"
+	"go-springAi/internal/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/repository"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/repository"
 )
 
 // UserService 用户服务接口

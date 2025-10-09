@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"goMcp/internal/openai"
+	"go-springAi/internal/openai"
 )
 
 // OpenAIChatRequest 聊天完成请求

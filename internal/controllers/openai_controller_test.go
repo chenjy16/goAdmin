@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 
-	"goMcp/internal/logger"
-	"goMcp/internal/openai"
-	"goMcp/internal/service"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/openai"
+	"go-springAi/internal/service"
 )
 
 // MockLogger 模拟logger

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"goMcp/internal/logger"
-	"goMcp/internal/wire"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/wire"
 
 	"github.com/gin-gonic/gin"
 )

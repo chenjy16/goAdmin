@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"goMcp/internal/response"
-	"goMcp/internal/utils"
+	"go-springAi/internal/response"
+	"go-springAi/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"goMcp/internal/database/generated/users"
-	"goMcp/internal/logger"
+	"go-springAi/internal/database/generated/users"
+	"go-springAi/internal/logger"
 
 	_ "github.com/mattn/go-sqlite3"
 )

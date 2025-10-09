@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"goMcp/internal/response"
+	"go-springAi/internal/response"
 
 	"github.com/gin-gonic/gin"
 )

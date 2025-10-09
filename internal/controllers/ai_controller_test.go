@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/logger"
-	"goMcp/internal/provider"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/provider"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

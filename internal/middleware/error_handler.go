@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"goMcp/internal/errors"
-	"goMcp/internal/logger"
-	"goMcp/internal/response"
+	"go-springAi/internal/errors"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/response"
 	"context"
 	"strings"
 	"time"

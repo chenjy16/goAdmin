@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"goMcp/internal/googleai"
-	"goMcp/internal/logger"
+	"go-springAi/internal/googleai"
+	"go-springAi/internal/logger"
 )
 
 // GoogleAIService Google AI 服务

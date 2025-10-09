@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/googleai"
-	"goMcp/internal/openai"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/googleai"
+	"go-springAi/internal/openai"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"goMcp/internal/googleai"
-	"goMcp/internal/service"
+	"go-springAi/internal/googleai"
+	"go-springAi/internal/service"
 )
 
 // GoogleAIProvider GoogleAI提供商实现

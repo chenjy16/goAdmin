@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"goMcp/internal/openai"
+	"go-springAi/internal/openai"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

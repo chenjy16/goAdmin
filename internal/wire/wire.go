@@ -4,13 +4,13 @@
 package wire
 
 import (
-	"goMcp/internal/config"
-	"goMcp/internal/controllers"
-	"goMcp/internal/database"
-	"goMcp/internal/provider"
-	"goMcp/internal/repository"
-	"goMcp/internal/service"
-	"goMcp/internal/utils"
+	"go-springAi/internal/config"
+	"go-springAi/internal/controllers"
+	"go-springAi/internal/database"
+	"go-springAi/internal/provider"
+	"go-springAi/internal/repository"
+	"go-springAi/internal/service"
+	"go-springAi/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"goMcp/internal/dto"
+	"go-springAi/internal/dto"
 )
 
 // MCPServiceInterface MCP服务接口（避免循环导入）

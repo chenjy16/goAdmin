@@ -1,9 +1,9 @@
 package route
 
 import (
-	"goMcp/internal/controllers"
-	"goMcp/internal/dto"
-	"goMcp/internal/middleware"
+	"go-springAi/internal/controllers"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"goMcp/internal/dto"
+	"go-springAi/internal/dto"
 )
 
 // Tool MCP工具接口

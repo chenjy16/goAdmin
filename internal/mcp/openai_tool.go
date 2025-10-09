@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/openai"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/openai"
 )
 
 // OpenAIService 接口，避免导入循环

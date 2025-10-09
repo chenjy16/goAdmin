@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"goMcp/internal/dto"
+	"go-springAi/internal/dto"
 )
 
 // PaginationParams 分页参数结构体

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"goMcp/internal/logger"
+	"go-springAi/internal/logger"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

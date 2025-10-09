@@ -4,10 +4,10 @@ import (
 	"io"
 	"net/http"
 
-	"goMcp/internal/dto"
-	"goMcp/internal/logger"
-	"goMcp/internal/provider"
-	"goMcp/internal/response"
+	"go-springAi/internal/dto"
+	"go-springAi/internal/logger"
+	"go-springAi/internal/provider"
+	"go-springAi/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
