@@ -1,8 +1,15 @@
 # go-springAi
 
-这是一个架构设计优秀、核心功能完整的AI应用框架，特别是在MCP协议支持和AI集成方面表现出色。主要需要补充用户认证、安全性和生产环境支持功能，就能成为一个完整的企业级AI应用。
+这是一个现代化的全栈AI应用平台，采用前后端分离架构，提供完整的AI集成解决方案。项目在MCP协议支持、AI集成和用户界面方面表现出色，是一个功能完整的企业级AI应用框架。
 
 ## ✨ 特性
+
+### 🎨 前端用户界面
+- 💻 **现代化前端**: 基于 React 19 + TypeScript + Vite 构建的响应式Web应用
+- 🎨 **优雅UI设计**: 使用 Ant Design v5 组件库，提供专业的用户体验
+- 📱 **响应式布局**: 支持桌面端和移动端，自适应不同屏幕尺寸
+- 🔄 **实时更新**: 集成 SSE (Server-Sent Events) 实现实时数据推送
+- 🗂️ **多页面应用**: 包含仪表板、AI聊天、提供商管理、MCP工具、AI助手和系统设置
 
 ### 🤖 AI 集成能力
 - 🚀 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，支持统一的 API 接口
@@ -10,6 +17,7 @@
 - 🧠 **AI 助手服务**: 内置智能助手，支持工具调用和上下文管理
 - 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能
 - 📊 **模型管理**: 支持多模型切换和配置管理
+- 💬 **智能对话**: 支持流式响应和多轮对话
 
 ### 🔧 MCP 协议支持
 - 🛠️ **完整 MCP 实现**: 完整实现 Model Context Protocol 规范
@@ -17,19 +25,22 @@
 - 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送和流式响应
 - 📝 **执行日志**: 完整的工具执行历史记录和性能监控
 - 🔄 **动态工具注册**: 支持运行时工具发现和注册
+- 🎯 **工具管理界面**: 提供可视化的工具管理和执行界面
 
 ### 🏗️ 架构设计
-- 🚀 **高性能**: 基于 Gin 框架，提供高性能的 HTTP 服务
+- 🚀 **高性能后端**: 基于 Gin 框架，提供高性能的 HTTP 服务
 - 🏗️ **清洁架构**: 采用分层架构设计，代码结构清晰，易于维护
 - ⚡ **依赖注入**: 使用 Google Wire 进行依赖注入管理
 - 🔧 **配置管理**: 使用 Viper 进行灵活的配置管理
 - 🛡️ **中间件支持**: 完整的 CORS、日志、错误处理和恢复中间件
+- 🔗 **前后端分离**: React前端 + Go后端，支持独立部署和扩展
 
 ### 🗄️ 数据持久化
 - 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
 - 👤 **用户管理**: 完整的用户 CRUD 操作和认证系统
 - 🔐 **JWT 认证**: 基于 JWT 的用户认证和授权
 - 🔒 **密码安全**: 安全的密码哈希和验证机制
+- 💾 **状态管理**: 前端使用 Redux Toolkit 进行状态管理
 
 ### 🛡️ 安全与监控
 - ✅ **数据验证**: 集成强大的数据验证功能
@@ -37,25 +48,39 @@
 - 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
 - 🔍 **监控支持**: 完整的请求/响应日志和性能监控
 - 🚨 **安全日志**: 记录潜在安全威胁和异常行为
+- 🔐 **类型安全**: 前后端完整的 TypeScript 类型定义
 
 ### 🧪 开发与测试
 - 🧪 **完整测试**: 包含单元测试和集成测试，确保代码质量
 - 🔨 **构建工具**: 完整的 Makefile 支持多种开发任务
 - 📚 **文档完善**: 详细的 API 文档和使用示例
-- 🔄 **热重载**: 支持 Air 热重载开发
+- 🔄 **热重载**: 支持 Air 热重载开发（后端）和 Vite HMR（前端）
+- 🛠️ **开发工具**: 集成 ESLint、TypeScript 等现代开发工具
 
 ## 🛠️ 技术栈
 
-### 核心框架
+### 前端技术栈
+- **React 19** - 现代化前端框架，支持并发特性
+- **TypeScript 5.x** - 类型安全的JavaScript超集
+- **Vite 6.x** - 快速的前端构建工具和开发服务器
+- **Ant Design v5** - 企业级UI设计语言和组件库
+- **Redux Toolkit** - 现代化的Redux状态管理
+- **React Router DOM v6** - 声明式路由管理
+- **Axios** - Promise based HTTP客户端
+- **ESLint** - 代码质量和风格检查工具
+
+### 后端技术栈
+
+#### 核心框架
 - **Go 1.24.0** - 编程语言
 - **Gin v1.11.0** - HTTP Web 框架
 - **SQLite3 v1.14.32** - 轻量级数据库
 
-### AI 集成
+#### AI 集成
 - **Google AI SDK v1.28.0** - Google AI 服务集成
 - **OpenAI API** - OpenAI 服务集成（通过 HTTP 客户端）
 
-### 主要依赖
+#### 主要依赖
 - **SQLC** - 类型安全的 SQL 代码生成器
 - **Google Wire v0.7.0** - 依赖注入框架
 - **Zap v1.27.0** - 结构化日志库
@@ -66,15 +91,17 @@
 - **Crypto v0.42.0** - 密码加密
 - **Gorilla WebSocket v1.5.3** - WebSocket 和 SSE 支持
 
-### 测试框架
+#### 测试框架
 - **Testify v1.11.1** - 测试断言和模拟框架
 - **Go Mock** - 接口模拟生成
 
 ### 开发工具
-- **Air** - 热重载开发工具（推荐）
+- **Air** - 后端热重载开发工具
+- **Vite HMR** - 前端热模块替换
 - **Wire** - 依赖注入代码生成
 - **SQLC** - SQL 代码生成
 - **Makefile** - 构建和开发任务自动化
+- **npm** - 前端包管理器
 
 ## 📁 项目结构
 
@@ -170,7 +197,58 @@ go-springAi/
 ├── schemas/             # 数据库模式文件
 │   └── users/
 │       └── 001_create_users_table.sql
-├── config.yaml         # 配置文件
+├── frontend/           # 前端应用
+│   ├── public/        # 静态资源
+│   │   ├── vite.svg
+│   │   └── index.html
+│   ├── src/           # 源代码
+│   │   ├── components/    # 可复用组件
+│   │   │   ├── Layout/   # 布局组件
+│   │   │   │   └── index.tsx
+│   │   │   └── common/   # 通用组件
+│   │   ├── pages/        # 页面组件
+│   │   │   ├── DashboardPage.tsx    # 仪表板页面
+│   │   │   ├── ProvidersPage.tsx    # 提供商管理页面
+│   │   │   ├── MCPToolsPage.tsx     # MCP工具页面
+│   │   │   ├── AssistantPage.tsx    # AI助手页面
+│   │   │   └── SettingsPage.tsx     # 设置页面
+│   │   ├── store/        # Redux状态管理
+│   │   │   ├── index.ts  # Store配置
+│   │   │   └── slices/   # 状态切片
+│   │   │       ├── authSlice.ts
+│   │   │       ├── providersSlice.ts
+│   │   │       ├── mcpSlice.ts
+│   │   │       └── assistantSlice.ts
+│   │   ├── services/     # API服务
+│   │   │   ├── api.ts    # API配置
+│   │   │   ├── auth.ts   # 认证服务
+│   │   │   ├── providers.ts  # 提供商服务
+│   │   │   ├── mcp.ts    # MCP服务
+│   │   │   └── assistant.ts  # 助手服务
+│   │   ├── types/        # TypeScript类型定义
+│   │   │   ├── api.ts    # API类型
+│   │   │   ├── auth.ts   # 认证类型
+│   │   │   ├── providers.ts  # 提供商类型
+│   │   │   ├── mcp.ts    # MCP类型
+│   │   │   └── assistant.ts  # 助手类型
+│   │   ├── utils/        # 工具函数
+│   │   │   ├── request.ts    # 请求工具
+│   │   │   ├── storage.ts    # 存储工具
+│   │   │   └── constants.ts  # 常量定义
+│   │   ├── router/       # 路由配置
+│   │   │   └── index.tsx
+│   │   ├── App.tsx       # 根组件
+│   │   ├── main.tsx      # 应用入口
+│   │   └── vite-env.d.ts # Vite类型声明
+│   ├── package.json      # 前端依赖配置
+│   ├── package-lock.json # 依赖锁定文件
+│   ├── tsconfig.json     # TypeScript配置
+│   ├── tsconfig.app.json # 应用TypeScript配置
+│   ├── tsconfig.node.json # Node TypeScript配置
+│   ├── vite.config.ts    # Vite配置
+│   ├── eslint.config.js  # ESLint配置
+│   └── README.md         # 前端文档
+├── config.yaml         # 后端配置文件
 ├── sqlc.yaml          # SQLC 配置
 ├── Makefile           # 构建脚本
 ├── go.mod             # Go 模块文件
@@ -182,23 +260,30 @@ go-springAi/
 
 ### 环境要求
 
+#### 后端环境
 - Go 1.24.0 或更高版本
 - SQLite3
+
+#### 前端环境
+- Node.js 18.0 或更高版本
+- npm 9.0 或更高版本
 
 ### 安装步骤
 
 1. **克隆项目**
    ```bash
    git clone <repository-url>
-   cd admin
+   cd go-springAi
    ```
 
-2. **安装依赖**
+2. **后端安装**
+   
+   **安装Go依赖**
    ```bash
    go mod download
    ```
-
-3. **安装开发工具**
+   
+   **安装开发工具**
    ```bash
    # 安装 SQLC（用于生成数据库代码）
    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
@@ -209,17 +294,29 @@ go-springAi/
    # 安装 Air（可选，用于热重载开发）
    go install github.com/air-verse/air@latest
    ```
-
-4. **生成代码**
+   
+   **生成代码**
    ```bash
    # 生成数据库访问代码
    sqlc generate
    
    # 生成依赖注入代码
-   cd internal/wire && wire
+   cd internal/wire && wire && cd ../..
    ```
 
-5. **初始化数据库**
+3. **前端安装**
+   ```bash
+   # 进入前端目录
+   cd frontend
+   
+   # 安装前端依赖
+   npm install
+   
+   # 返回项目根目录
+   cd ..
+   ```
+
+4. **初始化数据库**
    ```bash
    # 创建数据目录
    mkdir -p data
@@ -228,7 +325,7 @@ go-springAi/
    sqlite3 data/admin.db < schemas/users/001_create_users_table.sql
    ```
 
-6. **配置应用**
+5. **配置应用**
    
    复制并修改配置文件：
    ```bash
@@ -258,7 +355,9 @@ go-springAi/
      api_key: ""  # 设置你的 Google AI API 密钥
    ```
 
-7. **运行应用**
+6. **运行应用**
+   
+   **启动后端服务**
    ```bash
    # 开发模式（推荐使用 Air 进行热重载）
    air
@@ -266,11 +365,23 @@ go-springAi/
    # 或者直接运行
    go run cmd/main.go
    ```
+   
+   **启动前端服务**（新开一个终端）
+   ```bash
+   # 进入前端目录
+   cd frontend
+   
+   # 启动开发服务器
+   npm run dev
+   ```
 
-应用将在 `http://localhost:8080` 启动。
+服务启动后：
+- 后端API服务：`http://localhost:8080`
+- 前端Web应用：`http://localhost:5173`
 
 ### 验证安装
 
+#### 后端验证
 访问健康检查端点：
 ```bash
 curl http://localhost:8080/health
@@ -284,9 +395,57 @@ curl http://localhost:8080/health
 }
 ```
 
+#### 前端验证
+1. 打开浏览器访问：`http://localhost:5173`
+2. 应该看到现代化的Web界面，包含以下页面：
+   - 📊 **仪表板**：系统概览和统计信息
+   - 🤖 **AI助手**：智能对话界面
+   - 🔧 **提供商管理**：AI服务提供商配置
+   - 🛠️ **MCP工具**：工具管理和执行
+   - ⚙️ **系统设置**：应用配置管理
+
+#### 完整验证
+确保前后端通信正常：
+1. 在前端界面中访问各个页面
+2. 检查浏览器开发者工具的网络请求
+3. 确认API请求正常返回数据
+
 ## 💡 使用示例
 
-### AI 聊天完成示例
+### 前端Web界面使用
+
+#### 1. 仪表板页面
+- 查看系统概览：提供商数量、模型数量、对话数量、工具数量
+- 监控最近活动：实时显示系统操作日志
+- 系统状态监控：服务运行状态和性能指标
+
+#### 2. AI助手页面
+- **智能对话**：与AI助手进行自然语言交互
+- **流式响应**：实时显示AI回复内容
+- **对话历史**：保存和查看历史对话记录
+- **多轮对话**：支持上下文相关的连续对话
+
+#### 3. 提供商管理页面
+- **查看提供商**：显示已配置的AI服务提供商（OpenAI、Google AI）
+- **API密钥管理**：安全地设置和更新API密钥
+- **模型管理**：查看和切换可用的AI模型
+- **状态监控**：实时显示提供商连接状态
+
+#### 4. MCP工具页面
+- **工具列表**：查看所有可用的MCP工具
+- **工具执行**：通过界面执行工具并查看结果
+- **执行历史**：查看工具执行日志和结果
+- **参数配置**：为工具执行配置必要参数
+
+#### 5. 系统设置页面
+- **通用设置**：配置应用基本参数
+- **AI设置**：管理AI服务相关配置
+- **高级设置**：系统级配置选项
+- **关于信息**：查看应用版本和系统信息
+
+### 后端API使用示例
+
+#### AI 聊天完成示例
 
 #### 1. 使用统一 AI 接口
 ```bash
@@ -1490,7 +1649,93 @@ func (t *MyTool) Execute(arguments map[string]interface{}) (interface{}, error) 
 }
 ```
 
-### 项目架构说明
+### 前端开发指南
+
+#### 开发环境设置
+```bash
+# 进入前端目录
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览生产构建
+npm run preview
+```
+
+#### 添加新页面
+1. 在 `src/pages/` 目录下创建新的页面组件
+2. 在 `src/router/index.tsx` 中添加路由配置
+3. 在 `src/components/Layout/index.tsx` 中添加菜单项（如需要）
+
+#### 状态管理
+使用 Redux Toolkit 进行状态管理：
+```typescript
+// 创建新的 slice
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+
+interface MyState {
+  data: any[]
+  loading: boolean
+}
+
+const mySlice = createSlice({
+  name: 'my',
+  initialState: { data: [], loading: false } as MyState,
+  reducers: {
+    setData: (state, action: PayloadAction<any[]>) => {
+      state.data = action.payload
+    },
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload
+    }
+  }
+})
+
+export const { setData, setLoading } = mySlice.actions
+export default mySlice.reducer
+```
+
+#### API 服务
+在 `src/services/` 目录下创建 API 服务：
+```typescript
+import { api } from './api'
+
+export const myService = {
+  getData: () => api.get('/api/v1/my/data'),
+  createData: (data: any) => api.post('/api/v1/my/data', data),
+  updateData: (id: string, data: any) => api.put(`/api/v1/my/data/${id}`, data),
+  deleteData: (id: string) => api.delete(`/api/v1/my/data/${id}`)
+}
+```
+
+#### 类型定义
+在 `src/types/` 目录下定义 TypeScript 类型：
+```typescript
+export interface MyData {
+  id: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MyApiResponse {
+  data: MyData[]
+  total: number
+  page: number
+  pageSize: number
+}
+```
+
+### 后端开发指南
+
+#### 项目架构说明
 
 本项目采用清洁架构（Clean Architecture）设计：
 
@@ -1548,38 +1793,126 @@ go tool cover -html=coverage.out
 
 ## 📦 构建和部署
 
-### 构建
+### 前端构建
+
+```bash
+# 进入前端目录
+cd frontend
+
+# 安装依赖
+npm install
+
+# 构建生产版本
+npm run build
+
+# 构建产物在 dist/ 目录下
+```
+
+### 后端构建
 
 ```bash
 # 构建二进制文件
-go build -o bin/admin cmd/main.go
+go build -o bin/go-springai cmd/main.go
 
 # 交叉编译（Linux）
-GOOS=linux GOARCH=amd64 go build -o bin/admin-linux cmd/main.go
+GOOS=linux GOARCH=amd64 go build -o bin/go-springai-linux cmd/main.go
 ```
 
-### Docker 部署
+### 完整部署
+
+#### 方式一：分离部署
+```bash
+# 1. 构建前端
+cd frontend
+npm install
+npm run build
+
+# 2. 构建后端
+cd ..
+go build -o bin/go-springai cmd/main.go
+
+# 3. 部署前端到静态文件服务器（如 Nginx）
+# 4. 运行后端服务
+./bin/go-springai
+```
+
+#### 方式二：Docker 部署
 
 创建 `Dockerfile`：
 ```dockerfile
-FROM golang:1.24-alpine AS builder
+# 多阶段构建
+FROM node:18-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+FROM golang:1.24-alpine AS backend-builder
 WORKDIR /app
-COPY . .
+COPY go.mod go.sum ./
 RUN go mod download
-RUN go build -o admin cmd/main.go
+COPY . .
+RUN go build -o go-springai cmd/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-COPY --from=builder /app/admin .
-COPY --from=builder /app/config.yaml .
-CMD ["./admin"]
+
+# 复制后端二进制文件和配置
+COPY --from=backend-builder /app/go-springai .
+COPY --from=backend-builder /app/config.yaml .
+
+# 复制前端构建产物
+COPY --from=frontend-builder /app/frontend/dist ./static
+
+# 暴露端口
+EXPOSE 8080 5173
+
+CMD ["./go-springai"]
 ```
 
 构建和运行：
 ```bash
-docker build -t admin-system .
-docker run -p 8080:8080 admin-system
+docker build -t go-springai .
+docker run -p 8080:8080 -p 5173:5173 go-springai
+```
+
+#### 方式三：使用 Docker Compose
+
+创建 `docker-compose.yml`：
+```yaml
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8080:8080"
+    environment:
+      - GIN_MODE=release
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  data:
+```
+
+运行：
+```bash
+docker-compose up -d
 ```
 
 ## 🤝 贡献指南
@@ -1602,11 +1935,25 @@ docker run -p 8080:8080 admin-system
 
 感谢以下开源项目：
 
+### 后端技术
 - [Gin](https://github.com/gin-gonic/gin) - 高性能 HTTP Web 框架
 - [SQLC](https://github.com/sqlc-dev/sqlc) - 类型安全的 SQL 代码生成器
 - [Wire](https://github.com/google/wire) - 编译时依赖注入框架
 - [Zap](https://github.com/uber-go/zap) - 高性能结构化日志库
 - [Viper](https://github.com/spf13/viper) - 灵活的配置管理库
+
+### 前端技术
+- [React](https://github.com/facebook/react) - 用户界面构建库
+- [Vite](https://github.com/vitejs/vite) - 快速的前端构建工具
+- [Ant Design](https://github.com/ant-design/ant-design) - 企业级UI设计语言
+- [Redux Toolkit](https://github.com/reduxjs/redux-toolkit) - 现代化Redux状态管理
+- [React Router](https://github.com/remix-run/react-router) - 声明式路由
+- [Axios](https://github.com/axios/axios) - Promise based HTTP客户端
+- [TypeScript](https://github.com/microsoft/TypeScript) - 类型安全的JavaScript
+
+### AI与协议
+- [OpenAI API](https://openai.com/api/) - OpenAI 服务集成
+- [Google AI](https://ai.google.dev/) - Google AI 服务集成
 - [Model Context Protocol](https://modelcontextprotocol.io/) - MCP 协议规范
 
 ---
