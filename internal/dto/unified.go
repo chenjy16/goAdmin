@@ -1,22 +1,6 @@
 package dto
 
-// UnifiedMessage 统一的消息结构
-type UnifiedMessage struct {
-	Role    string `json:"role" binding:"required"`
-	Content string `json:"content" binding:"required"`
-}
 
-// UnifiedChatRequest 统一的聊天请求
-type UnifiedChatRequest struct {
-	Model       string                 `json:"model" binding:"required"`
-	Messages    []UnifiedMessage       `json:"messages" binding:"required,min=1"`
-	MaxTokens   *int                   `json:"max_tokens,omitempty"`
-	Temperature *float64               `json:"temperature,omitempty"`
-	TopP        *float64               `json:"top_p,omitempty"`
-	TopK        *int                   `json:"top_k,omitempty"`
-	Stream      bool                   `json:"stream,omitempty"`
-	Options     map[string]interface{} `json:"options,omitempty"`
-}
 
 // SetAPIKeyRequest 设置API密钥请求
 type SetAPIKeyRequest struct {

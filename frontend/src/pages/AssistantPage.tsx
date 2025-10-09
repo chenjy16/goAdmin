@@ -11,14 +11,12 @@ import {
   Spin,
   message,
   Tag,
-  Divider,
 } from 'antd';
 import {
   SendOutlined,
   UserOutlined,
   RobotOutlined,
   SettingOutlined,
-  DeleteOutlined,
   CopyOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,

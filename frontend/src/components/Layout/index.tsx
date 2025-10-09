@@ -3,7 +3,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, theme } from 'antd';
 import type { MenuProps } from 'antd';
 import {
-  MessageOutlined,
   CloudOutlined,
   ToolOutlined,
   RobotOutlined,
@@ -30,16 +29,11 @@ const Layout: React.FC = () => {
 
   // 菜单项配置
   const menuItems: MenuProps['items'] = [
-    {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: '仪表板',
-    },
-    {
-      key: 'chat',
-      icon: <MessageOutlined />,
-      label: '统一聊天',
-    },
+     {
+       key: 'dashboard',
+       icon: <DashboardOutlined />,
+       label: '仪表板',
+     },
     {
       key: 'providers',
       icon: <CloudOutlined />,

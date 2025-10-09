@@ -1004,13 +1004,13 @@ type MCPClientManager struct {
 ```go
 // AI 提供商策略接口
 type AIProviderStrategy interface {
-    ProcessChat(request UnifiedChatRequest) (UnifiedChatResponse, error)
-    GetModels() ([]UnifiedModel, error)
+    ChatCompletion(ctx context.Context, req *ChatRequest) (*ChatResponse, error)
+    GetModels() ([]ModelInfo, error)
 }
 
-// 统一 AI 控制器
-type UnifiedAIController struct {
-    strategies map[string]AIProviderStrategy
+// AI 控制器
+type AIController struct {
+    providers map[string]AIProviderStrategy
 }
 ```
 

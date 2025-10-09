@@ -2,8 +2,6 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type {
   ApiResponse,
-  UnifiedChatRequest,
-  UnifiedChatResponse,
   ProvidersResponse,
   ModelsResponse,
   ModelConfigResponse,
@@ -102,73 +100,7 @@ class ApiService {
     return response.data;
   }
 
-  // 聊天相关API
-  async chatCompletion(provider: string, request: UnifiedChatRequest): Promise<UnifiedChatResponse> {
-    const response = await this.api.post<UnifiedChatResponse>(`/api/v1/ai/${provider}/chat/completions`, request);
-    return response.data;
-  }
 
-  // 流式聊天
-  async streamChatCompletion(
-    provider: string, 
-    request: UnifiedChatRequest, 
-    onMessage: (chunk: string) => void,
-    onError: (error: Error) => void,
-    onComplete: () => void
-  ): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseURL}/api/v1/ai/${provider}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...request, stream: true }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('无法获取响应流');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              onComplete();
-              return;
-            }
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                onMessage(content);
-              }
-            } catch (e) {
-              // 忽略解析错误
-            }
-          }
-        }
-      }
-      onComplete();
-    } catch (error) {
-      onError(error as Error);
-    }
-  }
 
   // MCP工具相关API
   async initializeMCP(): Promise<ApiResponse> {

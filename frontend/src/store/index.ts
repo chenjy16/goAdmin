@@ -2,7 +2,6 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector } from 'react-redux';
 import type { TypedUseSelectorHook } from 'react-redux';
 
-import chatReducer from './slices/chatSlice';
 import providersReducer from './slices/providersSlice';
 import mcpReducer from './slices/mcpSlice';
 import assistantReducer from './slices/assistantSlice';
@@ -13,7 +12,6 @@ import type { RootState } from '../types/store';
 
 export const store = configureStore({
   reducer: {
-    chat: chatReducer,
     providers: providersReducer,
     mcp: mcpReducer,
     assistant: assistantReducer,

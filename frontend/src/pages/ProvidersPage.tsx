@@ -10,8 +10,6 @@ import {
   Form,
   Input,
   message,
-  Tooltip,
-  Divider,
   Row,
   Col,
   Statistic,
@@ -221,7 +219,6 @@ const ProvidersPage: React.FC = () => {
   ];
 
   const healthyProviders = (providers || []).filter(p => p.health).length;
-  const totalModels = (providers || []).reduce((sum, p) => sum + p.model_count, 0);
   const configuredProviders = (providers || []).filter(p => apiKeys[p.name]).length;
 
   return (

@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { Card, Row, Col, Statistic, Progress, List, Tag, Button } from 'antd';
 import {
-  MessageOutlined,
   CloudOutlined,
   ToolOutlined,
   RobotOutlined,
-  CheckCircleOutlined,
-  ExclamationCircleOutlined,
   SyncOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -16,9 +13,8 @@ import { fetchMCPTools } from '../store/slices/mcpSlice';
 
 const DashboardPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { providers, isLoading: providersLoading } = useAppSelector(state => state.providers);
+  const { providers } = useAppSelector(state => state.providers);
   const { tools, isInitialized: mcpInitialized } = useAppSelector(state => state.mcp);
-  const { conversations } = useAppSelector(state => state.chat);
   const { conversations: assistantConversations } = useAppSelector(state => state.assistant);
 
   useEffect(() => {
@@ -29,7 +25,7 @@ const DashboardPage: React.FC = () => {
   // 计算统计数据
   const healthyProviders = (providers || []).filter(p => p.health).length;
   const totalModels = (providers || []).reduce((sum, p) => sum + p.model_count, 0);
-  const totalConversations = (conversations || []).length + (assistantConversations || []).length;
+  const totalConversations = (assistantConversations || []).length;
   const availableTools = (tools || []).length;
 
   // 最近活动数据
@@ -63,7 +59,7 @@ const DashboardPage: React.FC = () => {
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'chat':
-        return <MessageOutlined style={{ color: '#1890ff' }} />;
+        return <RobotOutlined style={{ color: '#1890ff' }} />;
       case 'tool':
         return <ToolOutlined style={{ color: '#52c41a' }} />;
       case 'provider':
@@ -108,9 +104,9 @@ const DashboardPage: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="聊天对话"
+              title="助手对话"
               value={totalConversations}
-              prefix={<MessageOutlined />}
+              prefix={<RobotOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
           </Card>
@@ -198,18 +194,7 @@ const DashboardPage: React.FC = () => {
         <Col span={24}>
           <Card title="快速操作">
             <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} md={6}>
-                <Button 
-                  type="primary" 
-                  icon={<MessageOutlined />} 
-                  size="large" 
-                  block
-                  onClick={() => window.location.href = '/chat'}
-                >
-                  开始聊天
-                </Button>
-              </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={24} sm={12} md={8}>
                 <Button 
                   icon={<CloudOutlined />} 
                   size="large" 
@@ -219,7 +204,7 @@ const DashboardPage: React.FC = () => {
                   管理提供商
                 </Button>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={24} sm={12} md={8}>
                 <Button 
                   icon={<ToolOutlined />} 
                   size="large" 
@@ -229,7 +214,7 @@ const DashboardPage: React.FC = () => {
                   使用工具
                 </Button>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              <Col xs={24} sm={12} md={8}>
                 <Button 
                   icon={<SettingOutlined />} 
                   size="large" 

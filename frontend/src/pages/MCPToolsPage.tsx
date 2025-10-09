@@ -51,7 +51,6 @@ const MCPToolsPage: React.FC = () => {
     isInitialized,
     isLoading,
     error,
-    executionResults,
   } = useAppSelector(state => state.mcp);
 
   const [executeModalVisible, setExecuteModalVisible] = useState(false);

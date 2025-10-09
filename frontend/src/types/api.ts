@@ -6,37 +6,7 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-// 统一聊天相关类型
-export interface UnifiedMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp?: string;
-}
 
-export interface UnifiedChatRequest {
-  messages: UnifiedMessage[];
-  model?: string;
-  max_tokens?: number;
-  temperature?: number;
-  stream?: boolean;
-}
-
-export interface UnifiedChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: UnifiedMessage;
-    finish_reason: string;
-  }[];
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
 
 // 提供商相关类型
 export interface ProviderInfo {

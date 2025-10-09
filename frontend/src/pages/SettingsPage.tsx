@@ -7,10 +7,7 @@ import {
   Select,
   Button,
   Space,
-  Divider,
   Typography,
-  Row,
-  Col,
   InputNumber,
   message,
   Alert,
@@ -24,17 +21,14 @@ import {
   ReloadOutlined,
   ExportOutlined,
   ImportOutlined,
-  DeleteOutlined,
-  InfoCircleOutlined,
 } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
-  updateChatSettings,
   resetSettings,
   loadSettings,
 } from '../store/slices/settingsSlice';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 
@@ -53,9 +47,6 @@ const SettingsPage: React.FC = () => {
     try {
       setIsLoading(true);
       const values = await form.validateFields();
-      if (values.chatSettings) {
-        dispatch(updateChatSettings(values.chatSettings));
-      }
       dispatch(loadSettings(values));
       setHasChanges(false);
       message.success('设置已保存');

@@ -56,9 +56,6 @@ func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, a
 		// 统一AI API端点
 		aiGroup := v1.Group("/ai")
 		{
-			// 聊天完成端点 - 支持所有提供商
-			aiGroup.POST("/:provider/chat/completions", aiController.ChatCompletion)
-			
 			// 模型管理端点
 			aiGroup.GET("/:provider/models", aiController.ListModels)
 			aiGroup.GET("/:provider/config/:model", aiController.GetModelConfig)

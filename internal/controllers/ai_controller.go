@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"io"
 	"net/http"
 
 	"go-springAi/internal/dto"
@@ -29,113 +28,7 @@ func NewAIController(providerManager *provider.Manager, logger *zap.Logger) *AIC
 	}
 }
 
-// ChatCompletion 统一聊天完成接口
-func (ac *AIController) ChatCompletion(c *gin.Context) {
-	providerType := c.Param("provider")
-	
-	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
-		logger.Module(logger.ModuleController),
-		logger.Component("ai"),
-		logger.Operation("chat_completion"),
-		logger.String("provider", providerType),
-		logger.String("method", c.Request.Method),
-		logger.String("path", c.Request.URL.Path))
 
-	var req dto.UnifiedChatRequest
-
-	// 使用基础控制器的统一绑定和验证方法
-	if err := ac.BindAndValidate(c, &req); err != nil {
-		logger.WarnCtx(c.Request.Context(), logger.MsgAPIValidation,
-			logger.Module(logger.ModuleController),
-			logger.Component("ai"),
-			logger.Operation("chat_completion"),
-			logger.String("provider", providerType),
-			logger.ZapError(err))
-		return
-	}
-
-	// 获取Provider
-	prov, err := ac.providerManager.GetProvider(provider.ProviderType(providerType))
-	if err != nil {
-		logger.ErrorCtx(c.Request.Context(), logger.MsgAPIError,
-			logger.Module(logger.ModuleController),
-			logger.Component("ai"),
-			logger.Operation("chat_completion"),
-			logger.String("provider", providerType),
-			logger.ZapError(err))
-		response.Error(c, http.StatusBadRequest, "Invalid provider", err.Error())
-		return
-	}
-
-	// 转换为Provider请求
-	providerReq := &provider.ChatRequest{
-		Model:       req.Model,
-		Messages:    convertToProviderMessages(req.Messages),
-		MaxTokens:   req.MaxTokens,
-		Temperature: convertFloat64ToFloat32Ptr(req.Temperature),
-		TopP:        convertFloat64ToFloat32Ptr(req.TopP),
-		TopK:        req.TopK,
-		Stream:      req.Stream,
-		Options:     req.Options,
-	}
-
-	// 处理流式响应
-	if req.Stream {
-		stream, err := prov.ChatCompletionStream(c.Request.Context(), providerReq)
-		if err != nil {
-			logger.ErrorCtx(c.Request.Context(), logger.MsgAPIError,
-				logger.Module(logger.ModuleController),
-				logger.Component("ai"),
-				logger.Operation("chat_completion_stream"),
-				logger.String("provider", providerType),
-				logger.ZapError(err))
-			c.Error(err)
-			return
-		}
-		defer stream.Close()
-
-		// 设置SSE头
-		c.Header("Content-Type", "text/event-stream")
-		c.Header("Cache-Control", "no-cache")
-		c.Header("Connection", "keep-alive")
-		c.Header("Access-Control-Allow-Origin", "*")
-
-		// 流式传输数据
-		c.Stream(func(w io.Writer) bool {
-			buffer := make([]byte, 1024)
-			n, err := stream.Read(buffer)
-			if err != nil {
-				return false
-			}
-			w.Write(buffer[:n])
-			return true
-		})
-		return
-	}
-
-	// 处理普通响应
-	result, err := prov.ChatCompletion(c.Request.Context(), providerReq)
-	if err != nil {
-		logger.ErrorCtx(c.Request.Context(), logger.MsgAPIError,
-			logger.Module(logger.ModuleController),
-			logger.Component("ai"),
-			logger.Operation("chat_completion"),
-			logger.String("provider", providerType),
-			logger.ZapError(err))
-		c.Error(err)
-		return
-	}
-
-	logger.InfoCtx(c.Request.Context(), logger.MsgAPIResponse,
-		logger.Module(logger.ModuleController),
-		logger.Component("ai"),
-		logger.Operation("chat_completion"),
-		logger.String("provider", providerType),
-		logger.String("response_id", result.ID),
-		logger.Int("status", http.StatusOK))
-
-	response.Success(c, http.StatusOK, "Chat completion successful", result)
-}
 
 // ListModels 列出指定提供商的模型
 func (ac *AIController) ListModels(c *gin.Context) {
@@ -415,17 +308,7 @@ func (ac *AIController) SetAPIKey(c *gin.Context) {
 	})
 }
 
-// 辅助函数：转换DTO消息为Provider消息
-func convertToProviderMessages(messages []dto.UnifiedMessage) []provider.Message {
-	result := make([]provider.Message, len(messages))
-	for i, msg := range messages {
-		result[i] = provider.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
-		}
-	}
-	return result
-}
+
 
 // 辅助函数：转换float64指针为float32指针
 func convertFloat64ToFloat32Ptr(f64Ptr *float64) *float32 {

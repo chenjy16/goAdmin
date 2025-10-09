@@ -1,23 +1,4 @@
-import type { UnifiedMessage, ProviderInfo, ModelInfo, MCPTool, MCPMessage, ChatMessage } from './api';
-
-// 聊天状态
-export interface ChatState {
-  conversations: Conversation[];
-  currentConversationId: string | null;
-  isLoading: boolean;
-  error: string | null;
-  streamingMessage: string;
-}
-
-export interface Conversation {
-  id: string;
-  title: string;
-  messages: UnifiedMessage[];
-  provider: string;
-  model: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ProviderInfo, ModelInfo, MCPTool, MCPMessage, ChatMessage } from './api';
 
 // 提供商状态
 export interface ProvidersState {
@@ -86,9 +67,8 @@ export interface Notification {
   timestamp: string;
 }
 
-// 根状态类型
+// 根状态
 export interface RootState {
-  chat: ChatState;
   providers: ProvidersState;
   mcp: MCPState;
   assistant: AssistantState;

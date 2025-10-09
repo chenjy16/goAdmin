@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import type { MCPState } from '../../types/store';
-import type { MCPTool, MCPMessage, MCPExecuteRequest } from '../../types/api';
+import type { MCPMessage, MCPExecuteRequest } from '../../types/api';
 
 // 异步thunks
 export const initializeMCP = createAsyncThunk(

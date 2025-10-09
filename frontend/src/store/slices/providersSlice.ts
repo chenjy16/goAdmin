@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
 import type { ProvidersState } from '../../types/store';
-import type { ProviderInfo, ModelInfo } from '../../types/api';
+
 
 // 异步thunks
 export const fetchProviders = createAsyncThunk(
@@ -113,7 +113,7 @@ const providersSlice = createSlice({
         state.error = action.error.message || '获取模型列表失败';
       })
       // setAPIKey
-      .addCase(setAPIKey.fulfilled, (state, action) => {
+      .addCase(setAPIKey.fulfilled, () => {
         // API密钥设置成功，可以更新相关状态
       })
       .addCase(setAPIKey.rejected, (state, action) => {

@@ -192,7 +192,7 @@ class ErrorHandler {
 
   // 显示通知
   private showNotification(error: ErrorInfo): void {
-    const { severity, message: errorMessage, code } = error;
+    const { severity, message: errorMessage } = error;
     
     const config = {
       message: this.getNotificationTitle(severity),
