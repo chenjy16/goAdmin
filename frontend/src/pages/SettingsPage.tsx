@@ -95,6 +95,19 @@ const SettingsPage: React.FC = () => {
     dispatch(fetchProviders());
   }, [dispatch]);
 
+  // 当选择的提供商改变时，获取对应的模型列表
+  useEffect(() => {
+    if (selectedProvider) {
+      dispatch(fetchModels(selectedProvider));
+    }
+  }, [selectedProvider, dispatch]);
+
+  // 根据provider type获取显示名称
+  const getProviderDisplayName = (providerType: string): string => {
+    const provider = providers.find(p => p.type === providerType);
+    return provider ? provider.name : providerType;
+  };
+
   // 初始化MCP数据
   useEffect(() => {
     if (!mcpInitialized) {
@@ -343,7 +356,7 @@ const SettingsPage: React.FC = () => {
             size="small"
             icon={<KeyOutlined />}
             onClick={() => {
-              setSelectedProvider(record.name);
+              setSelectedProvider(record.type);
               setApiKeyModalVisible(true);
             }}
           >
@@ -352,7 +365,7 @@ const SettingsPage: React.FC = () => {
           <Button
             size="small"
             icon={<SettingOutlined />}
-            onClick={() => setSelectedProvider(record.name)}
+            onClick={() => setSelectedProvider(record.type)}
           >
             管理模型
           </Button>
@@ -445,50 +458,7 @@ const SettingsPage: React.FC = () => {
     },
   ];
 
-  const generalSettings = (
-    <Card title="通用设置" style={{ marginBottom: 16 }}>
-      <Form.Item
-        name="theme"
-        label="主题"
-        tooltip="选择应用程序的主题"
-      >
-        <Select>
-          <Select.Option value="light">浅色主题</Select.Option>
-          <Select.Option value="dark">深色主题</Select.Option>
-          <Select.Option value="auto">跟随系统</Select.Option>
-        </Select>
-      </Form.Item>
 
-      <Form.Item
-        name="language"
-        label="语言"
-        tooltip="选择界面语言"
-      >
-        <Select>
-          <Select.Option value="zh-CN">简体中文</Select.Option>
-          <Select.Option value="en-US">English</Select.Option>
-        </Select>
-      </Form.Item>
-
-      <Form.Item
-        name="autoSave"
-        label="自动保存"
-        valuePropName="checked"
-        tooltip="自动保存对话和设置"
-      >
-        <Switch />
-      </Form.Item>
-
-      <Form.Item
-        name="showNotifications"
-        label="显示通知"
-        valuePropName="checked"
-        tooltip="显示系统通知"
-      >
-        <Switch />
-      </Form.Item>
-    </Card>
-  );
 
 
 
@@ -690,7 +660,7 @@ const SettingsPage: React.FC = () => {
         <div>
           <Title level={4} style={{ margin: 0 }}>
             <CloudOutlined style={{ marginRight: '8px' }} />
-            AI提供商管理
+            AI大模型管理
           </Title>
           <Text type="secondary">配置和管理AI服务提供商</Text>
         </div>
@@ -704,44 +674,7 @@ const SettingsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* 统计信息 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="提供商总数"
-              value={(providers || []).length}
-              prefix={<CloudOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="健康状态"
-              value={(providers || []).filter(p => p.healthy).length}
-              suffix={`/ ${(providers || []).length}`}
-              valueStyle={{ 
-                color: (providers || []).filter(p => p.healthy).length === (providers || []).length ? '#3f8600' : '#cf1322' 
-              }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="已配置密钥"
-              value={(providers || []).filter(p => apiKeys[p.name]).length}
-              suffix={`/ ${(providers || []).length}`}
-              valueStyle={{ 
-                color: (providers || []).filter(p => apiKeys[p.name]).length === (providers || []).length ? '#3f8600' : '#fa8c16' 
-              }}
-              prefix={<KeyOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+
 
       {/* 提供商列表 */}
       <Card title="AI提供商列表" style={{ marginBottom: '24px' }}>
@@ -759,7 +692,7 @@ const SettingsPage: React.FC = () => {
         <Card
           title={
             <Space>
-              <span>模型管理 - {selectedProvider}</span>
+              <span>模型管理 - {getProviderDisplayName(selectedProvider)}</span>
               <Tag color="blue">{models[selectedProvider]?.length || 0} 个模型</Tag>
             </Space>
           }
@@ -911,11 +844,8 @@ const SettingsPage: React.FC = () => {
         onValuesChange={handleFormChange}
         initialValues={settings}
       >
-        <Tabs defaultActiveKey="general" type="card">
-          <TabPane tab="通用" key="general">
-            {generalSettings}
-          </TabPane>
-          <TabPane tab={<span><CloudOutlined />提供商管理</span>} key="providers">
+        <Tabs defaultActiveKey="providers" type="card">
+          <TabPane tab={<span><CloudOutlined />AI大模型管理</span>} key="providers">
             {providersManagement}
           </TabPane>
           <TabPane tab="MCP工具" key="mcp">

@@ -7,7 +7,6 @@ import {
   ToolOutlined,
   RobotOutlined,
   SettingOutlined,
-  DashboardOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
@@ -29,11 +28,6 @@ const Layout: React.FC = () => {
 
   // 菜单项配置
   const menuItems: MenuProps['items'] = [
-     {
-       key: 'dashboard',
-       icon: <DashboardOutlined />,
-       label: '仪表板',
-     },
     {
       key: 'assistant',
       icon: <RobotOutlined />,
@@ -80,7 +74,7 @@ const Layout: React.FC = () => {
 
   // 根据路径更新当前页面
   useEffect(() => {
-    const path = location.pathname.slice(1) || 'dashboard';
+    const path = location.pathname.slice(1) || 'assistant';
     dispatch(setCurrentPage(path));
   }, [location.pathname, dispatch]);
 

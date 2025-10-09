@@ -9,7 +9,7 @@ export const fetchProviders = createAsyncThunk(
   'providers/fetchProviders',
   async () => {
     const response = await apiService.getProviders();
-    return response.providers;
+    return response.data.providers;
   }
 );
 
@@ -17,7 +17,9 @@ export const fetchModels = createAsyncThunk(
   'providers/fetchModels',
   async (provider: string) => {
     const response = await apiService.getModels(provider);
-    return { provider, models: response.models };
+    // 将模型对象转换为数组
+    const modelsArray = Object.values(response.data.models);
+    return { provider, models: modelsArray };
   }
 );
 
@@ -143,7 +145,7 @@ const providersSlice = createSlice({
         const { provider, model, enabled } = action.payload;
         const models = state.models[provider];
         if (models) {
-          const modelInfo = (models || []).find(m => m.id === model);
+          const modelInfo = (models || []).find(m => m.name === model);
           if (modelInfo) {
             modelInfo.enabled = enabled;
           }

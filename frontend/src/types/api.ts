@@ -32,6 +32,7 @@ export interface ModelInfo {
   max_tokens: number;
   temperature: number;
   top_p: number;
+  top_k?: number;
   enabled: boolean;
   description?: string;
 }

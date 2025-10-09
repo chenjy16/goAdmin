@@ -37,14 +37,10 @@ class ConfigService {
     // 获取所有提供商的模型
     const models: Record<string, ModelInfo[]> = {};
     for (const provider of providers) {
-      if (provider.healthy === true) {
-        try {
-          models[provider.name] = await this.getModels(provider.type);
-        } catch (error) {
-          console.warn(`Failed to load models for provider ${provider.name}:`, error);
-          models[provider.name] = [];
-        }
-      } else {
+      try {
+        models[provider.name] = await this.getModels(provider.type);
+      } catch (error) {
+        console.warn(`Failed to load models for provider ${provider.name}:`, error);
         models[provider.name] = [];
       }
     }
