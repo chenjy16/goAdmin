@@ -1,32 +1,55 @@
-# AI API Gateway
+# AI MCP
 
-一个基于 Go 语言开发的高性能 AI API 网关，集成 OpenAI 和 Google AI，支持 MCP（Model Context Protocol）协议，采用清洁架构设计，提供统一的 AI 服务接口、完整的工具系统、实时通信和结构化日志功能。
+这是一个架构设计优秀、核心功能完整的AI应用框架，特别是在MCP协议支持和AI集成方面表现出色。主要需要补充用户认证、安全性和生产环境支持功能，就能成为一个完整的企业级AI应用。
 
 ## ✨ 特性
 
+### 🤖 AI 集成能力
+- 🚀 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，支持统一的 API 接口
+- 🔄 **统一 AI API**: 提供统一的聊天完成、模型管理和配置接口
+- 🧠 **AI 助手服务**: 内置智能助手，支持工具调用和上下文管理
+- 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能
+- 📊 **模型管理**: 支持多模型切换和配置管理
+
+### 🔧 MCP 协议支持
+- 🛠️ **完整 MCP 实现**: 完整实现 Model Context Protocol 规范
+- 🔧 **AI 工具系统**: 内置 OpenAI 和 Google AI 工具，支持可扩展的工具注册和执行
+- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送和流式响应
+- 📝 **执行日志**: 完整的工具执行历史记录和性能监控
+- 🔄 **动态工具注册**: 支持运行时工具发现和注册
+
+### 🏗️ 架构设计
 - 🚀 **高性能**: 基于 Gin 框架，提供高性能的 HTTP 服务
 - 🏗️ **清洁架构**: 采用分层架构设计，代码结构清晰，易于维护
-- 🤖 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，支持统一的 API 接口
-- 🔄 **统一 AI API**: 提供统一的聊天完成、模型管理和配置接口
-- 🔧 **MCP 协议支持**: 完整实现 Model Context Protocol 规范
-- 🛠️ **AI 工具系统**: 内置 OpenAI 和 Google AI 工具，支持可扩展的工具注册和执行
-- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送和流式响应
-- 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能
-- 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
-- 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
 - ⚡ **依赖注入**: 使用 Google Wire 进行依赖注入管理
-- ✅ **数据验证**: 集成强大的数据验证功能
 - 🔧 **配置管理**: 使用 Viper 进行灵活的配置管理
+- 🛡️ **中间件支持**: 完整的 CORS、日志、错误处理和恢复中间件
+
+### 🗄️ 数据持久化
+- 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
+- 👤 **用户管理**: 完整的用户 CRUD 操作和认证系统
+- 🔐 **JWT 认证**: 基于 JWT 的用户认证和授权
+- 🔒 **密码安全**: 安全的密码哈希和验证机制
+
+### 🛡️ 安全与监控
+- ✅ **数据验证**: 集成强大的数据验证功能
 - 🛡️ **错误处理**: 统一的错误处理和安全日志记录
+- 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
 - 🔍 **监控支持**: 完整的请求/响应日志和性能监控
+- 🚨 **安全日志**: 记录潜在安全威胁和异常行为
+
+### 🧪 开发与测试
 - 🧪 **完整测试**: 包含单元测试和集成测试，确保代码质量
+- 🔨 **构建工具**: 完整的 Makefile 支持多种开发任务
+- 📚 **文档完善**: 详细的 API 文档和使用示例
+- 🔄 **热重载**: 支持 Air 热重载开发
 
 ## 🛠️ 技术栈
 
 ### 核心框架
 - **Go 1.24.0** - 编程语言
 - **Gin v1.11.0** - HTTP Web 框架
-- **SQLite3** - 轻量级数据库
+- **SQLite3 v1.14.32** - 轻量级数据库
 
 ### AI 集成
 - **Google AI SDK v1.28.0** - Google AI 服务集成
@@ -51,22 +74,29 @@
 - **Air** - 热重载开发工具（推荐）
 - **Wire** - 依赖注入代码生成
 - **SQLC** - SQL 代码生成
+- **Makefile** - 构建和开发任务自动化
 
 ## 📁 项目结构
 
 ```
-admin/
+goMcp/
 ├── cmd/                    # 应用程序入口
 │   └── main.go
+├── doc/                    # 项目文档
+│   ├── ai_assistant_example.md      # AI助手使用示例
+│   ├── mcp_sequence_diagram.svg     # MCP序列图
+│   └── 项目功能组件关系流程图.svg    # 项目架构图
 ├── internal/               # 内部包（不对外暴露）
 │   ├── config/            # 配置管理
+│   │   └── config.go
 │   ├── controllers/       # 控制器层
-│   │   ├── base_controller.go      # 基础控制器
-│   │   ├── ai_controller.go        # 统一AI控制器
-│   │   ├── openai_controller.go    # OpenAI控制器
-│   │   ├── googleai_controller.go  # Google AI控制器
-│   │   ├── mcp_controller.go       # MCP协议控制器
-│   │   └── *_test.go              # 控制器测试文件
+│   │   ├── base_controller.go          # 基础控制器
+│   │   ├── ai_controller.go            # 统一AI控制器
+│   │   ├── ai_assistant_controller.go  # AI助手控制器
+│   │   ├── openai_controller.go        # OpenAI控制器
+│   │   ├── googleai_controller.go      # Google AI控制器
+│   │   ├── mcp_controller.go           # MCP协议控制器
+│   │   └── *_test.go                  # 控制器测试文件
 │   ├── database/          # 数据库相关
 │   │   ├── connection.go  # 数据库连接
 │   │   ├── curd/         # SQL 查询文件
@@ -78,6 +108,7 @@ admin/
 │   │   ├── unified.go    # 统一 AI DTO
 │   │   └── user.go       # 用户相关 DTO
 │   ├── errors/           # 错误处理
+│   │   └── errors.go
 │   ├── googleai/         # Google AI 集成
 │   │   ├── client.go     # Google AI 客户端
 │   │   ├── config.go     # 配置管理
@@ -89,6 +120,7 @@ admin/
 │   │   ├── constants.go
 │   │   └── logger.go
 │   ├── mcp/              # MCP 工具系统
+│   │   ├── client.go         # MCP 客户端实现
 │   │   ├── tool.go           # 基础工具定义
 │   │   ├── openai_tool.go    # OpenAI 工具
 │   │   ├── googleai_tool.go  # Google AI 工具
@@ -101,7 +133,7 @@ admin/
 │   │   └── validation.go
 │   ├── mocks/            # 测试模拟对象
 │   │   ├── generate.go
-│   │   └── *_mock.go
+│   │   └── user_repository_mock.go
 │   ├── openai/           # OpenAI 集成
 │   │   ├── client.go     # OpenAI 客户端
 │   │   ├── config.go     # 配置管理
@@ -109,24 +141,24 @@ admin/
 │   │   ├── model_manager.go  # 模型管理
 │   │   └── types.go      # 类型定义
 │   ├── provider/         # AI 提供商抽象层
-│   │   ├── manager.go        # 提供商管理器
+│   │   ├── manager.go            # 提供商管理器
 │   │   ├── openai_provider.go    # OpenAI 提供商
 │   │   ├── googleai_provider.go  # Google AI 提供商
-│   │   └── types.go      # 提供商接口定义
+│   │   └── types.go              # 提供商接口定义
 │   ├── repository/       # 数据访问层
 │   │   ├── manager.go
 │   │   ├── user_interfaces.go
-│   │   ├── user_repository.go
-│   │   └── *_test.go
+│   │   └── user_repository.go
 │   ├── response/         # 响应格式化
+│   │   └── response.go
 │   ├── route/           # 路由配置
+│   │   └── routes.go
 │   ├── service/         # 业务逻辑层
-│   │   ├── mcp_service.go      # MCP 服务实现
-│   │   ├── openai_service.go   # OpenAI 服务
-│   │   ├── googleai_service.go # Google AI 服务
-│   │   ├── user_service.go     # 用户服务
-│   │   └── *_test.go          # 服务测试文件
-│   ├── testutil/         # 测试工具
+│   │   ├── ai_assistant_service.go # AI助手服务
+│   │   ├── mcp_service.go          # MCP 服务实现
+│   │   ├── openai_service.go       # OpenAI 服务
+│   │   ├── googleai_service.go     # Google AI 服务
+│   │   └── user_service.go         # 用户服务
 │   ├── utils/           # 工具函数
 │   │   ├── jwt.go       # JWT 处理
 │   │   ├── password.go  # 密码处理
@@ -141,7 +173,9 @@ admin/
 ├── config.yaml         # 配置文件
 ├── sqlc.yaml          # SQLC 配置
 ├── Makefile           # 构建脚本
-└── go.mod             # Go 模块文件
+├── go.mod             # Go 模块文件
+├── go.sum             # Go 模块校验和
+└── .gitignore         # Git 忽略文件
 ```
 
 ## 🚀 快速开始
@@ -257,10 +291,9 @@ curl http://localhost:8080/health
 #### 1. 使用统一 AI 接口
 ```bash
 # OpenAI 聊天完成
-curl -X POST http://localhost:8080/api/v1/ai/chat/completions \
+curl -X POST http://localhost:8080/api/v1/ai/openai/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "provider": "openai",
     "model": "gpt-3.5-turbo",
     "messages": [
       {
@@ -272,10 +305,9 @@ curl -X POST http://localhost:8080/api/v1/ai/chat/completions \
   }' | jq
 
 # Google AI 聊天完成
-curl -X POST http://localhost:8080/api/v1/ai/chat/completions \
+curl -X POST http://localhost:8080/api/v1/ai/googleai/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "provider": "googleai",
     "model": "gemini-pro",
     "messages": [
       {
@@ -313,7 +345,8 @@ curl -X GET http://localhost:8080/api/v1/openai/models | jq
 curl -X GET http://localhost:8080/api/v1/googleai/models | jq
 
 # 使用统一接口获取模型列表
-curl -X GET "http://localhost:8080/api/v1/ai/models?provider=openai" | jq
+curl -X GET "http://localhost:8080/api/v1/ai/openai/models" | jq
+curl -X GET "http://localhost:8080/api/v1/ai/googleai/models" | jq
 ```
 
 ### 基本 MCP 工具调用
@@ -335,7 +368,17 @@ curl -X POST http://localhost:8080/api/v1/mcp/execute \
   }' | jq
 ```
 
-#### 3. 调用用户信息工具
+#### 3. 调用 OpenAI 模型工具
+```bash
+curl -X POST http://localhost:8080/api/v1/mcp/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "openai_models",
+    "arguments": {}
+  }' | jq
+```
+
+#### 4. 调用用户信息工具
 ```bash
 curl -X POST http://localhost:8080/api/v1/mcp/execute \
   -H "Content-Type: application/json" \
@@ -562,12 +605,12 @@ GET /api/v1/mcp/logs
 
 #### 1. 统一 AI 聊天完成
 ```http
-POST /api/v1/ai/chat/completions
+POST /api/v1/ai/openai/chat/completions
+POST /api/v1/ai/googleai/chat/completions
 Content-Type: application/json
 
 {
-  "provider": "openai",  // 或 "googleai"
-  "model": "gpt-3.5-turbo",
+  "model": "gpt-3.5-turbo",  // 或 "gemini-pro"
   "messages": [
     {
       "role": "user",
@@ -614,14 +657,14 @@ Content-Type: application/json
 
 #### 4. 获取模型列表
 ```http
-GET /api/v1/ai/models?provider=openai
 GET /api/v1/openai/models
 GET /api/v1/googleai/models
+GET /api/v1/ai/openai/models
+GET /api/v1/ai/googleai/models
 ```
 
 #### 5. API 密钥管理
 ```http
-POST /api/v1/ai/api-key
 POST /api/v1/openai/api-key
 POST /api/v1/googleai/api-key
 Content-Type: application/json
@@ -633,9 +676,24 @@ Content-Type: application/json
 
 #### 6. 验证 API 密钥
 ```http
-POST /api/v1/ai/validate?provider=openai
 POST /api/v1/openai/validate
 POST /api/v1/googleai/validate
+```
+
+#### 7. 模型配置管理
+```http
+GET /api/v1/openai/config/:model
+GET /api/v1/googleai/config/:model
+GET /api/v1/ai/openai/config/:model
+GET /api/v1/ai/googleai/config/:model
+```
+
+#### 8. 模型启用/禁用
+```http
+PUT /api/v1/openai/models/:model/enable
+PUT /api/v1/openai/models/:model/disable
+PUT /api/v1/googleai/models/:model/enable
+PUT /api/v1/googleai/models/:model/disable
 ```
 
 ### 响应格式
@@ -1532,23 +1590,13 @@ docker run -p 8080:8080 admin-system
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 打开 Pull Request
 
-### 代码规范
 
-- 遵循 Go 官方代码规范
-- 使用 `gofmt` 格式化代码
-- 添加必要的注释和文档
-- 编写单元测试
 
 ## 📄 许可证
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
 
-## 📞 联系方式
 
-如有问题或建议，请通过以下方式联系：
-
-- 提交 Issue
-- 发送邮件至：[your-email@example.com]
 
 ## 🙏 致谢
 
