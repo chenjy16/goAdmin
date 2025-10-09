@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"admin/internal/dto"
-	"admin/internal/openai"
+	"goMcp/internal/dto"
+	"goMcp/internal/openai"
 )
 
 // OpenAIService 接口，避免导入循环

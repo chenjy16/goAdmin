@@ -4,10 +4,10 @@ import (
 	"io"
 	"net/http"
 
-	"admin/internal/dto"
-	"admin/internal/logger"
-	"admin/internal/provider"
-	"admin/internal/response"
+	"goMcp/internal/dto"
+	"goMcp/internal/logger"
+	"goMcp/internal/provider"
+	"goMcp/internal/response"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

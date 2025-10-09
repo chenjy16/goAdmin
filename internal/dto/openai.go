@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"admin/internal/openai"
+	"goMcp/internal/openai"
 )
 
 // OpenAIChatRequest 聊天完成请求

@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"admin/internal/dto"
-	"admin/internal/logger"
-	"admin/internal/provider"
+	"goMcp/internal/dto"
+	"goMcp/internal/logger"
+	"goMcp/internal/provider"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

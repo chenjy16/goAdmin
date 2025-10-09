@@ -10,8 +10,8 @@
 package mocks
 
 import (
-	dto "admin/internal/dto"
-	repository "admin/internal/repository"
+	dto "goMcp/internal/dto"
+	repository "goMcp/internal/repository"
 	context "context"
 	reflect "reflect"
 

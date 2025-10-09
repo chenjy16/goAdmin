@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"admin/internal/googleai"
-	"admin/internal/logger"
+	"goMcp/internal/googleai"
+	"goMcp/internal/logger"
 )
 
 // GoogleAIService Google AI 服务

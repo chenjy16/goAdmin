@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"admin/internal/dto"
-	"admin/internal/logger"
-	"admin/internal/response"
-	"admin/internal/service"
+	"goMcp/internal/dto"
+	"goMcp/internal/logger"
+	"goMcp/internal/response"
+	"goMcp/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

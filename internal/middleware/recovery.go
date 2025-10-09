@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"admin/internal/response"
+	"goMcp/internal/response"
 
 	"github.com/gin-gonic/gin"
 )

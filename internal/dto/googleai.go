@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"admin/internal/googleai"
+	"goMcp/internal/googleai"
 )
 
 // GoogleAIChatRequest Google AI 聊天完成请求

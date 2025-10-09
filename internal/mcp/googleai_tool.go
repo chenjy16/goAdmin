@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"admin/internal/dto"
-	"admin/internal/googleai"
+	"goMcp/internal/dto"
+	"goMcp/internal/googleai"
 )
 
 // GoogleAIService 接口，避免导入循环

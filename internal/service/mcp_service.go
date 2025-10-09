@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"admin/internal/dto"
-	"admin/internal/googleai"
-	"admin/internal/logger"
-	"admin/internal/mcp"
-	"admin/internal/openai"
-	"admin/internal/repository"
+	"goMcp/internal/dto"
+	"goMcp/internal/googleai"
+	"goMcp/internal/logger"
+	"goMcp/internal/mcp"
+	"goMcp/internal/openai"
+	"goMcp/internal/repository"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"

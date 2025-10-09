@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"admin/internal/errors"
-	"admin/internal/logger"
-	"admin/internal/response"
+	"goMcp/internal/errors"
+	"goMcp/internal/logger"
+	"goMcp/internal/response"
 	"context"
 	"strings"
 	"time"

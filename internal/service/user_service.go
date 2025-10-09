@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"admin/internal/dto"
-	"admin/internal/repository"
+	"goMcp/internal/dto"
+	"goMcp/internal/repository"
 )
 
 // UserService 用户服务接口

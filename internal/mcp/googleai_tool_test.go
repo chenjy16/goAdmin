@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"admin/internal/googleai"
+	"goMcp/internal/googleai"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

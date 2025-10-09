@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"admin/internal/dto"
+	"goMcp/internal/dto"
 )
 
 // MCPServiceInterface MCP服务接口（避免循环导入）

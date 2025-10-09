@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"admin/internal/dto"
-	"admin/internal/googleai"
-	"admin/internal/openai"
+	"goMcp/internal/dto"
+	"goMcp/internal/googleai"
+	"goMcp/internal/openai"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

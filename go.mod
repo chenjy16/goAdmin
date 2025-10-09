@@ -1,4 +1,4 @@
-module admin
+module goMcp
 
 go 1.24.0
 

@@ -3,9 +3,9 @@ package controllers
 import (
 	"net/http"
 
-	"admin/internal/logger"
-	"admin/internal/response"
-	"admin/internal/service"
+	"goMcp/internal/logger"
+	"goMcp/internal/response"
+	"goMcp/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

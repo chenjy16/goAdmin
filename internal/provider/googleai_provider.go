@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"admin/internal/googleai"
-	"admin/internal/service"
+	"goMcp/internal/googleai"
+	"goMcp/internal/service"
 )
 
 // GoogleAIProvider GoogleAI提供商实现

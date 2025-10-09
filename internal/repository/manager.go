@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"admin/internal/database"
+	"goMcp/internal/database"
 )
 
 // repositoryManager 数据访问层管理器实现

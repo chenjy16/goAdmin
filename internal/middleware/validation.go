@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"admin/internal/response"
-	"admin/internal/utils"
+	"goMcp/internal/response"
+	"goMcp/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

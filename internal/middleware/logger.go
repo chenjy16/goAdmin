@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"admin/internal/logger"
+	"goMcp/internal/logger"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"admin/internal/logger"
-	"admin/internal/wire"
+	"goMcp/internal/logger"
+	"goMcp/internal/wire"
 
 	"github.com/gin-gonic/gin"
 )

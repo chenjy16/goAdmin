@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"admin/internal/dto"
+	"goMcp/internal/dto"
 )
 
 // PaginationParams 分页参数结构体

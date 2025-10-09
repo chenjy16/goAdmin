@@ -1,9 +1,9 @@
 package route
 
 import (
-	"admin/internal/controllers"
-	"admin/internal/dto"
-	"admin/internal/middleware"
+	"goMcp/internal/controllers"
+	"goMcp/internal/dto"
+	"goMcp/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

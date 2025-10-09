@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"admin/internal/database/generated/users"
-	"admin/internal/logger"
+	"goMcp/internal/database/generated/users"
+	"goMcp/internal/logger"
 
 	_ "github.com/mattn/go-sqlite3"
 )

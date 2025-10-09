@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"strings"
 
-	"admin/internal/database"
-	"admin/internal/database/generated/users"
-	"admin/internal/dto"
-	"admin/internal/errors"
-	"admin/internal/utils"
+	"goMcp/internal/database"
+	"goMcp/internal/database/generated/users"
+	"goMcp/internal/dto"
+	"goMcp/internal/errors"
+	"goMcp/internal/utils"
 )
 
 // userRepository 用户数据访问层实现

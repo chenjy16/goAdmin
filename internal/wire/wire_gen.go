@@ -7,13 +7,13 @@
 package wire
 
 import (
-	"admin/internal/config"
-	"admin/internal/controllers"
-	"admin/internal/database"
-	"admin/internal/provider"
-	"admin/internal/repository"
-	"admin/internal/service"
-	"admin/internal/utils"
+	"goMcp/internal/config"
+	"goMcp/internal/controllers"
+	"goMcp/internal/database"
+	"goMcp/internal/provider"
+	"goMcp/internal/repository"
+	"goMcp/internal/service"
+	"goMcp/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

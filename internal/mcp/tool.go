@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"admin/internal/dto"
+	"goMcp/internal/dto"
 )
 
 // Tool MCP工具接口

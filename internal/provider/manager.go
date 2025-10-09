@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"admin/internal/logger"
+	"goMcp/internal/logger"
 )
 
 // Manager Provider管理器

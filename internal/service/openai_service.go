@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"admin/internal/logger"
-	"admin/internal/openai"
+	"goMcp/internal/logger"
+	"goMcp/internal/openai"
 )
 
 // OpenAIService OpenAI 服务

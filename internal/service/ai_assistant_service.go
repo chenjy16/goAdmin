@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"admin/internal/dto"
-	"admin/internal/mcp"
-	"admin/internal/openai"
+	"goMcp/internal/dto"
+	"goMcp/internal/mcp"
+	"goMcp/internal/openai"
 
 	"go.uber.org/zap"
 )

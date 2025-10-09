@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"admin/internal/openai"
-	"admin/internal/service"
+	"goMcp/internal/openai"
+	"goMcp/internal/service"
 )
 
 // OpenAIProvider OpenAI提供商实现

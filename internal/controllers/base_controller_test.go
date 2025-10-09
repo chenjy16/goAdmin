@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"admin/internal/errors"
+	"goMcp/internal/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
