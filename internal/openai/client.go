@@ -14,13 +14,15 @@ import (
 // HTTPClient OpenAI HTTP 客户端实现
 type HTTPClient struct {
 	config     *Config
+	keyManager KeyManager
 	httpClient *http.Client
 }
 
 // NewHTTPClient 创建新的 HTTP 客户端
-func NewHTTPClient(config *Config) *HTTPClient {
+func NewHTTPClient(config *Config, keyManager KeyManager) *HTTPClient {
 	return &HTTPClient{
-		config: config,
+		config:     config,
+		keyManager: keyManager,
 		httpClient: &http.Client{
 			Timeout: config.Timeout,
 		},
@@ -32,6 +34,12 @@ func (c *HTTPClient) ChatCompletion(ctx context.Context, req *ChatRequest) (*Cha
 	// 设置默认值
 	if req.Model == "" {
 		req.Model = c.config.DefaultModel
+	}
+	
+	// 从密钥管理器获取API密钥
+	apiKey, err := c.keyManager.GetAPIKey()
+	if err != nil {
+		return nil, fmt.Errorf("get API key: %w", err)
 	}
 	
 	// 序列化请求
@@ -48,7 +56,7 @@ func (c *HTTPClient) ChatCompletion(ctx context.Context, req *ChatRequest) (*Cha
 	
 	// 设置请求头
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.config.APIKey)
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	
 	// 发送请求
 	resp, err := c.httpClient.Do(httpReq)
@@ -91,6 +99,12 @@ func (c *HTTPClient) ChatCompletionStream(ctx context.Context, req *ChatRequest)
 		req.Model = c.config.DefaultModel
 	}
 	
+	// 从密钥管理器获取API密钥
+	apiKey, err := c.keyManager.GetAPIKey()
+	if err != nil {
+		return nil, fmt.Errorf("get API key: %w", err)
+	}
+	
 	// 序列化请求
 	reqBody, err := json.Marshal(req)
 	if err != nil {
@@ -105,7 +119,7 @@ func (c *HTTPClient) ChatCompletionStream(ctx context.Context, req *ChatRequest)
 	
 	// 设置请求头
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Authorization", "Bearer "+c.config.APIKey)
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	httpReq.Header.Set("Accept", "text/event-stream")
 	
 	// 发送请求
@@ -182,6 +196,12 @@ func (c *HTTPClient) ListModels(ctx context.Context) ([]string, error) {
 
 // ValidateAPIKey 验证 API 密钥
 func (c *HTTPClient) ValidateAPIKey(ctx context.Context) error {
+	// 从密钥管理器获取API密钥
+	apiKey, err := c.keyManager.GetAPIKey()
+	if err != nil {
+		return fmt.Errorf("get API key: %w", err)
+	}
+	
 	// 创建一个简单的请求来验证密钥
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", c.config.BaseURL+"/models", nil)
 	if err != nil {
@@ -189,7 +209,7 @@ func (c *HTTPClient) ValidateAPIKey(ctx context.Context) error {
 	}
 	
 	// 设置请求头
-	httpReq.Header.Set("Authorization", "Bearer "+c.config.APIKey)
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
 	
 	// 发送请求
 	resp, err := c.httpClient.Do(httpReq)

@@ -10,7 +10,7 @@ import (
 )
 
 // SetupRoutes 设置路由
-func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, openaiController *controllers.OpenAIController, googleaiController *controllers.GoogleAIController, aiController *controllers.AIController) *gin.Engine {
+func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, openaiController *controllers.OpenAIController, googleaiController *controllers.GoogleAIController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController) *gin.Engine {
 	// 创建Gin引擎
 	r := gin.New()
 
@@ -93,6 +93,16 @@ func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, o
 			
 			// 提供商管理端点
 			aiGroup.GET("/providers", aiController.ListProviders)
+		}
+
+		// AI助手端点
+		assistantGroup := v1.Group("/assistant")
+		{
+			// 初始化AI助手
+			assistantGroup.POST("/initialize", aiAssistantController.Initialize)
+			
+			// AI助手聊天端点
+			assistantGroup.POST("/chat", aiAssistantController.Chat)
 		}
 	}
 

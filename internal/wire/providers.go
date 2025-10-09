@@ -87,12 +87,12 @@ func ProvideOpenAIService(cfg *config.Config, zapLogger *zap.Logger) *service.Op
 		DefaultModel: cfg.OpenAI.DefaultModel,
 	}
 
-	// 创建HTTP客户端
-	httpClient := openai.NewHTTPClient(openaiConfig)
-
 	// 创建内存管理器
 	keyManager := openai.NewMemoryKeyManager()
 	modelManager := openai.NewMemoryModelManager()
+
+	// 创建HTTP客户端，传入密钥管理器
+	httpClient := openai.NewHTTPClient(openaiConfig, keyManager)
 
 	// 使用全局日志器
 	globalLogger := logger.GetGlobalLogger()
@@ -160,7 +160,17 @@ func ProvideAIController(providerManager *provider.Manager, logger *zap.Logger) 
 	return controllers.NewAIController(providerManager, logger)
 }
 
+// ProvideAIAssistantService 提供AI助手服务
+func ProvideAIAssistantService(mcpService service.MCPService, openaiService *service.OpenAIService, logger *zap.Logger) *service.AIAssistantService {
+	return service.NewAIAssistantService(mcpService, openaiService, logger)
+}
+
+// ProvideAIAssistantController 提供AI助手控制器
+func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService, logger *zap.Logger) *controllers.AIAssistantController {
+	return controllers.NewAIAssistantController(aiAssistantService, logger)
+}
+
 // ProvideRouter 提供路由器
-func ProvideRouter(mcpController *controllers.MCPController, openaiController *controllers.OpenAIController, googleaiController *controllers.GoogleAIController, aiController *controllers.AIController, logger *zap.Logger) *gin.Engine {
-	return route.SetupRoutes(logger, mcpController, openaiController, googleaiController, aiController)
+func ProvideRouter(mcpController *controllers.MCPController, openaiController *controllers.OpenAIController, googleaiController *controllers.GoogleAIController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
+	return route.SetupRoutes(logger, mcpController, openaiController, googleaiController, aiController, aiAssistantController)
 }
