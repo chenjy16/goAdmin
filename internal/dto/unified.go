@@ -1,6 +1,10 @@
 package dto
 
-
+// UnifiedMessage 统一的消息结构
+type UnifiedMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
 
 // SetAPIKeyRequest 设置API密钥请求
 type SetAPIKeyRequest struct {

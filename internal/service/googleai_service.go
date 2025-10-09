@@ -96,7 +96,7 @@ func (s *GoogleAIService) ChatCompletion(ctx context.Context, req *GoogleAIChatC
 			logger.ZapError(err),
 			logger.Duration("duration", time.Since(startTime)),
 		)
-		return nil, fmt.Errorf("Google AI API error: %w", err)
+		return nil, fmt.Errorf("google AI API error: %w", err)
 	}
 	
 	// 记录成功日志
@@ -159,7 +159,7 @@ func (s *GoogleAIService) ChatCompletionStream(ctx context.Context, req *GoogleA
 			logger.ZapError(err),
 			logger.Duration("duration", time.Since(startTime)),
 		)
-		return nil, fmt.Errorf("Google AI API stream error: %w", err)
+		return nil, fmt.Errorf("google AI API stream error: %w", err)
 	}
 	
 	// 记录流开始日志

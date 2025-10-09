@@ -12,8 +12,8 @@ jwt:
   expire_time: 24  # hours
 
 openai:
-  api_key: ""  # Set your OpenAI API key here
+  api_key: "sk-mock-api-key-for-development-testing-only"  # Mock API key for development
   base_url: "https://api.openai.com/v1"
 
 googleai:
-  api_key: ""  # Set your Google AI API key here
+  api_key: "mock-google-ai-api-key-for-development"  # Mock API key for development

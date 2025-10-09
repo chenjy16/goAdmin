@@ -43,10 +43,10 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	}
 	openAIService := ProvideOpenAIService(config, logger)
 	mcpService := ProvideMCPService(repositoryManager, googleAIService, openAIService, logger)
-	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, logger)
+	manager := ProvideProviderManager(openAIService, googleAIService, logger)
+	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, logger)
 	mcpController := ProvideMCPController(mcpService, logger)
 	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger)
-	manager := ProvideProviderManager(openAIService, googleAIService, logger)
 	aiController := ProvideAIController(manager, logger)
 	engine := ProvideRouter(mcpController, aiController, aiAssistantController, logger)
 	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, aiAssistantService, mcpController, aiAssistantController, manager, aiController, engine)

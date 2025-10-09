@@ -41,7 +41,6 @@ import type { MCPTool, MCPMessage } from '../types/api';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
-const { Panel } = Collapse;
 
 const MCPToolsPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -99,13 +98,20 @@ const MCPToolsPage: React.FC = () => {
     }
 
     return (
-      <Collapse size="small">
-        <Panel header="参数结构" key="schema">
-          <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
-            {JSON.stringify(schema, null, 2)}
-          </pre>
-        </Panel>
-      </Collapse>
+      <Collapse 
+        size="small"
+        items={[
+          {
+            key: 'schema',
+            label: '参数结构',
+            children: (
+              <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                {JSON.stringify(schema, null, 2)}
+              </pre>
+            )
+          }
+        ]}
+      />
     );
   };
 
@@ -185,8 +191,8 @@ const MCPToolsPage: React.FC = () => {
     },
     {
       title: '参数结构',
-      dataIndex: 'input_schema',
-      key: 'input_schema',
+      dataIndex: 'inputSchema',
+      key: 'inputSchema',
       render: (schema: any) => renderInputSchema(schema),
     },
     {
@@ -213,7 +219,7 @@ const MCPToolsPage: React.FC = () => {
                 title: `${record.name} - 参数结构`,
                 content: (
                   <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '4px' }}>
-                    {JSON.stringify(record.input_schema, null, 2)}
+                    {JSON.stringify(record.inputSchema, null, 2)}
                   </pre>
                 ),
                 width: 600,
@@ -346,7 +352,7 @@ const MCPToolsPage: React.FC = () => {
             </Button>
           }>
             <List
-              dataSource={logs.slice(0, 50)} // 只显示最近50条
+              dataSource={Array.isArray(logs) ? logs.slice(0, 50) : []} // 只显示最近50条，确保logs是数组
               renderItem={(log: MCPMessage) => (
                 <List.Item>
                   <List.Item.Meta
@@ -362,13 +368,21 @@ const MCPToolsPage: React.FC = () => {
                           {new Date(log.timestamp).toLocaleString()}
                         </Text>
                         {log.data && (
-                          <Collapse size="small" style={{ marginTop: '8px' }}>
-                            <Panel header="详细数据" key="data">
-                              <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
-                                {JSON.stringify(log.data, null, 2)}
-                              </pre>
-                            </Panel>
-                          </Collapse>
+                          <Collapse 
+                            size="small" 
+                            style={{ marginTop: '8px' }}
+                            items={[
+                              {
+                                key: 'data',
+                                label: '详细数据',
+                                children: (
+                                  <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
+                                    {JSON.stringify(log.data, null, 2)}
+                                  </pre>
+                                )
+                              }
+                            ]}
+                          />
                         )}
                       </div>
                     }
@@ -406,7 +420,7 @@ const MCPToolsPage: React.FC = () => {
               layout="vertical"
               onFinish={handleExecuteTool}
             >
-              {renderExecutionForm(selectedTool.input_schema)}
+              {renderExecutionForm(selectedTool.inputSchema)}
               
               <Form.Item style={{ marginBottom: 0, marginTop: '24px' }}>
                 <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

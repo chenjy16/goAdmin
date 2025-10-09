@@ -99,7 +99,7 @@ const ProvidersPage: React.FC = () => {
       key: 'name',
       render: (name: string, record: ProviderInfo) => (
         <Space>
-          <CloudOutlined style={{ color: record.health ? '#52c41a' : '#ff4d4f' }} />
+          <CloudOutlined style={{ color: record.healthy ? '#52c41a' : '#ff4d4f' }} />
           <span style={{ fontWeight: 'bold' }}>{name}</span>
         </Space>
       ),
@@ -218,7 +218,7 @@ const ProvidersPage: React.FC = () => {
     },
   ];
 
-  const healthyProviders = (providers || []).filter(p => p.health).length;
+  const healthyProviders = (providers || []).filter(p => p.healthy).length;
   const configuredProviders = (providers || []).filter(p => apiKeys[p.name]).length;
 
   return (

@@ -23,18 +23,43 @@ export const sendAssistantMessage = createAsyncThunk(
     maxTokens?: number;
     temperature?: number;
     tools?: any[];
-  }) => {
-    const { conversationId, message, model, maxTokens, temperature, tools } = params;
+    useTools?: boolean;
+    provider?: string;
+    selectedTools?: string[];
+  }, { getState }) => {
+    const { conversationId, message, model, maxTokens, temperature, tools, useTools, provider, selectedTools } = params;
+    
+    // 获取当前状态以获取完整的对话历史
+    const state = getState() as any;
+    const conversation = state.assistant.conversations?.find((c: any) => c.id === conversationId);
+    
+    // 构建包含完整对话历史的消息列表
+    const messages: ChatMessage[] = [];
+    if (conversation && conversation.messages) {
+      // 添加历史消息
+      messages.push(...conversation.messages);
+    }
+    // 添加当前用户消息
+    messages.push(message);
     
     const request: ChatRequest = {
-      messages: [message], // 这里应该包含完整的对话历史
+      messages,
       model,
       max_tokens: maxTokens,
       temperature,
       tools,
+      use_tools: useTools,
+      provider,
+      selected_tools: selectedTools,
     };
 
     const response = await apiService.assistantChat(request);
+    
+    // 安全检查：确保response.choices存在且不为空
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('API响应格式错误：缺少choices数据');
+    }
+    
     return {
       conversationId,
       userMessage: message,

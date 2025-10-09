@@ -60,14 +60,14 @@
 ## 🛠️ 技术栈
 
 ### 前端技术栈
-- **React 19** - 现代化前端框架，支持并发特性
-- **TypeScript 5.x** - 类型安全的JavaScript超集
-- **Vite 6.x** - 快速的前端构建工具和开发服务器
-- **Ant Design v5** - 企业级UI设计语言和组件库
-- **Redux Toolkit** - 现代化的Redux状态管理
-- **React Router DOM v6** - 声明式路由管理
-- **Axios** - Promise based HTTP客户端
-- **ESLint** - 代码质量和风格检查工具
+- **React 19.1.1** - 现代化前端框架，支持并发特性和最新React 19特性
+- **TypeScript 5.9.3** - 类型安全的JavaScript超集
+- **Vite 7.1.7** - 快速的前端构建工具和开发服务器
+- **Ant Design 5.27.4** - 企业级UI设计语言和组件库
+- **Redux Toolkit 2.9.0** - 现代化的Redux状态管理
+- **React Router DOM 6.30.1** - 声明式路由管理
+- **Axios 1.12.2** - Promise based HTTP客户端
+- **ESLint 9.36.0** - 代码质量和风格检查工具
 
 ### 后端技术栈
 
@@ -322,7 +322,7 @@ go-springAi/
    mkdir -p data
    
    # 初始化数据库
-   sqlite3 data/admin.db < schemas/users/001_create_users_table.sql
+   sqlite3 data/go-springAi.db < schemas/users/001_create_users_table.sql
    ```
 
 5. **配置应用**
@@ -341,7 +341,7 @@ go-springAi/
    
    database:
      driver: "sqlite3"
-     dsn: "./data/admin.db"
+     dsn: "./data/go-springAi.db"
    
    jwt:
      secret: "your-secret-key-change-this-in-production"
@@ -760,122 +760,6 @@ GET /api/v1/mcp/logs
 }
 ```
 
-### AI API
-
-#### 1. 统一 AI 聊天完成
-```http
-POST /api/v1/ai/openai/chat/completions
-POST /api/v1/ai/googleai/chat/completions
-Content-Type: application/json
-
-{
-  "model": "gpt-3.5-turbo",  // 或 "gemini-pro"
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, how are you?"
-    }
-  ],
-  "stream": false
-}
-```
-
-#### 2. OpenAI 聊天完成
-```http
-POST /api/v1/openai/chat/completions
-Content-Type: application/json
-
-{
-  "model": "gpt-3.5-turbo",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, how are you?"
-    }
-  ],
-  "stream": false
-}
-```
-
-#### 3. Google AI 聊天完成
-```http
-POST /api/v1/googleai/chat/completions
-Content-Type: application/json
-
-{
-  "model": "gemini-pro",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, how are you?"
-    }
-  ],
-  "stream": false
-}
-```
-
-#### 4. 获取模型列表
-```http
-GET /api/v1/openai/models
-GET /api/v1/googleai/models
-GET /api/v1/ai/openai/models
-GET /api/v1/ai/googleai/models
-```
-
-#### 5. API 密钥管理
-```http
-POST /api/v1/openai/api-key
-POST /api/v1/googleai/api-key
-Content-Type: application/json
-
-{
-  "api_key": "your-api-key-here"
-}
-```
-
-#### 6. 验证 API 密钥
-```http
-POST /api/v1/openai/validate
-POST /api/v1/googleai/validate
-```
-
-#### 7. 模型配置管理
-```http
-GET /api/v1/openai/config/:model
-GET /api/v1/googleai/config/:model
-GET /api/v1/ai/openai/config/:model
-GET /api/v1/ai/googleai/config/:model
-```
-
-#### 8. 模型启用/禁用
-```http
-PUT /api/v1/openai/models/:model/enable
-PUT /api/v1/openai/models/:model/disable
-PUT /api/v1/googleai/models/:model/enable
-PUT /api/v1/googleai/models/:model/disable
-```
-
-### 响应格式
-
-成功响应：
-```json
-{
-  "code": 200,
-  "message": "Success message",
-  "data": {
-    // 响应数据
-  }
-}
-```
-
-错误响应：
-```json
-{
-  "code": 400,
-  "message": "Error message",
-  "error": "ERROR_CODE"
-}
-```
 
 ## 🏗️ MCP 客户端架构分析
 
@@ -1779,6 +1663,36 @@ export interface MyApiResponse {
 
 ## 🧪 测试
 
+### 使用 Makefile（推荐）
+
+```bash
+# 查看所有可用命令
+make help
+
+# 运行所有测试
+make test
+
+# 运行单元测试
+make test-unit
+
+# 运行集成测试
+make test-integration
+
+# 生成测试覆盖率报告
+make test-coverage
+
+# 运行竞态检测测试
+make test-race
+
+# 生成 Mock 文件
+make mock-gen
+
+# 清理测试缓存和生成文件
+make clean
+```
+
+### 直接使用 Go 命令
+
 ```bash
 # 运行所有测试
 go test ./...
@@ -1812,10 +1726,13 @@ npm run build
 
 ```bash
 # 构建二进制文件
-go build -o bin/go-springai cmd/main.go
+go build -o bin/admin cmd/main.go
+
+# 或使用 Makefile
+make build
 
 # 交叉编译（Linux）
-GOOS=linux GOARCH=amd64 go build -o bin/go-springai-linux cmd/main.go
+GOOS=linux GOARCH=amd64 go build -o bin/admin-linux cmd/main.go
 ```
 
 ### 完整部署
@@ -1829,11 +1746,11 @@ npm run build
 
 # 2. 构建后端
 cd ..
-go build -o bin/go-springai cmd/main.go
+go build -o bin/admin cmd/main.go
 
 # 3. 部署前端到静态文件服务器（如 Nginx）
 # 4. 运行后端服务
-./bin/go-springai
+./bin/admin
 ```
 
 #### 方式二：Docker 部署
@@ -1853,14 +1770,14 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o go-springai cmd/main.go
+RUN go build -o admin cmd/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # 复制后端二进制文件和配置
-COPY --from=backend-builder /app/go-springai .
+COPY --from=backend-builder /app/admin .
 COPY --from=backend-builder /app/config.yaml .
 
 # 复制前端构建产物
@@ -1869,7 +1786,7 @@ COPY --from=frontend-builder /app/frontend/dist ./static
 # 暴露端口
 EXPOSE 8080 5173
 
-CMD ["./go-springai"]
+CMD ["./admin"]
 ```
 
 构建和运行：

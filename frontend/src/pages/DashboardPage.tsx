@@ -23,7 +23,7 @@ const DashboardPage: React.FC = () => {
   }, [dispatch]);
 
   // 计算统计数据
-  const healthyProviders = (providers || []).filter(p => p.health).length;
+  const healthyProviders = (providers || []).filter(p => p.healthy).length;
   const totalModels = (providers || []).reduce((sum, p) => sum + p.model_count, 0);
   const totalConversations = (assistantConversations || []).length;
   const availableTools = (tools || []).length;

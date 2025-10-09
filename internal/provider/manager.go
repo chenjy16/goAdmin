@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"go-springAi/internal/logger"
@@ -146,6 +147,93 @@ func (m *Manager) IsProviderRegistered(providerType ProviderType) bool {
 	
 	_, exists := m.providers[providerType]
 	return exists
+}
+
+// ValidateModelForProvider 验证模型是否存在于指定的提供商中
+func (m *Manager) ValidateModelForProvider(ctx context.Context, providerName, modelName string) error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	// 通过名称获取提供商
+	provider, err := m.getProviderByNameUnsafe(providerName)
+	if err != nil {
+		return fmt.Errorf("provider %s not found: %w", providerName, err)
+	}
+	
+	// 获取提供商的模型列表
+	models, err := provider.ListModels(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get models for provider %s: %w", providerName, err)
+	}
+	
+	// 检查模型是否存在
+	if _, exists := models[modelName]; !exists {
+		return fmt.Errorf("model %s not found in provider %s", modelName, providerName)
+	}
+	
+	return nil
+}
+
+// GetProviderByModelWithValidation 根据模型名称获取对应的Provider，并验证模型存在
+func (m *Manager) GetProviderByModelWithValidation(ctx context.Context, modelName string) (Provider, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	// 遍历所有提供商，查找包含该模型的提供商
+	for _, provider := range m.providers {
+		models, err := provider.ListModels(ctx)
+		if err != nil {
+			m.logger.Warn("Failed to get models for provider",
+				logger.String("provider", provider.GetName()),
+				logger.ZapError(err))
+			continue
+		}
+		
+		if _, exists := models[modelName]; exists {
+			return provider, nil
+		}
+	}
+	
+	return nil, fmt.Errorf("model %s not found in any registered provider", modelName)
+}
+
+// GetProviderByModel 根据模型名称获取对应的Provider（保持向后兼容）
+func (m *Manager) GetProviderByModel(modelName string) (Provider, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	
+	// 根据模型名称前缀映射到提供商
+	var providerType ProviderType
+	
+	switch {
+	case strings.HasPrefix(modelName, "gpt-"):
+		providerType = ProviderTypeOpenAI
+	case strings.HasPrefix(modelName, "gemini-"):
+		providerType = ProviderTypeGoogleAI
+	case strings.HasPrefix(modelName, "claude-"):
+		// 为未来的Claude支持预留
+		return nil, fmt.Errorf("claude provider not implemented yet")
+	default:
+		// 默认使用OpenAI
+		providerType = ProviderTypeOpenAI
+	}
+	
+	provider, exists := m.providers[providerType]
+	if !exists {
+		return nil, fmt.Errorf("provider %s not found for model %s", providerType, modelName)
+	}
+	
+	return provider, nil
+}
+
+// getProviderByNameUnsafe 内部方法，不加锁获取提供商（调用者需要持有锁）
+func (m *Manager) getProviderByNameUnsafe(name string) (Provider, error) {
+	for _, provider := range m.providers {
+		if provider.GetName() == name {
+			return provider, nil
+		}
+	}
+	return nil, fmt.Errorf("provider %s not found", name)
 }
 
 // UnregisterProvider 注销Provider

@@ -21,7 +21,8 @@ class ApiService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    // 在开发环境使用代理，生产环境使用环境变量
+    this.baseURL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080');
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
@@ -104,7 +105,13 @@ class ApiService {
 
   // MCP工具相关API
   async initializeMCP(): Promise<ApiResponse> {
-    const response = await this.api.post<ApiResponse>('/api/v1/mcp/initialize');
+    const response = await this.api.post<ApiResponse>('/api/v1/mcp/initialize', {
+      protocolVersion: '2024-11-05',
+      clientInfo: {
+        name: 'Admin Frontend',
+        version: '1.0.0'
+      }
+    });
     return response.data;
   }
 
@@ -140,8 +147,8 @@ class ApiService {
   }
 
   async assistantChat(request: ChatRequest): Promise<ChatResponse> {
-    const response = await this.api.post<ChatResponse>('/api/v1/assistant/chat', request);
-    return response.data;
+    const response = await this.api.post<{code: number; message: string; data: ChatResponse}>('/api/v1/assistant/chat', request);
+    return response.data.data;
   }
 }
 

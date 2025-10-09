@@ -13,41 +13,113 @@ import (
 	"go.uber.org/zap"
 )
 
-// AIAssistantService AI助手服务，集成MCP客户端和OpenAI
+// ProviderManager 提供商管理器接口
+type ProviderManager interface {
+	GetProviderByModel(modelName string) (ProviderInterface, error)
+	GetProviderByName(name string) (ProviderInterface, error)
+	ValidateModelForProvider(ctx context.Context, providerName, modelName string) error
+	GetProviderByModelWithValidation(ctx context.Context, modelName string) (ProviderInterface, error)
+}
+
+// ProviderInterface 定义Provider接口，避免循环导入
+type ProviderInterface interface {
+	GetType() string
+	GetName() string
+	ChatCompletion(ctx context.Context, request *ProviderChatRequest) (*ProviderChatResponse, error)
+}
+
+// ProviderChatRequest 提供商聊天请求结构
+type ProviderChatRequest struct {
+	Model       string                 `json:"model"`
+	Messages    []ProviderMessage      `json:"messages"`
+	MaxTokens   *int                   `json:"max_tokens,omitempty"`
+	Temperature *float32               `json:"temperature,omitempty"`
+	TopP        *float32               `json:"top_p,omitempty"`
+	TopK        *int                   `json:"top_k,omitempty"`
+	Stream      bool                   `json:"stream,omitempty"`
+	Options     map[string]interface{} `json:"options,omitempty"`
+}
+
+// ProviderChatResponse 提供商聊天响应结构
+type ProviderChatResponse struct {
+	ID      string                `json:"id"`
+	Object  string                `json:"object"`
+	Created int64                 `json:"created"`
+	Model   string                `json:"model"`
+	Choices []ProviderChoice      `json:"choices"`
+	Usage   ProviderUsage         `json:"usage"`
+}
+
+// ProviderMessage 提供商消息结构
+type ProviderMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// ProviderChoice 提供商选择结构
+type ProviderChoice struct {
+	Index        int             `json:"index"`
+	Message      ProviderMessage `json:"message"`
+	FinishReason string          `json:"finish_reason"`
+}
+
+// ProviderUsage 提供商使用情况结构
+type ProviderUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
+// AIAssistantService AI助手服务，集成MCP客户端和Provider管理器
 type AIAssistantService struct {
-	mcpClient     mcp.InternalMCPClient
-	openaiService *OpenAIService
-	logger        *zap.Logger
+	mcpClient       mcp.InternalMCPClient
+	openaiService   *OpenAIService
+	providerManager ProviderManager
+	logger          *zap.Logger
 }
 
 // NewAIAssistantService 创建AI助手服务
 func NewAIAssistantService(
 	mcpClient mcp.InternalMCPClient,
 	openaiService *OpenAIService,
+	providerManager ProviderManager,
 	logger *zap.Logger,
 ) *AIAssistantService {
 	return &AIAssistantService{
-		mcpClient:     mcpClient,
-		openaiService: openaiService,
-		logger:        logger,
+		mcpClient:       mcpClient,
+		openaiService:   openaiService,
+		providerManager: providerManager,
+		logger:          logger,
 	}
 }
 
 // ChatRequest AI助手聊天请求
 type ChatRequest struct {
-	Messages    []openai.Message `json:"messages"`
-	Model       string           `json:"model,omitempty"`
-	MaxTokens   *int             `json:"max_tokens,omitempty"`
-	Temperature *float32         `json:"temperature,omitempty"`
-	UseTools    bool             `json:"use_tools,omitempty"`
+	Messages      []openai.Message `json:"messages"`
+	Model         string           `json:"model,omitempty"`
+	MaxTokens     *int             `json:"max_tokens,omitempty"`
+	Temperature   *float32         `json:"temperature,omitempty"`
+	UseTools      bool             `json:"use_tools,omitempty"`
+	Provider      string           `json:"provider,omitempty"`      // 指定提供商
+	SelectedTools []string         `json:"selected_tools,omitempty"` // 指定要使用的工具列表
 }
 
 // ChatResponse AI助手聊天响应
 type ChatResponse struct {
-	Message       openai.Message         `json:"message"`
-	ToolCalls     []ToolCallExecution    `json:"tool_calls,omitempty"`
-	Usage         openai.Usage           `json:"usage"`
-	FinishReason  string                 `json:"finish_reason"`
+	ID      string                `json:"id"`
+	Object  string                `json:"object"`
+	Created int64                 `json:"created"`
+	Model   string                `json:"model"`
+	Choices []ChatChoice          `json:"choices"`
+	Usage   openai.Usage          `json:"usage"`
+}
+
+// ChatChoice 聊天选择
+type ChatChoice struct {
+	Index        int                  `json:"index"`
+	Message      openai.Message       `json:"message"`
+	FinishReason string               `json:"finish_reason"`
+	ToolCalls    []ToolCallExecution  `json:"tool_calls,omitempty"`
 }
 
 // ToolCallExecution 工具调用执行结果
@@ -59,13 +131,210 @@ type ToolCallExecution struct {
 	ExecutionID string                 `json:"execution_id,omitempty"`
 }
 
-// Chat 进行AI对话，支持工具调用
+// Chat 进行AI对话，支持动态提供商选择和工具调用
 func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
 	s.logger.Info("AI assistant chat request",
 		zap.String("model", req.Model),
+		zap.String("provider", req.Provider),
 		zap.Int("message_count", len(req.Messages)),
-		zap.Bool("use_tools", req.UseTools))
+		zap.Bool("use_tools", req.UseTools),
+		zap.Strings("selected_tools", req.SelectedTools))
 
+	// 1. 动态提供商选择和模型验证
+	var provider ProviderInterface
+	var err error
+	
+	if req.Provider != "" {
+		// 如果明确指定了提供商，尝试通过提供商名称获取
+		s.logger.Info("Using explicitly specified provider", zap.String("provider", req.Provider))
+		provider, err = s.providerManager.GetProviderByName(req.Provider)
+		if err != nil {
+			s.logger.Error("Failed to get provider by name", 
+				zap.String("provider", req.Provider), zap.Error(err))
+			return nil, fmt.Errorf("provider %s not found", req.Provider)
+		}
+		
+		// 验证模型是否存在于指定的提供商中
+		if req.Model != "" {
+			if validateErr := s.providerManager.ValidateModelForProvider(ctx, req.Provider, req.Model); validateErr != nil {
+				s.logger.Error("Model validation failed", 
+					zap.String("provider", req.Provider),
+					zap.String("model", req.Model),
+					zap.Error(validateErr))
+				return nil, fmt.Errorf("model %s not supported by provider %s", req.Model, req.Provider)
+			}
+		}
+	} else {
+		// 根据模型名称自动选择提供商（使用验证版本）
+		if req.Model != "" {
+			provider, err = s.providerManager.GetProviderByModelWithValidation(ctx, req.Model)
+			if err != nil {
+				s.logger.Warn("Failed to find provider with model validation, falling back to prefix matching", 
+					zap.String("model", req.Model), zap.Error(err))
+				// 回退到原有的前缀匹配方式
+				provider, err = s.providerManager.GetProviderByModel(req.Model)
+			}
+		} else {
+			// 如果没有指定模型，使用默认提供商
+			provider, err = s.providerManager.GetProviderByModel("gpt-3.5-turbo") // 默认模型
+		}
+	}
+	
+	if err != nil {
+		s.logger.Error("Failed to get provider", zap.Error(err))
+		// 回退到原有的OpenAI实现
+		return s.chatWithOpenAI(ctx, req)
+	}
+
+	// 2. 工具过滤和获取
+	var availableTools []dto.MCPTool
+	if req.UseTools || len(req.SelectedTools) > 0 {
+		toolsResp, err := s.mcpClient.ListTools(ctx)
+		if err != nil {
+			s.logger.Error("Failed to get available tools", zap.Error(err))
+			return nil, fmt.Errorf("failed to get available tools: %w", err)
+		}
+		
+		// 根据SelectedTools过滤工具
+		if len(req.SelectedTools) > 0 {
+			availableTools = s.filterTools(toolsResp.Tools, req.SelectedTools)
+		} else {
+			availableTools = toolsResp.Tools
+		}
+	}
+
+	// 3. 使用动态选择的提供商进行聊天
+	s.logger.Info("Using provider for chat", 
+		zap.String("provider_type", provider.GetType()),
+		zap.String("provider_name", provider.GetName()),
+		zap.Int("available_tools", len(availableTools)))
+
+	// 构建提供商聊天请求
+	providerMessages := make([]ProviderMessage, len(req.Messages))
+	for i, msg := range req.Messages {
+		providerMessages[i] = ProviderMessage{
+			Role:    msg.Role,
+			Content: msg.Content,
+		}
+	}
+
+	// 如果有可用工具，添加工具信息到系统消息
+	if len(availableTools) > 0 {
+		toolsInfo := s.buildToolsSystemMessage(availableTools)
+		systemMsg := ProviderMessage{
+			Role:    "system",
+			Content: toolsInfo,
+		}
+		
+		// 如果第一条消息已经是系统消息，则替换；否则添加到开头
+		if len(providerMessages) > 0 && providerMessages[0].Role == "system" {
+			providerMessages[0] = systemMsg
+		} else {
+			providerMessages = append([]ProviderMessage{systemMsg}, providerMessages...)
+		}
+	}
+
+	providerReq := &ProviderChatRequest{
+		Model:       req.Model,
+		Messages:    providerMessages,
+		MaxTokens:   req.MaxTokens,
+		Temperature: req.Temperature,
+	}
+
+	// 调用提供商
+	providerResp, err := provider.ChatCompletion(ctx, providerReq)
+	if err != nil {
+		s.logger.Error("Provider chat failed", zap.Error(err))
+		return nil, fmt.Errorf("provider chat failed: %w", err)
+	}
+
+	// 转换响应格式
+	if len(providerResp.Choices) == 0 {
+		return nil, fmt.Errorf("no response from provider")
+	}
+
+	choice := providerResp.Choices[0]
+	response := &ChatResponse{
+		ID:      providerResp.ID,
+		Object:  providerResp.Object,
+		Created: providerResp.Created,
+		Model:   providerResp.Model,
+		Choices: []ChatChoice{
+			{
+				Index: 0,
+				Message: openai.Message{
+					Role:    choice.Message.Role,
+					Content: choice.Message.Content,
+				},
+				FinishReason: choice.FinishReason,
+			},
+		},
+		Usage: openai.Usage{
+			PromptTokens:     providerResp.Usage.PromptTokens,
+			CompletionTokens: providerResp.Usage.CompletionTokens,
+			TotalTokens:      providerResp.Usage.TotalTokens,
+		},
+	}
+
+	// 4. 处理工具调用（如果需要）
+	if len(availableTools) > 0 && len(response.Choices) > 0 && response.Choices[0].Message.Content != "" {
+		toolCalls := s.parseToolCalls(response.Choices[0].Message.Content)
+		if len(toolCalls) > 0 {
+			s.logger.Info("Executing tool calls", zap.Int("count", len(toolCalls)))
+			
+			executions := make([]ToolCallExecution, 0, len(toolCalls))
+			for _, toolCall := range toolCalls {
+				execution := s.executeToolCall(ctx, toolCall)
+				executions = append(executions, execution)
+			}
+			
+			response.Choices[0].ToolCalls = executions
+			
+			// 如果有工具调用结果，可以选择再次调用提供商生成最终回复
+			if s.shouldGenerateFinalResponse(executions) {
+				finalResp, err := s.generateFinalResponse(ctx, req, executions)
+				if err != nil {
+					s.logger.Warn("Failed to generate final response", zap.Error(err))
+				} else {
+					response.Choices[0].Message = finalResp
+				}
+			}
+		}
+	}
+
+	return response, nil
+}
+
+// filterTools 根据选择的工具名称过滤工具列表
+func (s *AIAssistantService) filterTools(allTools []dto.MCPTool, selectedTools []string) []dto.MCPTool {
+	if len(selectedTools) == 0 {
+		return allTools
+	}
+	
+	selectedSet := make(map[string]bool)
+	for _, toolName := range selectedTools {
+		selectedSet[toolName] = true
+	}
+	
+	var filtered []dto.MCPTool
+	for _, tool := range allTools {
+		if selectedSet[tool.Name] {
+			filtered = append(filtered, tool)
+		}
+	}
+	
+	s.logger.Info("Filtered tools", 
+		zap.Int("total_tools", len(allTools)),
+		zap.Int("selected_tools", len(filtered)),
+		zap.Strings("tool_names", selectedTools))
+	
+	return filtered
+}
+
+// chatWithOpenAI 回退到原有的OpenAI实现（向后兼容）
+func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
+	s.logger.Info("Falling back to OpenAI implementation")
+	
 	// 如果启用工具，先获取可用工具列表
 	var availableTools []dto.MCPTool
 	if req.UseTools {
@@ -104,9 +373,18 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 
 	choice := openaiResp.Choices[0]
 	response := &ChatResponse{
-		Message:      choice.Message,
-		Usage:        openaiResp.Usage,
-		FinishReason: choice.FinishReason,
+		ID:      openaiResp.ID,
+		Object:  openaiResp.Object,
+		Created: openaiResp.Created,
+		Model:   openaiResp.Model,
+		Choices: []ChatChoice{
+			{
+				Index:        choice.Index,
+				Message:      choice.Message,
+				FinishReason: choice.FinishReason,
+			},
+		},
+		Usage: openaiResp.Usage,
 	}
 
 	// 检查是否需要执行工具调用
@@ -121,7 +399,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 				executions = append(executions, execution)
 			}
 			
-			response.ToolCalls = executions
+			response.Choices[0].ToolCalls = executions
 			
 			// 如果有工具调用结果，可以选择再次调用OpenAI生成最终回复
 			if s.shouldGenerateFinalResponse(executions) {
@@ -129,7 +407,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 				if err != nil {
 					s.logger.Warn("Failed to generate final response", zap.Error(err))
 				} else {
-					response.Message = finalResp
+					response.Choices[0].Message = finalResp
 				}
 			}
 		}

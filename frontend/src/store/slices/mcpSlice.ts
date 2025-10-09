@@ -17,7 +17,7 @@ export const fetchMCPTools = createAsyncThunk(
   'mcp/fetchTools',
   async () => {
     const response = await apiService.getMCPTools();
-    return response.tools;
+    return response.data?.tools || [];
   }
 );
 
@@ -118,7 +118,7 @@ const mcpSlice = createSlice({
       })
       // fetchMCPLogs
       .addCase(fetchMCPLogs.fulfilled, (state, action) => {
-        state.logs = action.payload;
+        state.logs = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchMCPLogs.rejected, (state, action) => {
         state.error = action.error.message || '获取日志失败';

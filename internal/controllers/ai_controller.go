@@ -28,12 +28,10 @@ func NewAIController(providerManager *provider.Manager, logger *zap.Logger) *AIC
 	}
 }
 
-
-
 // ListModels 列出指定提供商的模型
 func (ac *AIController) ListModels(c *gin.Context) {
 	providerType := c.Param("provider")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -89,7 +87,7 @@ func (ac *AIController) ListProviders(c *gin.Context) {
 func (ac *AIController) GetModelConfig(c *gin.Context) {
 	providerType := c.Param("provider")
 	modelName := c.Param("model")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -134,7 +132,7 @@ func (ac *AIController) GetModelConfig(c *gin.Context) {
 func (ac *AIController) EnableModel(c *gin.Context) {
 	providerType := c.Param("provider")
 	modelName := c.Param("model")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -178,7 +176,7 @@ func (ac *AIController) EnableModel(c *gin.Context) {
 func (ac *AIController) DisableModel(c *gin.Context) {
 	providerType := c.Param("provider")
 	modelName := c.Param("model")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -221,7 +219,7 @@ func (ac *AIController) DisableModel(c *gin.Context) {
 // ValidateAPIKey 验证指定提供商的API密钥
 func (ac *AIController) ValidateAPIKey(c *gin.Context) {
 	providerType := c.Param("provider")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -260,7 +258,7 @@ func (ac *AIController) ValidateAPIKey(c *gin.Context) {
 // SetAPIKey 设置指定提供商的API密钥
 func (ac *AIController) SetAPIKey(c *gin.Context) {
 	providerType := c.Param("provider")
-	
+
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai"),
@@ -306,15 +304,4 @@ func (ac *AIController) SetAPIKey(c *gin.Context) {
 	response.Success(c, http.StatusOK, "API key set successfully", gin.H{
 		"provider": providerType,
 	})
-}
-
-
-
-// 辅助函数：转换float64指针为float32指针
-func convertFloat64ToFloat32Ptr(f64Ptr *float64) *float32 {
-	if f64Ptr == nil {
-		return nil
-	}
-	f32 := float32(*f64Ptr)
-	return &f32
 }

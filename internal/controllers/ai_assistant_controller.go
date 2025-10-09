@@ -59,17 +59,26 @@ func (ac *AIAssistantController) Chat(c *gin.Context) {
 			logger.Module(logger.ModuleController),
 			logger.Component("ai_assistant"),
 			logger.Operation("chat"),
-			logger.ZapError(err))
+			logger.ZapError(err),
+			logger.String("error_message", err.Error()),
+			logger.String("model", req.Model))
 		c.Error(err)
 		return
+	}
+
+	var finishReason string
+	var toolCallsCount int
+	if len(result.Choices) > 0 {
+		finishReason = result.Choices[0].FinishReason
+		toolCallsCount = len(result.Choices[0].ToolCalls)
 	}
 
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIResponse,
 		logger.Module(logger.ModuleController),
 		logger.Component("ai_assistant"),
 		logger.Operation("chat"),
-		logger.String("finish_reason", result.FinishReason),
-		logger.Int("tool_calls", len(result.ToolCalls)),
+		logger.String("finish_reason", finishReason),
+		logger.Int("tool_calls", toolCallsCount),
 		logger.Int("status", http.StatusOK))
 
 	response.Success(c, http.StatusOK, "Chat completed successfully", result)

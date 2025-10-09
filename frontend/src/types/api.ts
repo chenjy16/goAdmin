@@ -13,29 +13,36 @@ export interface ProviderInfo {
   type: string;
   name: string;
   description: string;
-  health: boolean;
+  healthy: boolean;
   model_count: number;
 }
 
 export interface ProvidersResponse {
-  providers: ProviderInfo[];
+  code: number;
+  message: string;
+  data: {
+    providers: ProviderInfo[];
+  };
 }
 
 // 模型相关类型
 export interface ModelInfo {
-  id: string;
   name: string;
-  description?: string;
+  display_name: string;
   max_tokens: number;
   temperature: number;
+  top_p: number;
   enabled: boolean;
-  context_window?: number;
-  input_cost?: number;
-  output_cost?: number;
+  description?: string;
 }
 
 export interface ModelsResponse {
-  models: ModelInfo[];
+  code: number;
+  message: string;
+  data: {
+    models: Record<string, ModelInfo>;
+    provider: string;
+  };
 }
 
 export interface ModelConfigResponse {
@@ -56,11 +63,15 @@ export interface ValidateAPIKeyResponse {
 export interface MCPTool {
   name: string;
   description: string;
-  input_schema: any;
+  inputSchema: any;
 }
 
 export interface MCPToolsResponse {
-  tools: MCPTool[];
+  code: number;
+  message: string;
+  data: {
+    tools: MCPTool[];
+  };
 }
 
 export interface MCPExecuteRequest {
@@ -108,6 +119,9 @@ export interface ChatRequest {
   temperature?: number;
   tools?: any[];
   tool_choice?: string;
+  use_tools?: boolean;
+  provider?: string;
+  selected_tools?: string[];
 }
 
 export interface ChatResponse {

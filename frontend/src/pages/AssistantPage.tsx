@@ -11,6 +11,7 @@ import {
   Spin,
   message,
   Tag,
+  Drawer,
 } from 'antd';
 import {
   SendOutlined,
@@ -27,6 +28,8 @@ import {
   sendAssistantMessage,
   createAssistantConversation,
 } from '../store/slices/assistantSlice';
+import { loadConfigData, selectConfig } from '../store/slices/configSlice';
+import AssistantConfigPanel from '../components/AssistantConfigPanel';
 import type { ChatMessage } from '../types/api';
 
 const { TextArea } = Input;
@@ -43,10 +46,16 @@ const AssistantPage: React.FC = () => {
     error,
   } = useAppSelector(state => state.assistant);
 
+  const config = useAppSelector(selectConfig);
+
   const [inputValue, setInputValue] = useState('');
+  const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 加载配置数据
+    dispatch(loadConfigData());
+    
     if (!isInitialized) {
       dispatch(initializeAssistant());
     } else if (!currentConversationId) {
@@ -68,6 +77,12 @@ const AssistantPage: React.FC = () => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || !isInitialized) return;
 
+    // 验证配置是否完整
+    if (!config.selectedModel || !config.selectedProvider) {
+      message.error('请先在配置中选择AI提供商和模型');
+      return;
+    }
+
     const messageContent = inputValue.trim();
     setInputValue('');
 
@@ -79,6 +94,12 @@ const AssistantPage: React.FC = () => {
           content: messageContent,
           timestamp: new Date().toISOString(),
         },
+        model: config.selectedModel,
+        temperature: config.temperature,
+        maxTokens: config.maxTokens,
+        useTools: config.selectedTools.length > 0,
+        provider: config.selectedProvider,
+        selectedTools: config.selectedTools,
       })).unwrap();
     } catch (err) {
       message.error('发送消息失败');
@@ -225,6 +246,12 @@ const AssistantPage: React.FC = () => {
             )}
           </div>
           <Space>
+            <Button 
+              icon={<SettingOutlined />}
+              onClick={() => setConfigDrawerVisible(true)}
+            >
+              配置
+            </Button>
             <Button onClick={handleNewConversation}>新建对话</Button>
           </Space>
         </div>
@@ -264,7 +291,9 @@ const AssistantPage: React.FC = () => {
           )}
           {isLoading && (
             <div style={{ textAlign: 'center', padding: '16px' }}>
-              <Spin tip="AI助手正在思考中..." />
+              <Spin tip="AI助手正在思考中..." spinning={true}>
+                <div style={{ height: '40px' }} />
+              </Spin>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -305,6 +334,18 @@ const AssistantPage: React.FC = () => {
           )}
         </div>
       </Content>
+      
+      {/* 配置抽屉 */}
+      <Drawer
+        title="AI助手配置"
+        placement="right"
+        width={600}
+        open={configDrawerVisible}
+        onClose={() => setConfigDrawerVisible(false)}
+        destroyOnClose={false}
+      >
+        <AssistantConfigPanel />
+      </Drawer>
     </Layout>
   );
 };

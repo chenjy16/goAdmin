@@ -260,46 +260,6 @@ func (s *MCPServiceImpl) registerDefaultTools() {
 	echoTool := mcp.NewEchoTool()
 	s.toolRegistry.Register(echoTool)
 
-	// 注册用户信息工具
-	userInfoTool := mcp.NewUserInfoTool(s.userService)
-	s.toolRegistry.Register(userInfoTool)
-
-	// 注册Google AI工具
-	if s.googleaiService != nil {
-		// 创建适配器
-		adapter := NewGoogleAIServiceAdapter(s.googleaiService)
-
-		// 注册Google AI聊天工具
-		googleaiChatTool := mcp.NewGoogleAIChatTool(adapter)
-		s.toolRegistry.Register(googleaiChatTool)
-
-		// 注册Google AI模型工具
-		googleaiModelsTool := mcp.NewGoogleAIModelsTool(adapter)
-		s.toolRegistry.Register(googleaiModelsTool)
-
-		// 注册Google AI配置工具
-		googleaiConfigTool := mcp.NewGoogleAIConfigTool(adapter)
-		s.toolRegistry.Register(googleaiConfigTool)
-	}
-
-	// 注册OpenAI工具
-	if s.openaiService != nil {
-		// 创建适配器
-		adapter := NewOpenAIServiceAdapter(s.openaiService)
-
-		// 注册OpenAI聊天工具
-		openaiChatTool := mcp.NewOpenAIChatTool(adapter)
-		s.toolRegistry.Register(openaiChatTool)
-
-		// 注册OpenAI模型工具
-		openaiModelsTool := mcp.NewOpenAIModelsTool(adapter)
-		s.toolRegistry.Register(openaiModelsTool)
-
-		// 注册OpenAI配置工具
-		openaiConfigTool := mcp.NewOpenAIConfigTool(adapter)
-		s.toolRegistry.Register(openaiConfigTool)
-	}
-
 	s.logger.Info("Default MCP tools registered",
 		logger.Module(logger.ModuleService),
 		logger.Component("mcp"),

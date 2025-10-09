@@ -1,6 +1,7 @@
 package wire
 
 import (
+	"context"
 	"time"
 
 	"go-springAi/internal/config"
@@ -91,6 +92,15 @@ func ProvideOpenAIService(cfg *config.Config, zapLogger *zap.Logger) *service.Op
 	keyManager := openai.NewMemoryKeyManager()
 	modelManager := openai.NewMemoryModelManager()
 
+	// 将配置中的API密钥设置到密钥管理器中
+	if cfg.OpenAI.APIKey != "" {
+		if err := keyManager.SetAPIKey(cfg.OpenAI.APIKey); err != nil {
+			logger.LogError("Failed to set OpenAI API key",
+				logger.Module(logger.ModuleService),
+				logger.String("error", err.Error()))
+		}
+	}
+
 	// 创建HTTP客户端，传入密钥管理器
 	httpClient := openai.NewHTTPClient(openaiConfig, keyManager)
 
@@ -146,6 +156,10 @@ func ProvideProviderManager(openaiService *service.OpenAIService, googleaiServic
 	googleaiProvider := provider.NewGoogleAIProvider(googleaiService)
 	manager.RegisterProvider(googleaiProvider)
 	
+	// 创建并注册Mock Provider（用于测试）
+	mockProvider := provider.NewMockProvider("mock", provider.ProviderTypeMock)
+	manager.RegisterProvider(mockProvider)
+	
 	return manager
 }
 
@@ -155,8 +169,116 @@ func ProvideAIController(providerManager *provider.Manager, logger *zap.Logger) 
 }
 
 // ProvideAIAssistantService 提供AI助手服务
-func ProvideAIAssistantService(mcpService service.MCPService, openaiService *service.OpenAIService, logger *zap.Logger) *service.AIAssistantService {
-	return service.NewAIAssistantService(mcpService, openaiService, logger)
+func ProvideAIAssistantService(mcpService service.MCPService, openaiService *service.OpenAIService, providerManager *provider.Manager, logger *zap.Logger) *service.AIAssistantService {
+	// 创建适配器来实现接口
+	adapter := &ProviderManagerAdapter{manager: providerManager}
+	return service.NewAIAssistantService(mcpService, openaiService, adapter, logger)
+}
+
+// ProviderManagerAdapter 适配器，将provider.Manager适配为service.ProviderManager接口
+type ProviderManagerAdapter struct {
+	manager *provider.Manager
+}
+
+func (a *ProviderManagerAdapter) GetProviderByModel(modelName string) (service.ProviderInterface, error) {
+	provider, err := a.manager.GetProviderByModel(modelName)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 创建Provider适配器
+	return &ProviderAdapter{provider: provider}, nil
+}
+
+func (a *ProviderManagerAdapter) GetProviderByName(name string) (service.ProviderInterface, error) {
+	provider, err := a.manager.GetProviderByName(name)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 创建Provider适配器
+	return &ProviderAdapter{provider: provider}, nil
+}
+
+func (a *ProviderManagerAdapter) ValidateModelForProvider(ctx context.Context, providerName, modelName string) error {
+	return a.manager.ValidateModelForProvider(ctx, providerName, modelName)
+}
+
+func (a *ProviderManagerAdapter) GetProviderByModelWithValidation(ctx context.Context, modelName string) (service.ProviderInterface, error) {
+	provider, err := a.manager.GetProviderByModelWithValidation(ctx, modelName)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 创建Provider适配器
+	return &ProviderAdapter{provider: provider}, nil
+}
+
+// ProviderAdapter 适配器，将provider.Provider适配为service.ProviderInterface接口
+type ProviderAdapter struct {
+	provider provider.Provider
+}
+
+func (a *ProviderAdapter) GetType() string {
+	return string(a.provider.GetType())
+}
+
+func (a *ProviderAdapter) GetName() string {
+	return a.provider.GetName()
+}
+
+func (a *ProviderAdapter) ChatCompletion(ctx context.Context, request *service.ProviderChatRequest) (*service.ProviderChatResponse, error) {
+	// 转换请求格式
+	providerMessages := make([]provider.Message, len(request.Messages))
+	for i, msg := range request.Messages {
+		providerMessages[i] = provider.Message{
+			Role:    msg.Role,
+			Content: msg.Content,
+		}
+	}
+	
+	providerReq := &provider.ChatRequest{
+		Model:       request.Model,
+		Messages:    providerMessages,
+		MaxTokens:   request.MaxTokens,
+		Temperature: request.Temperature,
+		TopP:        request.TopP,
+		TopK:        request.TopK,
+		Stream:      request.Stream,
+		Options:     request.Options,
+	}
+	
+	// 调用实际的provider
+	resp, err := a.provider.ChatCompletion(ctx, providerReq)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 转换响应格式
+	serviceChoices := make([]service.ProviderChoice, len(resp.Choices))
+	for i, choice := range resp.Choices {
+		serviceChoices[i] = service.ProviderChoice{
+			Index: choice.Index,
+			Message: service.ProviderMessage{
+				Role:    choice.Message.Role,
+				Content: choice.Message.Content,
+			},
+			FinishReason: choice.FinishReason,
+		}
+	}
+	
+	return &service.ProviderChatResponse{
+		ID:      resp.ID,
+		Object:  resp.Object,
+		Created: resp.Created,
+		Model:   resp.Model,
+		Choices: serviceChoices,
+		Usage: service.ProviderUsage{
+			PromptTokens:     resp.Usage.PromptTokens,
+			CompletionTokens: resp.Usage.CompletionTokens,
+			TotalTokens:      resp.Usage.TotalTokens,
+		},
+	}, nil
 }
 
 // ProvideAIAssistantController 提供AI助手控制器

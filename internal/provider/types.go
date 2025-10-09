@@ -11,6 +11,7 @@ type ProviderType string
 const (
 	ProviderTypeOpenAI   ProviderType = "openai"
 	ProviderTypeGoogleAI ProviderType = "googleai"
+	ProviderTypeMock     ProviderType = "mock"
 )
 
 // Message 统一的消息结构

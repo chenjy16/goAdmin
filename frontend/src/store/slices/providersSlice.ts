@@ -71,12 +71,12 @@ const providersSlice = createSlice({
     },
     updateProviderHealth: (state, action: PayloadAction<{
       provider: string;
-      health: boolean;
+      healthy: boolean;
     }>) => {
-      const { provider, health } = action.payload;
+      const { provider, healthy } = action.payload;
       const providerInfo = (state.providers || []).find(p => p.name === provider);
       if (providerInfo) {
-        providerInfo.health = health;
+        providerInfo.healthy = healthy;
       }
     },
   },
@@ -90,9 +90,17 @@ const providersSlice = createSlice({
       .addCase(fetchProviders.fulfilled, (state, action) => {
         state.isLoading = false;
         state.providers = action.payload;
-        if (!state.selectedProvider && (action.payload || []).length > 0) {
+        if (!state.selectedProvider && (action.payload || []).length > 0 && (action.payload || [])[0]) {
           state.selectedProvider = (action.payload || [])[0].name;
         }
+        
+        // 检查每个提供商的健康状态
+        (action.payload || []).forEach(provider => {
+          const providerInfo = (state.providers || []).find(p => p.name === provider.name);
+          if (providerInfo) {
+            providerInfo.healthy = provider.healthy;
+          }
+        });
       })
       .addCase(fetchProviders.rejected, (state, action) => {
         state.isLoading = false;
@@ -124,7 +132,7 @@ const providersSlice = createSlice({
         const { provider, valid } = action.payload;
         const providerInfo = (state.providers || []).find(p => p.name === provider);
         if (providerInfo) {
-          providerInfo.health = valid;
+          providerInfo.healthy = valid;
         }
       })
       .addCase(validateAPIKey.rejected, (state, action) => {

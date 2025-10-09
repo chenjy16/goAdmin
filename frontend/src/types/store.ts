@@ -1,4 +1,5 @@
 import type { ProviderInfo, ModelInfo, MCPTool, MCPMessage, ChatMessage } from './api';
+import type { ConfigSliceState } from '../store/slices/configSlice';
 
 // 提供商状态
 export interface ProvidersState {
@@ -74,6 +75,7 @@ export interface RootState {
   assistant: AssistantState;
   settings: SettingsState;
   ui: UIState;
+  config: ConfigSliceState;
 }
 
 // 异步操作状态

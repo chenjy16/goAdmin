@@ -7,6 +7,7 @@ import mcpReducer from './slices/mcpSlice';
 import assistantReducer from './slices/assistantSlice';
 import settingsReducer from './slices/settingsSlice';
 import uiReducer from './slices/uiSlice';
+import configReducer from './slices/configSlice';
 
 import type { RootState } from '../types/store';
 
@@ -17,6 +18,7 @@ export const store = configureStore({
     assistant: assistantReducer,
     settings: settingsReducer,
     ui: uiReducer,
+    config: configReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

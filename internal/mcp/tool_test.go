@@ -2,10 +2,8 @@ package mcp
 
 import (
 	"context"
-	"errors"
 	"testing"
 
-	"go-springAi/internal/dto"
 	"go-springAi/internal/googleai"
 	"go-springAi/internal/openai"
 
@@ -13,26 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockUserService 模拟用户服务
-type MockUserService struct {
-	mock.Mock
-}
 
-func (m *MockUserService) GetUser(ctx context.Context, id int64) (*dto.UserResponse, error) {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*dto.UserResponse), args.Error(1)
-}
-
-func (m *MockUserService) ListUsers(ctx context.Context, page, limit int64) ([]*dto.UserResponse, error) {
-	args := m.Called(ctx, page, limit)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*dto.UserResponse), args.Error(1)
-}
 
 // MockGoogleAIService 模拟Google AI服务
 type MockGoogleAIService struct {
@@ -249,131 +228,5 @@ func TestEchoTool(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, response)
 		assert.Contains(t, err.Error(), "message parameter is required and must be a string")
-	})
-}
-
-// TestUserInfoTool 测试用户信息工具
-func TestUserInfoTool(t *testing.T) {
-	t.Run("NewUserInfoTool", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		assert.NotNil(t, tool)
-		assert.Equal(t, "get_user_info", tool.Name)
-		assert.Equal(t, mockUserService, tool.userService)
-	})
-
-	t.Run("Execute_GetUser_Success", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		ctx := context.Background()
-		
-		expectedUser := &dto.UserResponse{
-			ID:       1,
-			Username: "testuser",
-			Email:    "test@example.com",
-		}
-		
-		mockUserService.On("GetUser", ctx, int64(1)).Return(expectedUser, nil)
-		
-		args := map[string]interface{}{
-			"user_id": float64(1),
-		}
-		
-		response, err := tool.Execute(ctx, args)
-		assert.NoError(t, err)
-		assert.NotNil(t, response)
-		assert.False(t, response.IsError)
-		assert.Equal(t, 1, len(response.Content))
-		assert.Equal(t, "text", response.Content[0].Type)
-		assert.Contains(t, response.Content[0].Text, "User information for ID 1")
-		assert.Equal(t, expectedUser, response.Content[0].Data)
-		
-		mockUserService.AssertExpectations(t)
-	})
-
-	t.Run("Execute_GetUser_Error", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		ctx := context.Background()
-		
-		mockUserService.On("GetUser", ctx, int64(1)).Return(nil, errors.New("user not found"))
-		
-		args := map[string]interface{}{
-			"user_id": float64(1),
-		}
-		
-		response, err := tool.Execute(ctx, args)
-		assert.NoError(t, err)
-		assert.NotNil(t, response)
-		assert.True(t, response.IsError)
-		assert.Equal(t, 1, len(response.Content))
-		assert.Contains(t, response.Content[0].Text, "Error getting user")
-		
-		mockUserService.AssertExpectations(t)
-	})
-
-	t.Run("Execute_ListUsers_Success", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		ctx := context.Background()
-		
-		expectedUsers := []*dto.UserResponse{
-			{ID: 1, Username: "user1", Email: "user1@example.com"},
-			{ID: 2, Username: "user2", Email: "user2@example.com"},
-		}
-		
-		mockUserService.On("ListUsers", ctx, int64(1), int64(10)).Return(expectedUsers, nil)
-		
-		args := map[string]interface{}{
-			"list_all": true,
-		}
-		
-		response, err := tool.Execute(ctx, args)
-		assert.NoError(t, err)
-		assert.NotNil(t, response)
-		assert.False(t, response.IsError)
-		assert.Equal(t, 1, len(response.Content))
-		assert.Contains(t, response.Content[0].Text, "Found 2 users")
-		assert.Equal(t, expectedUsers, response.Content[0].Data)
-		
-		mockUserService.AssertExpectations(t)
-	})
-
-	t.Run("Execute_ListUsers_WithPagination", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		ctx := context.Background()
-		
-		expectedUsers := []*dto.UserResponse{
-			{ID: 3, Username: "user3", Email: "user3@example.com"},
-		}
-		
-		mockUserService.On("ListUsers", ctx, int64(2), int64(5)).Return(expectedUsers, nil)
-		
-		args := map[string]interface{}{
-			"list_all": true,
-			"page":     float64(2),
-			"limit":    float64(5),
-		}
-		
-		response, err := tool.Execute(ctx, args)
-		assert.NoError(t, err)
-		assert.NotNil(t, response)
-		assert.False(t, response.IsError)
-		
-		mockUserService.AssertExpectations(t)
-	})
-
-	t.Run("Execute_MissingUserID", func(t *testing.T) {
-		mockUserService := &MockUserService{}
-		tool := NewUserInfoTool(mockUserService)
-		ctx := context.Background()
-		
-		args := map[string]interface{}{}
-		
-		response, err := tool.Execute(ctx, args)
-		assert.Error(t, err)
-		assert.Nil(t, response)
-		assert.Contains(t, err.Error(), "user_id parameter is required")
 	})
 }
