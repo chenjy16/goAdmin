@@ -199,7 +199,7 @@ const DashboardPage: React.FC = () => {
                   icon={<CloudOutlined />} 
                   size="large" 
                   block
-                  onClick={() => window.location.href = '/providers'}
+                  onClick={() => window.location.href = '/settings#providers'}
                 >
                   管理提供商
                 </Button>

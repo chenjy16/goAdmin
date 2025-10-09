@@ -35,16 +35,6 @@ const Layout: React.FC = () => {
        label: '仪表板',
      },
     {
-      key: 'providers',
-      icon: <CloudOutlined />,
-      label: '提供商管理',
-    },
-    {
-      key: 'tools',
-      icon: <ToolOutlined />,
-      label: 'MCP工具',
-    },
-    {
       key: 'assistant',
       icon: <RobotOutlined />,
       label: 'AI助手',

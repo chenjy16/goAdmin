@@ -14,34 +14,137 @@ import {
   Tabs,
   List,
   Tag,
+  Table,
+  Modal,
+  Row,
+  Col,
+  Statistic,
+  Divider,
+  Collapse,
 } from 'antd';
 import {
   SettingOutlined,
   SaveOutlined,
   ReloadOutlined,
-  ExportOutlined,
-  ImportOutlined,
+  CloudOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  KeyOutlined,
+  ToolOutlined,
+  PlayCircleOutlined,
+  CodeOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   resetSettings,
   loadSettings,
 } from '../store/slices/settingsSlice';
+import {
+  fetchProviders,
+  fetchModels,
+  setAPIKey,
+  validateAPIKey,
+  toggleModel,
+} from '../store/slices/providersSlice';
+import {
+  initializeMCP,
+  fetchMCPTools,
+  executeMCPTool,
+  fetchMCPLogs,
+} from '../store/slices/mcpSlice';
+import type { ProviderInfo, ModelInfo, MCPTool, MCPMessage } from '../types/api';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 const { TabPane } = Tabs;
 
 const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+  const { providers, models, isLoading: providersLoading } = useAppSelector(state => state.providers);
+  const { 
+    tools: mcpTools, 
+    logs: mcpLogs, 
+    isInitialized: mcpInitialized, 
+    isLoading: mcpLoading, 
+    error: mcpError 
+  } = useAppSelector(state => state.mcp);
+  const { apiKeys } = settings;
   const [form] = Form.useForm();
   const [hasChanges, setHasChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 提供商管理相关状态
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
+  const [apiKeyForm] = Form.useForm();
+
+  // MCP工具相关状态
+  const [executeModalVisible, setExecuteModalVisible] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
+  const [mcpForm] = Form.useForm();
 
   useEffect(() => {
     form.setFieldsValue(settings);
   }, [settings, form]);
+
+  // 初始化提供商数据
+  useEffect(() => {
+    dispatch(fetchProviders());
+  }, [dispatch]);
+
+  // 初始化MCP数据
+  useEffect(() => {
+    if (!mcpInitialized) {
+      dispatch(initializeMCP());
+    } else {
+      dispatch(fetchMCPTools());
+      dispatch(fetchMCPLogs());
+    }
+  }, [dispatch, mcpInitialized]);
+
+  // 提供商管理相关函数
+  const handleSetAPIKey = async (values: { apiKey: string }) => {
+    if (!selectedProvider) return;
+
+    try {
+      await dispatch(setAPIKey({
+        provider: selectedProvider,
+        apiKey: values.apiKey,
+      })).unwrap();
+      
+      await dispatch(validateAPIKey(selectedProvider)).unwrap();
+
+      message.success('API密钥设置成功');
+      setApiKeyModalVisible(false);
+      apiKeyForm.resetFields();
+      dispatch(fetchProviders()); // 刷新提供商状态
+    } catch (err) {
+      message.error('API密钥设置失败');
+    }
+  };
+
+  const handleToggleModel = async (provider: string, modelId: string, enabled: boolean) => {
+    try {
+      await dispatch(toggleModel({
+        provider,
+        model: modelId,
+        enabled,
+      })).unwrap();
+      message.success(`模型${enabled ? '启用' : '禁用'}成功`);
+    } catch (err) {
+      message.error(`模型${enabled ? '启用' : '禁用'}失败`);
+    }
+  };
+
+  const handleRefreshProviders = () => {
+    dispatch(fetchProviders());
+    if (selectedProvider) {
+      dispatch(fetchModels(selectedProvider));
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -64,46 +167,283 @@ const SettingsPage: React.FC = () => {
     message.success('设置已重置为默认值');
   };
 
-  const handleExport = async () => {
-    try {
-      const dataStr = JSON.stringify(settings, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'settings.json';
-      link.click();
-      URL.revokeObjectURL(url);
-      message.success('设置已导出');
-    } catch (err) {
-      message.error('导出设置失败');
-    }
-  };
 
-  const handleImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        try {
-          const text = await file.text();
-          const importedSettings = JSON.parse(text);
-          dispatch(loadSettings(importedSettings));
-          form.setFieldsValue(importedSettings);
-          message.success('设置已导入');
-        } catch (err) {
-          message.error('导入设置失败');
-        }
-      }
-    };
-    input.click();
-  };
 
   const handleFormChange = () => {
     setHasChanges(true);
   };
+
+  // MCP工具相关函数
+  const handleInitializeMCP = () => {
+    dispatch(initializeMCP());
+  };
+
+  const handleRefreshMCPTools = () => {
+    dispatch(fetchMCPTools());
+    dispatch(fetchMCPLogs());
+  };
+
+  const handleExecuteMCPTool = async (values: Record<string, any>) => {
+    if (!selectedTool) return;
+
+    try {
+      await dispatch(executeMCPTool({
+        name: selectedTool.name,
+        arguments: values,
+      })).unwrap();
+      
+      message.success('工具执行成功');
+      setExecuteModalVisible(false);
+      mcpForm.resetFields();
+      dispatch(fetchMCPLogs()); // 刷新日志
+    } catch (err) {
+      message.error('工具执行失败');
+    }
+  };
+
+  const renderExecutionForm = (inputSchema: any) => {
+    if (!inputSchema || !inputSchema.properties) {
+      return <div>该工具无需参数</div>;
+    }
+
+    const properties = inputSchema.properties;
+    const required = inputSchema.required || [];
+
+    return Object.entries(properties).map(([key, schema]: [string, any]) => {
+      const isRequired = required.includes(key);
+      const rules = isRequired ? [{ required: true, message: `请输入${schema.title || key}` }] : [];
+
+      if (schema.type === 'string') {
+        if (schema.enum) {
+          return (
+            <Form.Item
+              key={key}
+              name={key}
+              label={schema.title || key}
+              rules={rules}
+            >
+              <Select placeholder={schema.description}>
+                {schema.enum.map((option: string) => (
+                  <Select.Option key={option} value={option}>
+                    {option}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          );
+        } else {
+          return (
+            <Form.Item
+              key={key}
+              name={key}
+              label={schema.title || key}
+              rules={rules}
+            >
+              <Input placeholder={schema.description} />
+            </Form.Item>
+          );
+        }
+      } else if (schema.type === 'number' || schema.type === 'integer') {
+        return (
+          <Form.Item
+            key={key}
+            name={key}
+            label={schema.title || key}
+            rules={rules}
+          >
+            <InputNumber
+              placeholder={schema.description}
+              min={schema.minimum}
+              max={schema.maximum}
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+        );
+      } else if (schema.type === 'boolean') {
+        return (
+          <Form.Item
+            key={key}
+            name={key}
+            label={schema.title || key}
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+        );
+      } else {
+        return (
+          <Form.Item
+            key={key}
+            name={key}
+            label={schema.title || key}
+            rules={rules}
+          >
+            <TextArea placeholder={schema.description} rows={3} />
+          </Form.Item>
+        );
+      }
+    });
+  };
+
+  // 提供商表格列定义
+  const providerColumns: ColumnsType<ProviderInfo> = [
+    {
+      title: '提供商',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string, record: ProviderInfo) => (
+        <Space>
+          <CloudOutlined style={{ color: record.healthy ? '#52c41a' : '#ff4d4f' }} />
+          <span style={{ fontWeight: 'bold' }}>{name}</span>
+        </Space>
+      ),
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+    },
+    {
+      title: '状态',
+      dataIndex: 'healthy',
+      key: 'healthy',
+      render: (healthy: boolean) => (
+        <Tag color={healthy ? 'green' : 'red'} icon={healthy ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}>
+          {healthy ? '正常' : '异常'}
+        </Tag>
+      ),
+    },
+    {
+      title: '模型数量',
+      dataIndex: 'model_count',
+      key: 'model_count',
+      render: (count: number) => (
+        <Statistic value={count} suffix="个" />
+      ),
+    },
+    {
+      title: 'API密钥',
+      key: 'apiKey',
+      render: (_, record: ProviderInfo) => {
+        const hasKey = apiKeys[record.name];
+        return (
+          <Tag color={hasKey ? 'green' : 'orange'}>
+            {hasKey ? '已配置' : '未配置'}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      render: (_, record: ProviderInfo) => (
+        <Space>
+          <Button
+            type="primary"
+            size="small"
+            icon={<KeyOutlined />}
+            onClick={() => {
+              setSelectedProvider(record.name);
+              setApiKeyModalVisible(true);
+            }}
+          >
+            设置密钥
+          </Button>
+          <Button
+            size="small"
+            icon={<SettingOutlined />}
+            onClick={() => setSelectedProvider(record.name)}
+          >
+            管理模型
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  // 模型表格列定义
+  const modelColumns: ColumnsType<ModelInfo> = [
+    {
+      title: '模型名称',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string) => <span style={{ fontWeight: 'bold' }}>{name}</span>,
+    },
+    {
+      title: '显示名称',
+      dataIndex: 'display_name',
+      key: 'display_name',
+    },
+    {
+      title: '最大令牌',
+      dataIndex: 'max_tokens',
+      key: 'max_tokens',
+      render: (tokens: number) => tokens.toLocaleString(),
+    },
+    {
+      title: '状态',
+      dataIndex: 'enabled',
+      key: 'enabled',
+      render: (enabled: boolean, record: ModelInfo) => (
+        <Switch
+          checked={enabled}
+          onChange={(checked) => handleToggleModel(selectedProvider!, record.name, checked)}
+          checkedChildren="启用"
+          unCheckedChildren="禁用"
+        />
+      ),
+    },
+  ];
+
+  // MCP工具表格列定义
+  const toolColumns: ColumnsType<MCPTool> = [
+    {
+      title: '工具名称',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string) => (
+        <Space>
+          <ToolOutlined />
+          <span style={{ fontWeight: 'bold' }}>{name}</span>
+        </Space>
+      ),
+    },
+    {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: '参数',
+      dataIndex: 'inputSchema',
+      key: 'inputSchema',
+      render: (schema: any) => {
+        if (!schema || !schema.properties) {
+          return <Tag color="blue">无参数</Tag>;
+        }
+        const paramCount = Object.keys(schema.properties).length;
+        return <Tag color="green">{paramCount} 个参数</Tag>;
+      },
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      render: (_, record: MCPTool) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<PlayCircleOutlined />}
+          onClick={() => {
+            setSelectedTool(record);
+            setExecuteModalVisible(true);
+          }}
+        >
+          执行
+        </Button>
+      ),
+    },
+  ];
 
   const generalSettings = (
     <Card title="通用设置" style={{ marginBottom: 16 }}>
@@ -150,157 +490,341 @@ const SettingsPage: React.FC = () => {
     </Card>
   );
 
-  const chatSettings = (
-    <Card title="聊天设置" style={{ marginBottom: 16 }}>
-      <Form.Item
-        name={['chat', 'defaultProvider']}
-        label="默认提供商"
-        tooltip="新对话的默认AI提供商"
-      >
-        <Select placeholder="选择默认提供商">
-          <Select.Option value="openai">OpenAI</Select.Option>
-          <Select.Option value="anthropic">Anthropic</Select.Option>
-          <Select.Option value="google">Google</Select.Option>
-          <Select.Option value="azure">Azure OpenAI</Select.Option>
-        </Select>
-      </Form.Item>
 
-      <Form.Item
-        name={['chat', 'defaultModel']}
-        label="默认模型"
-        tooltip="新对话的默认AI模型"
-      >
-        <Input placeholder="例如: gpt-4" />
-      </Form.Item>
-
-      <Form.Item
-        name={['chat', 'maxTokens']}
-        label="最大令牌数"
-        tooltip="单次响应的最大令牌数"
-      >
-        <InputNumber min={1} max={32000} style={{ width: '100%' }} />
-      </Form.Item>
-
-      <Form.Item
-        name={['chat', 'temperature']}
-        label="温度"
-        tooltip="控制响应的随机性 (0-2)"
-      >
-        <InputNumber min={0} max={2} step={0.1} style={{ width: '100%' }} />
-      </Form.Item>
-
-      <Form.Item
-        name={['chat', 'streamResponse']}
-        label="流式响应"
-        valuePropName="checked"
-        tooltip="启用实时流式响应"
-      >
-        <Switch />
-      </Form.Item>
-
-      <Form.Item
-        name={['chat', 'saveHistory']}
-        label="保存历史"
-        valuePropName="checked"
-        tooltip="保存对话历史记录"
-      >
-        <Switch />
-      </Form.Item>
-    </Card>
-  );
 
   const mcpSettings = (
-    <Card title="MCP工具设置" style={{ marginBottom: 16 }}>
-      <Form.Item
-        name={['mcp', 'autoInitialize']}
-        label="自动初始化"
-        valuePropName="checked"
-        tooltip="启动时自动初始化MCP工具"
-      >
-        <Switch />
-      </Form.Item>
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          <ToolOutlined style={{ marginRight: '8px' }} />
+          MCP工具系统
+        </Title>
+        <Space>
+          {!mcpInitialized && (
+            <Button
+              type="primary"
+              icon={<SettingOutlined />}
+              onClick={handleInitializeMCP}
+              loading={mcpLoading}
+            >
+              初始化MCP
+            </Button>
+          )}
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={handleRefreshMCPTools}
+            loading={mcpLoading}
+            disabled={!mcpInitialized}
+          >
+            刷新工具
+          </Button>
+        </Space>
+      </div>
 
-      <Form.Item
-        name={['mcp', 'timeout']}
-        label="超时时间 (秒)"
-        tooltip="MCP工具执行超时时间"
-      >
-        <InputNumber min={1} max={300} style={{ width: '100%' }} />
-      </Form.Item>
+      {/* 状态统计 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="初始化状态"
+              value={mcpInitialized ? '已初始化' : '未初始化'}
+              prefix={mcpInitialized ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+              valueStyle={{ color: mcpInitialized ? '#3f8600' : '#cf1322' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="可用工具"
+              value={(mcpTools || []).length}
+              prefix={<ToolOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="日志条数"
+              value={(mcpLogs || []).length}
+              prefix={<HistoryOutlined />}
+              valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-      <Form.Item
-        name={['mcp', 'maxRetries']}
-        label="最大重试次数"
-        tooltip="工具执行失败时的最大重试次数"
-      >
-        <InputNumber min={0} max={10} style={{ width: '100%' }} />
-      </Form.Item>
+      {!mcpInitialized ? (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <ExclamationCircleOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
+            <h3>MCP工具系统未初始化</h3>
+            <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
+              请先初始化MCP工具系统以使用相关功能
+            </p>
+            <Button
+              type="primary"
+              size="large"
+              icon={<SettingOutlined />}
+              onClick={handleInitializeMCP}
+              loading={mcpLoading}
+            >
+              立即初始化
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {/* 工具列表 */}
+          <Card title="可用工具" style={{ marginBottom: '24px' }}>
+            <Table
+              columns={toolColumns}
+              dataSource={mcpTools}
+              rowKey="name"
+              loading={mcpLoading}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total) => `共 ${total} 个工具`,
+              }}
+            />
+          </Card>
 
-      <Form.Item
-        name={['mcp', 'enableLogging']}
-        label="启用日志"
-        valuePropName="checked"
-        tooltip="记录MCP工具的执行日志"
-      >
-        <Switch />
-      </Form.Item>
-    </Card>
+          {/* 执行日志 */}
+          <Card title="执行日志" style={{ marginBottom: '24px' }}>
+            <List
+              dataSource={mcpLogs}
+              loading={mcpLoading}
+              renderItem={(log: MCPMessage) => (
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={<CodeOutlined style={{ color: '#1890ff' }} />}
+                    title={
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>{log.message || '系统消息'}</span>
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {new Date(log.timestamp).toLocaleString()}
+                        </Text>
+                      </div>
+                    }
+                    description={
+                      <div>
+                        <Paragraph ellipsis={{ rows: 2, expandable: true }}>
+                          {log.data ? (typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : String(log.data)) : '-'}
+                        </Paragraph>
+                        <Tag color={log.level === 'error' ? 'red' : log.level === 'warn' ? 'orange' : 'blue'}>
+                          {log.level.toUpperCase()}
+                        </Tag>
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: false,
+                showQuickJumper: false,
+              }}
+            />
+          </Card>
+
+          {/* 基础设置 */}
+          <Card title="MCP工具设置" style={{ marginBottom: 16 }}>
+            <Form.Item
+              name={['mcp', 'autoInitialize']}
+              label="自动初始化"
+              valuePropName="checked"
+              tooltip="启动时自动初始化MCP工具"
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item
+              name={['mcp', 'timeout']}
+              label="超时时间 (秒)"
+              tooltip="MCP工具执行超时时间"
+            >
+              <InputNumber min={1} max={300} style={{ width: '100%' }} />
+            </Form.Item>
+
+            <Form.Item
+              name={['mcp', 'maxRetries']}
+              label="最大重试次数"
+              tooltip="工具执行失败时的最大重试次数"
+            >
+              <InputNumber min={0} max={10} style={{ width: '100%' }} />
+            </Form.Item>
+
+            <Form.Item
+              name={['mcp', 'enableLogging']}
+              label="启用日志"
+              valuePropName="checked"
+              tooltip="记录MCP工具的执行日志"
+            >
+              <Switch />
+            </Form.Item>
+          </Card>
+        </>
+      )}
+
+      {mcpError && (
+        <Alert
+          message="错误"
+          description={mcpError}
+          type="error"
+          showIcon
+          style={{ marginTop: '16px' }}
+        />
+      )}
+    </div>
   );
 
-  const advancedSettings = (
-    <Card title="高级设置" style={{ marginBottom: 16 }}>
-      <Alert
-        message="警告"
-        description="修改高级设置可能影响应用程序的稳定性，请谨慎操作。"
-        type="warning"
-        showIcon
-        style={{ marginBottom: 16 }}
-      />
 
-      <Form.Item
-        name={['advanced', 'apiTimeout']}
-        label="API超时时间 (毫秒)"
-        tooltip="API请求的超时时间"
-      >
-        <InputNumber min={1000} max={60000} style={{ width: '100%' }} />
-      </Form.Item>
 
-      <Form.Item
-        name={['advanced', 'maxConcurrentRequests']}
-        label="最大并发请求数"
-        tooltip="同时进行的最大API请求数"
-      >
-        <InputNumber min={1} max={20} style={{ width: '100%' }} />
-      </Form.Item>
+  // 提供商管理组件
+  const providersManagement = (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <Title level={4} style={{ margin: 0 }}>
+            <CloudOutlined style={{ marginRight: '8px' }} />
+            AI提供商管理
+          </Title>
+          <Text type="secondary">配置和管理AI服务提供商</Text>
+        </div>
+        <Button
+          type="primary"
+          icon={<ReloadOutlined />}
+          onClick={handleRefreshProviders}
+          loading={providersLoading}
+        >
+          刷新状态
+        </Button>
+      </div>
 
-      <Form.Item
-        name={['advanced', 'enableDebugMode']}
-        label="调试模式"
-        valuePropName="checked"
-        tooltip="启用调试模式以获取详细日志"
-      >
-        <Switch />
-      </Form.Item>
+      {/* 统计信息 */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="提供商总数"
+              value={(providers || []).length}
+              prefix={<CloudOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="健康状态"
+              value={(providers || []).filter(p => p.healthy).length}
+              suffix={`/ ${(providers || []).length}`}
+              valueStyle={{ 
+                color: (providers || []).filter(p => p.healthy).length === (providers || []).length ? '#3f8600' : '#cf1322' 
+              }}
+              prefix={<CheckCircleOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="已配置密钥"
+              value={(providers || []).filter(p => apiKeys[p.name]).length}
+              suffix={`/ ${(providers || []).length}`}
+              valueStyle={{ 
+                color: (providers || []).filter(p => apiKeys[p.name]).length === (providers || []).length ? '#3f8600' : '#fa8c16' 
+              }}
+              prefix={<KeyOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-      <Form.Item
-        name={['advanced', 'customApiEndpoint']}
-        label="自定义API端点"
-        tooltip="使用自定义的API端点"
-      >
-        <Input placeholder="https://api.example.com" />
-      </Form.Item>
-
-      <Form.Item
-        name={['advanced', 'proxySettings']}
-        label="代理设置"
-        tooltip="网络代理配置"
-      >
-        <TextArea
-          rows={3}
-          placeholder="代理配置 (JSON格式)"
+      {/* 提供商列表 */}
+      <Card title="AI提供商列表" style={{ marginBottom: '24px' }}>
+        <Table
+          columns={providerColumns}
+          dataSource={providers}
+          rowKey="name"
+          loading={providersLoading}
+          pagination={false}
         />
-      </Form.Item>
-    </Card>
+      </Card>
+
+      {/* 模型管理 */}
+      {selectedProvider && (
+        <Card
+          title={
+            <Space>
+              <span>模型管理 - {selectedProvider}</span>
+              <Tag color="blue">{models[selectedProvider]?.length || 0} 个模型</Tag>
+            </Space>
+          }
+          extra={
+            <Button
+              size="small"
+              onClick={() => setSelectedProvider(null)}
+            >
+              关闭
+            </Button>
+          }
+        >
+          <Table
+            columns={modelColumns}
+            dataSource={models[selectedProvider] || []}
+            rowKey="name"
+            loading={providersLoading}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `共 ${total} 个模型`,
+            }}
+          />
+        </Card>
+      )}
+
+      {/* API密钥设置模态框 */}
+      <Modal
+        title={`设置 ${selectedProvider} API密钥`}
+        open={apiKeyModalVisible}
+        onCancel={() => {
+          setApiKeyModalVisible(false);
+          apiKeyForm.resetFields();
+        }}
+        footer={null}
+      >
+        <Form
+          form={apiKeyForm}
+          layout="vertical"
+          onFinish={handleSetAPIKey}
+        >
+          <Form.Item
+            name="apiKey"
+            label="API密钥"
+            rules={[{ required: true, message: '请输入API密钥' }]}
+          >
+            <Input.Password placeholder="请输入API密钥" />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                保存
+              </Button>
+              <Button onClick={() => {
+                setApiKeyModalVisible(false);
+                apiKeyForm.resetFields();
+              }}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 
   const aboutInfo = (
@@ -361,18 +885,6 @@ const SettingsPage: React.FC = () => {
         </div>
         <Space>
           <Button
-            icon={<ImportOutlined />}
-            onClick={handleImport}
-          >
-            导入设置
-          </Button>
-          <Button
-            icon={<ExportOutlined />}
-            onClick={handleExport}
-          >
-            导出设置
-          </Button>
-          <Button
             icon={<ReloadOutlined />}
             onClick={handleReset}
             disabled={isLoading}
@@ -403,14 +915,11 @@ const SettingsPage: React.FC = () => {
           <TabPane tab="通用" key="general">
             {generalSettings}
           </TabPane>
-          <TabPane tab="聊天" key="chat">
-            {chatSettings}
+          <TabPane tab={<span><CloudOutlined />提供商管理</span>} key="providers">
+            {providersManagement}
           </TabPane>
           <TabPane tab="MCP工具" key="mcp">
             {mcpSettings}
-          </TabPane>
-          <TabPane tab="高级" key="advanced">
-            {advancedSettings}
           </TabPane>
           <TabPane tab="关于" key="about">
             {aboutInfo}

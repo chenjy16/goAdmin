@@ -869,11 +869,7 @@ type Tool interface {
 
 **具体工具实现**
 - `EchoTool`: 基础回显工具
-- `UserInfoTool`: 用户信息查询工具
-- `OpenAI 工具集`: OpenAI API 集成工具
-  - `OpenAIChatTool`: 聊天完成工具
-  - `OpenAIModelsTool`: 模型列表工具
-  - `OpenAIConfigTool`: 配置管理工具
+
 
 ### MCP 客户端调用关系
 
