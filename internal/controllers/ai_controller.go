@@ -426,3 +426,12 @@ func convertToProviderMessages(messages []dto.UnifiedMessage) []provider.Message
 	}
 	return result
 }
+
+// 辅助函数：转换float64指针为float32指针
+func convertFloat64ToFloat32Ptr(f64Ptr *float64) *float32 {
+	if f64Ptr == nil {
+		return nil
+	}
+	f32 := float32(*f64Ptr)
+	return &f32
+}

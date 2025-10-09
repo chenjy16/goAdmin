@@ -100,10 +100,7 @@ func ProvideOpenAIService(cfg *config.Config, zapLogger *zap.Logger) *service.Op
 	return service.NewOpenAIService(httpClient, keyManager, modelManager, globalLogger)
 }
 
-// ProvideOpenAIController 提供OpenAI控制器
-func ProvideOpenAIController(openaiService *service.OpenAIService, logger *zap.Logger) *controllers.OpenAIController {
-	return controllers.NewOpenAIController(openaiService, logger)
-}
+
 
 // ProvideGoogleAIService 提供Google AI服务
 func ProvideGoogleAIService(cfg *config.Config, zapLogger *zap.Logger) (*service.GoogleAIService, error) {
@@ -133,10 +130,7 @@ func ProvideGoogleAIService(cfg *config.Config, zapLogger *zap.Logger) (*service
 	return service.NewGoogleAIService(httpClient, keyManager, modelManager, globalLogger), nil
 }
 
-// ProvideGoogleAIController 提供Google AI控制器
-func ProvideGoogleAIController(googleaiService *service.GoogleAIService, logger *zap.Logger) *controllers.GoogleAIController {
-	return controllers.NewGoogleAIController(googleaiService, logger)
-}
+
 
 // ProvideProviderManager 提供Provider管理器
 func ProvideProviderManager(openaiService *service.OpenAIService, googleaiService *service.GoogleAIService, zapLogger *zap.Logger) *provider.Manager {
@@ -171,6 +165,6 @@ func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService
 }
 
 // ProvideRouter 提供路由器
-func ProvideRouter(mcpController *controllers.MCPController, openaiController *controllers.OpenAIController, googleaiController *controllers.GoogleAIController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
-	return route.SetupRoutes(logger, mcpController, openaiController, googleaiController, aiController, aiAssistantController)
+func ProvideRouter(mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
+	return route.SetupRoutes(logger, mcpController, aiController, aiAssistantController)
 }

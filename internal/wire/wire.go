@@ -46,8 +46,6 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 		// Controllers
 		ProvideMCPController,
-		ProvideOpenAIController,
-		ProvideGoogleAIController,
 		ProvideAIAssistantController,
 
 		// Provider Manager
@@ -78,8 +76,6 @@ type App struct {
 	GoogleAIService        *service.GoogleAIService
 	AIAssistantService     *service.AIAssistantService
 	MCPController          *controllers.MCPController
-	OpenAIController       *controllers.OpenAIController
-	GoogleAIController     *controllers.GoogleAIController
 	AIAssistantController  *controllers.AIAssistantController
 	ProviderManager        *provider.Manager
 	AIController           *controllers.AIController
@@ -99,8 +95,6 @@ func NewApp(
 	googleaiService *service.GoogleAIService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
-	openaiController *controllers.OpenAIController,
-	googleaiController *controllers.GoogleAIController,
 	aiAssistantController *controllers.AIAssistantController,
 	providerManager *provider.Manager,
 	aiController *controllers.AIController,
@@ -118,8 +112,6 @@ func NewApp(
 		GoogleAIService:       googleaiService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
-		OpenAIController:      openaiController,
-		GoogleAIController:    googleaiController,
 		AIAssistantController: aiAssistantController,
 		ProviderManager:       providerManager,
 		AIController:          aiController,

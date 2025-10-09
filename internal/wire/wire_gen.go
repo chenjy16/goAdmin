@@ -7,6 +7,7 @@
 package wire
 
 import (
+	"github.com/gin-gonic/gin"
 	"go-springAi/internal/config"
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
@@ -14,7 +15,6 @@ import (
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
 	"go-springAi/internal/utils"
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
@@ -45,13 +45,11 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	mcpService := ProvideMCPService(repositoryManager, googleAIService, openAIService, logger)
 	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, logger)
 	mcpController := ProvideMCPController(mcpService, logger)
-	openAIController := ProvideOpenAIController(openAIService, logger)
-	googleAIController := ProvideGoogleAIController(googleAIService, logger)
 	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger)
 	manager := ProvideProviderManager(openAIService, googleAIService, logger)
 	aiController := ProvideAIController(manager, logger)
-	engine := ProvideRouter(mcpController, openAIController, googleAIController, aiController, aiAssistantController, logger)
-	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, aiAssistantService, mcpController, openAIController, googleAIController, aiAssistantController, manager, aiController, engine)
+	engine := ProvideRouter(mcpController, aiController, aiAssistantController, logger)
+	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, aiAssistantService, mcpController, aiAssistantController, manager, aiController, engine)
 	return app, func() {
 		cleanup()
 	}, nil
@@ -72,8 +70,6 @@ type App struct {
 	GoogleAIService       *service.GoogleAIService
 	AIAssistantService    *service.AIAssistantService
 	MCPController         *controllers.MCPController
-	OpenAIController      *controllers.OpenAIController
-	GoogleAIController    *controllers.GoogleAIController
 	AIAssistantController *controllers.AIAssistantController
 	ProviderManager       *provider.Manager
 	AIController          *controllers.AIController
@@ -92,8 +88,6 @@ func NewApp(config2 *config.Config,
 	googleaiService *service.GoogleAIService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
-	openaiController *controllers.OpenAIController,
-	googleaiController *controllers.GoogleAIController,
 	aiAssistantController *controllers.AIAssistantController,
 	providerManager *provider.Manager,
 	aiController *controllers.AIController,
@@ -111,8 +105,6 @@ func NewApp(config2 *config.Config,
 		GoogleAIService:       googleaiService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
-		OpenAIController:      openaiController,
-		GoogleAIController:    googleaiController,
 		AIAssistantController: aiAssistantController,
 		ProviderManager:       providerManager,
 		AIController:          aiController,
