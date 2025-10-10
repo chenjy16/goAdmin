@@ -211,6 +211,8 @@ func (a *UserServiceAdapter) ListUsers(ctx context.Context, page, limit int64) (
 type MCPService interface {
 	// Initialize 初始化MCP服务
 	Initialize(ctx context.Context, req *dto.MCPInitializeRequest) (*dto.MCPInitializeResponse, error)
+	// IsInitialized 检查是否已初始化
+	IsInitialized() bool
 	// ListTools 获取工具列表
 	ListTools(ctx context.Context) (*dto.MCPToolsResponse, error)
 	// ExecuteTool 执行工具
@@ -233,6 +235,8 @@ type MCPServiceImpl struct {
 	executionMutex  sync.RWMutex
 	sseClients      map[string]chan *dto.MCPSSEEvent
 	sseClientsMutex sync.RWMutex
+	initialized     bool
+	initMutex       sync.RWMutex
 	logger          *zap.Logger
 }
 
@@ -268,6 +272,28 @@ func (s *MCPServiceImpl) registerDefaultTools() {
 
 // Initialize 初始化MCP服务
 func (s *MCPServiceImpl) Initialize(ctx context.Context, req *dto.MCPInitializeRequest) (*dto.MCPInitializeResponse, error) {
+	s.initMutex.Lock()
+	defer s.initMutex.Unlock()
+
+	// 检查是否已经初始化
+	if s.initialized {
+		s.logger.Info("MCP service already initialized, returning existing configuration")
+		return &dto.MCPInitializeResponse{
+			ProtocolVersion: "2024-11-05",
+			Capabilities: dto.MCPCapabilities{
+				Tools: &dto.MCPToolsCapability{
+					ListChanged: true,
+				},
+				Logging: &dto.MCPLoggingCapability{},
+			},
+			ServerInfo: dto.MCPServerInfo{
+				Name:    "Admin MCP Server",
+				Version: "1.0.0",
+			},
+			Instructions: "This is an Admin MCP Server that provides tools for user management and system operations.",
+		}, nil
+	}
+
 	s.logger.Info("MCP service initialization requested",
 		zap.String("protocolVersion", req.ProtocolVersion),
 		zap.String("clientName", req.ClientInfo.Name),
@@ -293,11 +319,21 @@ func (s *MCPServiceImpl) Initialize(ctx context.Context, req *dto.MCPInitializeR
 		Instructions: "This is an Admin MCP Server that provides tools for user management and system operations.",
 	}
 
+	// 标记为已初始化
+	s.initialized = true
+
 	s.logger.Info("MCP service initialized successfully",
 		zap.String("serverName", response.ServerInfo.Name),
 		zap.String("serverVersion", response.ServerInfo.Version))
 
 	return response, nil
+}
+
+// IsInitialized 检查是否已初始化
+func (s *MCPServiceImpl) IsInitialized() bool {
+	s.initMutex.RLock()
+	defer s.initMutex.RUnlock()
+	return s.initialized
 }
 
 // ListTools 获取工具列表

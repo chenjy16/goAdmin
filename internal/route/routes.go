@@ -4,13 +4,14 @@ import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/dto"
 	"go-springAi/internal/middleware"
+	"go-springAi/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 // SetupRoutes 设置路由
-func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController) *gin.Engine {
+func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController) *gin.Engine {
 	// 创建Gin引擎
 	r := gin.New()
 
@@ -39,6 +40,9 @@ func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, a
 			// MCP初始化端点
 			mcp.POST("/initialize", middleware.ValidateJSONFactory(&dto.MCPInitializeRequest{}), mcpController.Initialize)
 			
+			// MCP状态端点
+			mcp.GET("/status", mcpController.GetStatus)
+			
 			// 工具管理端点
 			mcp.GET("/tools", mcpController.ListTools)
 			mcp.POST("/execute", middleware.ValidateJSONFactory(&dto.MCPExecuteRequest{}), mcpController.ExecuteTool)
@@ -58,13 +62,16 @@ func SetupRoutes(logger *zap.Logger, mcpController *controllers.MCPController, a
 		{
 			// 模型管理端点
 			aiGroup.GET("/:provider/models", aiController.ListModels)
+			aiGroup.GET("/:provider/models/all", aiController.ListAllModels) // 新增：获取所有模型（包括禁用的）
 			aiGroup.GET("/:provider/config/:model", aiController.GetModelConfig)
 			aiGroup.PUT("/:provider/models/:model/enable", aiController.EnableModel)
 			aiGroup.PUT("/:provider/models/:model/disable", aiController.DisableModel)
 			
-			// API密钥管理端点
-			aiGroup.POST("/:provider/api-key", aiController.SetAPIKey)
-			aiGroup.POST("/:provider/validate", aiController.ValidateAPIKey)
+			// API密钥管理端点（可选认证）
+			aiGroup.POST("/:provider/api-key", middleware.OptionalAuthMiddleware(jwtManager, logger), aiController.SetAPIKey)
+			aiGroup.POST("/:provider/validate", middleware.OptionalAuthMiddleware(jwtManager, logger), aiController.ValidateAPIKey)
+			aiGroup.GET("/api-keys/status", middleware.OptionalAuthMiddleware(jwtManager, logger), aiController.GetAPIKeyStatus)
+			aiGroup.GET("/:provider/api-key/plain", middleware.OptionalAuthMiddleware(jwtManager, logger), aiController.GetPlainAPIKey)
 			
 			// 提供商管理端点
 			aiGroup.GET("/providers", aiController.ListProviders)

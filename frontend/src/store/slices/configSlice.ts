@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { configService, type ConfigData, type ConfigState } from '../../services/configService';
-import type { ProviderInfo, ModelInfo, MCPTool } from '../../types/api';
 
 // 配置状态接口
 export interface ConfigSliceState {
@@ -20,9 +19,14 @@ export interface ConfigSliceState {
 // 异步thunks
 export const loadConfigData = createAsyncThunk(
   'config/loadConfigData',
-  async () => {
-    const data = await configService.getAllConfigData();
-    return data;
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await configService.getAllConfigData();
+      return data;
+    } catch (error) {
+      console.error('configSlice - Failed to load config data:', error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to load config data');
+    }
   }
 );
 
@@ -161,10 +165,10 @@ const configSlice = createSlice({
         if (!state.config.selectedProvider && action.payload.providers.length > 0) {
           const healthyProvider = action.payload.providers.find(p => p.healthy === true);
           if (healthyProvider) {
-            state.config.selectedProvider = healthyProvider.name;
+            state.config.selectedProvider = healthyProvider.type;
             
             // 自动选择第一个模型
-            const providerModels = action.payload.models[healthyProvider.name] || [];
+            const providerModels = action.payload.models[healthyProvider.type] || [];
             if (providerModels.length > 0 && providerModels[0]) {
               state.config.selectedModel = providerModels[0].name;
             }
@@ -230,7 +234,7 @@ export const selectConfigInitialized = (state: { config: ConfigSliceState }) => 
 // 复合选择器
 export const selectCurrentProvider = (state: { config: ConfigSliceState }) => {
   const { data, config } = state.config;
-  return data.providers.find(p => p.name === config.selectedProvider);
+  return data.providers.find(p => p.type === config.selectedProvider);
 };
 
 export const selectCurrentModel = (state: { config: ConfigSliceState }) => {

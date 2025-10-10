@@ -1,8 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import apiService from '../../services/api';
-import type { ProvidersState } from '../../types/store';
+import type { ProviderInfo, ModelInfo, APIKeyInfo } from '../../types/api';
 
+// 提供商状态接口
+export interface ProvidersState {
+  providers: ProviderInfo[];
+  models: Record<string, ModelInfo[]>; // provider -> models
+  apiKeyStatus: Record<string, APIKeyInfo>; // provider -> APIKeyInfo
+  selectedProvider: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
 
 // 异步thunks
 export const fetchProviders = createAsyncThunk(
@@ -13,11 +22,20 @@ export const fetchProviders = createAsyncThunk(
   }
 );
 
+// 自定义异步thunks
 export const fetchModels = createAsyncThunk(
   'providers/fetchModels',
   async (provider: string) => {
     const response = await apiService.getModels(provider);
-    // 将模型对象转换为数组
+    const modelsArray = Object.values(response.data.models);
+    return { provider, models: modelsArray };
+  }
+);
+
+export const fetchAllModels = createAsyncThunk(
+  'providers/fetchAllModels',
+  async (provider: string) => {
+    const response = await apiService.getAllModels(provider);
     const modelsArray = Object.values(response.data.models);
     return { provider, models: modelsArray };
   }
@@ -53,9 +71,26 @@ export const toggleModel = createAsyncThunk(
   }
 );
 
+export const fetchAPIKeyStatus = createAsyncThunk<Record<string, APIKeyInfo>>(
+  'providers/fetchAPIKeyStatus',
+  async () => {
+    const response = await apiService.getAPIKeyStatus();
+    return response.data || {};
+  }
+);
+
+export const fetchPlainAPIKey = createAsyncThunk(
+  'providers/fetchPlainAPIKey',
+  async (provider: string) => {
+    const response = await apiService.getPlainAPIKey(provider);
+    return { provider, apiKey: response.data.api_key };
+  }
+);
+
 const initialState: ProvidersState = {
   providers: [],
   models: {},
+  apiKeyStatus: {},
   selectedProvider: null,
   isLoading: false,
   error: null,
@@ -97,8 +132,8 @@ const providersSlice = createSlice({
         }
         
         // 检查每个提供商的健康状态
-        (action.payload || []).forEach(provider => {
-          const providerInfo = (state.providers || []).find(p => p.name === provider.name);
+        (action.payload || []).forEach((provider: ProviderInfo) => {
+          const providerInfo = (state.providers || []).find((p: ProviderInfo) => p.name === provider.name);
           if (providerInfo) {
             providerInfo.healthy = provider.healthy;
           }
@@ -122,6 +157,20 @@ const providersSlice = createSlice({
         state.isLoading = false;
         state.error = action.error.message || '获取模型列表失败';
       })
+      // fetchAllModels
+      .addCase(fetchAllModels.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchAllModels.fulfilled, (state, action) => {
+        state.isLoading = false;
+        const { provider, models } = action.payload;
+        state.models[provider] = models;
+      })
+      .addCase(fetchAllModels.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message || '获取所有模型列表失败';
+      })
       // setAPIKey
       .addCase(setAPIKey.fulfilled, () => {
         // API密钥设置成功，可以更新相关状态
@@ -132,7 +181,7 @@ const providersSlice = createSlice({
       // validateAPIKey
       .addCase(validateAPIKey.fulfilled, (state, action) => {
         const { provider, valid } = action.payload;
-        const providerInfo = (state.providers || []).find(p => p.name === provider);
+        const providerInfo = (state.providers || []).find((p: ProviderInfo) => p.name === provider);
         if (providerInfo) {
           providerInfo.healthy = valid;
         }
@@ -145,7 +194,7 @@ const providersSlice = createSlice({
         const { provider, model, enabled } = action.payload;
         const models = state.models[provider];
         if (models) {
-          const modelInfo = (models || []).find(m => m.name === model);
+          const modelInfo = (models || []).find((m: ModelInfo) => m.name === model);
           if (modelInfo) {
             modelInfo.enabled = enabled;
           }
@@ -153,6 +202,13 @@ const providersSlice = createSlice({
       })
       .addCase(toggleModel.rejected, (state, action) => {
         state.error = action.error.message || '切换模型状态失败';
+      })
+      // fetchAPIKeyStatus
+      .addCase(fetchAPIKeyStatus.fulfilled, (state, action) => {
+        state.apiKeyStatus = action.payload || {};
+      })
+      .addCase(fetchAPIKeyStatus.rejected, (state, action) => {
+        state.error = action.error.message || '获取API密钥状态失败';
       });
   },
 });

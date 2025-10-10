@@ -83,9 +83,33 @@ func (p *GoogleAIProvider) ChatCompletionStream(ctx context.Context, req *ChatRe
 	return p.service.ChatCompletionStream(ctx, googleaiReq)
 }
 
-// ListModels 列出可用模型
+// ListModels 列出可用模型（仅启用的）
 func (p *GoogleAIProvider) ListModels(ctx context.Context) (map[string]*ModelConfig, error) {
 	models, err := p.service.ListModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 转换GoogleAI模型配置为统一模型配置
+	result := make(map[string]*ModelConfig)
+	for name, config := range models {
+		result[name] = &ModelConfig{
+			Name:        config.Name,
+			DisplayName: config.DisplayName,
+			MaxTokens:   config.MaxTokens,
+			Temperature: config.Temperature,
+			TopP:        config.TopP,
+			TopK:        config.TopK,
+			Enabled:     config.Enabled,
+		}
+	}
+	
+	return result, nil
+}
+
+// ListAllModels 列出所有模型（包括禁用的）
+func (p *GoogleAIProvider) ListAllModels(ctx context.Context) (map[string]*ModelConfig, error) {
+	models, err := p.service.ListAllModels(ctx)
 	if err != nil {
 		return nil, err
 	}

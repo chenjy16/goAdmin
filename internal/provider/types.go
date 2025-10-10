@@ -81,8 +81,11 @@ type Provider interface {
 	// ChatCompletionStream 流式聊天完成
 	ChatCompletionStream(ctx context.Context, req *ChatRequest) (io.ReadCloser, error)
 	
-	// ListModels 列出可用模型
+	// ListModels 列出可用模型（仅启用的）
 	ListModels(ctx context.Context) (map[string]*ModelConfig, error)
+	
+	// ListAllModels 列出所有模型（包括禁用的）
+	ListAllModels(ctx context.Context) (map[string]*ModelConfig, error)
 	
 	// GetModelConfig 获取模型配置
 	GetModelConfig(name string) (*ModelConfig, error)

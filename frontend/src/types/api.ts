@@ -60,6 +60,17 @@ export interface ValidateAPIKeyResponse {
   message?: string;
 }
 
+export interface APIKeyInfo {
+  has_key: boolean;
+  masked_key?: string;
+}
+
+export interface APIKeyStatusResponse {
+  code: number;
+  message: string;
+  data: Record<string, APIKeyInfo>;
+}
+
 // MCP工具相关类型
 export interface MCPTool {
   name: string;

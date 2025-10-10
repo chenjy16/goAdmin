@@ -170,7 +170,7 @@ func (s *OpenAIService) ChatCompletionStream(ctx context.Context, req *ChatCompl
 	return stream, nil
 }
 
-// ListModels 列出可用模型
+// ListModels 列出可用模型（仅启用的）
 func (s *OpenAIService) ListModels(ctx context.Context) (map[string]*openai.ModelConfig, error) {
 	s.logger.Info("Listing OpenAI models")
 	
@@ -187,6 +187,17 @@ func (s *OpenAIService) ListModels(ctx context.Context) (map[string]*openai.Mode
 	
 	s.logger.Info("Listed OpenAI models", logger.Int("count", len(enabledModels)))
 	return enabledModels, nil
+}
+
+// ListAllModels 列出所有模型（包括禁用的）
+func (s *OpenAIService) ListAllModels(ctx context.Context) (map[string]*openai.ModelConfig, error) {
+	s.logger.Info("Listing all OpenAI models")
+	
+	// 获取本地配置的所有模型
+	models := s.modelManager.ListModels()
+	
+	s.logger.Info("Listed all OpenAI models", logger.Int("count", len(models)))
+	return models, nil
 }
 
 // ValidateAPIKey 验证 API 密钥

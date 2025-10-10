@@ -124,15 +124,15 @@ func ProvideGoogleAIService(cfg *config.Config, zapLogger *zap.Logger) (*service
 		DefaultModel: cfg.GoogleAI.DefaultModel,
 	}
 
-	// 创建HTTP客户端
-	httpClient, err := googleai.NewHTTPClient(googleaiConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	// 创建内存管理器
 	keyManager := googleai.NewKeyManager(cfg.GoogleAI.APIKey)
 	modelManager := googleai.NewModelManager()
+
+	// 创建HTTP客户端，传递keyManager
+	httpClient, err := googleai.NewHTTPClient(googleaiConfig, keyManager)
+	if err != nil {
+		return nil, err
+	}
 
 	// 使用全局日志器
 	globalLogger := logger.GetGlobalLogger()
@@ -163,9 +163,14 @@ func ProvideProviderManager(openaiService *service.OpenAIService, googleaiServic
 	return manager
 }
 
-// ProvideAIController 提供统一AI控制器
-func ProvideAIController(providerManager *provider.Manager, logger *zap.Logger) *controllers.AIController {
-	return controllers.NewAIController(providerManager, logger)
+// ProvideAPIKeyService 提供API密钥服务
+func ProvideAPIKeyService(repoManager repository.RepositoryManager) service.APIKeyService {
+	return service.NewAPIKeyService(repoManager.APIKey())
+}
+
+// ProvideAIController 提供AI控制器
+func ProvideAIController(providerManager *provider.Manager, apiKeyService service.APIKeyService, logger *zap.Logger) *controllers.AIController {
+	return controllers.NewAIController(providerManager, apiKeyService, logger)
 }
 
 // ProvideAIAssistantService 提供AI助手服务
@@ -287,6 +292,6 @@ func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService
 }
 
 // ProvideRouter 提供路由器
-func ProvideRouter(mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
-	return route.SetupRoutes(logger, mcpController, aiController, aiAssistantController)
+func ProvideRouter(jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
+	return route.SetupRoutes(logger, jwtManager, mcpController, aiController, aiAssistantController)
 }

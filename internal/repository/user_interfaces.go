@@ -67,6 +67,7 @@ type UserRepository interface {
 // RepositoryManager 数据访问层管理器接口
 type RepositoryManager interface {
 	User() UserRepository
+	APIKey() APIKeyRepository
 	Close() error
 	Ping(ctx context.Context) error
 }

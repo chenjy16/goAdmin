@@ -2,29 +2,19 @@ import React, { useEffect, useState } from 'react';
 import {
   Card,
   Form,
-  Input,
   Switch,
-  Select,
   Button,
   Space,
   Typography,
-  InputNumber,
   message,
   Alert,
   Tabs,
   List,
   Tag,
-  Table,
-  Modal,
-  Row,
-  Col,
   Statistic,
-  Divider,
-  Collapse,
 } from 'antd';
 import {
   SettingOutlined,
-  SaveOutlined,
   ReloadOutlined,
   CloudOutlined,
   CheckCircleOutlined,
@@ -32,59 +22,58 @@ import {
   KeyOutlined,
   ToolOutlined,
   PlayCircleOutlined,
-  CodeOutlined,
-  HistoryOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useAppDispatch, useAppSelector } from '../store';
-import {
-  resetSettings,
-  loadSettings,
-} from '../store/slices/settingsSlice';
+import { useAppDispatch, useAppSelector, store } from '../store';
+
 import {
   fetchProviders,
   fetchModels,
+  fetchAllModels,
   setAPIKey,
   validateAPIKey,
   toggleModel,
+  fetchAPIKeyStatus,
+  fetchPlainAPIKey,
 } from '../store/slices/providersSlice';
+import { setAPIKey as setSettingsAPIKey } from '../store/slices/settingsSlice';
 import {
   initializeMCP,
   fetchMCPTools,
-  executeMCPTool,
   fetchMCPLogs,
+  checkMCPStatus,
 } from '../store/slices/mcpSlice';
-import type { ProviderInfo, ModelInfo, MCPTool, MCPMessage } from '../types/api';
+import type { ProviderInfo, ModelInfo, MCPTool } from '../types/api';
+import { SearchableTable, APIKeyForm } from '../components/common';
 
-const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
-const { TabPane } = Tabs;
+
+const { Title, Text } = Typography;
 
 const SettingsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
-  const { providers, models, isLoading: providersLoading } = useAppSelector(state => state.providers);
+  const { providers, models, apiKeyStatus, isLoading: providersLoading } = useAppSelector(state => state.providers);
   const { 
     tools: mcpTools, 
-    logs: mcpLogs, 
     isInitialized: mcpInitialized, 
     isLoading: mcpLoading, 
     error: mcpError 
   } = useAppSelector(state => state.mcp);
-  const { apiKeys } = settings;
   const [form] = Form.useForm();
-  const [hasChanges, setHasChanges] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   
   // 提供商管理相关状态
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
   const [apiKeyForm] = Form.useForm();
 
+  // API密钥明文显示相关状态
+  const [plainAPIKeys, setPlainAPIKeys] = useState<Record<string, string>>({});
+  const [showingPlainKeys, setShowingPlainKeys] = useState<Record<string, boolean>>({});
+
   // MCP工具相关状态
-  const [executeModalVisible, setExecuteModalVisible] = useState(false);
-  const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
-  const [mcpForm] = Form.useForm();
+  const [forceRender, setForceRender] = useState(0);
 
   useEffect(() => {
     form.setFieldsValue(settings);
@@ -93,30 +82,47 @@ const SettingsPage: React.FC = () => {
   // 初始化提供商数据
   useEffect(() => {
     dispatch(fetchProviders());
+    dispatch(fetchAPIKeyStatus());
   }, [dispatch]);
 
   // 当选择的提供商改变时，获取对应的模型列表
   useEffect(() => {
     if (selectedProvider) {
-      dispatch(fetchModels(selectedProvider));
+      dispatch(fetchAllModels(selectedProvider));
     }
   }, [selectedProvider, dispatch]);
 
   // 根据provider type获取显示名称
   const getProviderDisplayName = (providerType: string): string => {
-    const provider = providers.find(p => p.type === providerType);
-    return provider ? provider.name : providerType;
+    if (!providers || providers.length === 0) {
+      return providerType;
+    }
+    const provider = providers.find(p => p && p.type === providerType);
+    return provider && provider.name ? provider.name : providerType;
   };
 
-  // 初始化MCP数据
+  // 检查MCP状态并加载数据
   useEffect(() => {
-    if (!mcpInitialized) {
-      dispatch(initializeMCP());
-    } else {
-      dispatch(fetchMCPTools());
-      dispatch(fetchMCPLogs());
-    }
-  }, [dispatch, mcpInitialized]);
+    // 首先检查MCP状态
+    dispatch(checkMCPStatus()).then((result) => {
+      if (result.type === 'mcp/checkStatus/fulfilled') {
+        // 如果已初始化，加载工具和日志
+        const payload = result.payload as { initialized: boolean; toolCount: number; lastActivity?: string };
+        if (payload && payload.initialized) {
+          dispatch(fetchMCPTools());
+          dispatch(fetchMCPLogs());
+        }
+      }
+    }).catch((error) => {
+      console.error('检查MCP状态失败:', error);
+    });
+  }, [dispatch]);
+
+  // 监听MCP状态变化
+  useEffect(() => {
+    // 强制重新渲染以确保UI更新
+    setForceRender(prev => prev + 1);
+  }, [mcpInitialized, mcpLoading, mcpError]);
 
   // 提供商管理相关函数
   const handleSetAPIKey = async (values: { apiKey: string }) => {
@@ -128,14 +134,53 @@ const SettingsPage: React.FC = () => {
         apiKey: values.apiKey,
       })).unwrap();
       
+      // 同时更新本地settings状态
+      dispatch(setSettingsAPIKey(selectedProvider, values.apiKey));
+      
       await dispatch(validateAPIKey(selectedProvider)).unwrap();
 
       message.success('API密钥设置成功');
       setApiKeyModalVisible(false);
       apiKeyForm.resetFields();
       dispatch(fetchProviders()); // 刷新提供商状态
+      dispatch(fetchAPIKeyStatus()); // 刷新API密钥状态
     } catch (err) {
       message.error('API密钥设置失败');
+    }
+  };
+
+  // 处理明文显示切换
+  const handleTogglePlainText = async (providerType: string) => {
+    const isCurrentlyShowing = showingPlainKeys[providerType];
+    
+    if (isCurrentlyShowing) {
+      // 隐藏明文
+      setShowingPlainKeys(prev => ({ ...prev, [providerType]: false }));
+      setPlainAPIKeys(prev => {
+        const newKeys = { ...prev };
+        delete newKeys[providerType];
+        return newKeys;
+      });
+    } else {
+      // 显示明文
+      try {
+        const result = await dispatch(fetchPlainAPIKey(providerType)).unwrap();
+        setPlainAPIKeys(prev => ({ ...prev, [providerType]: result.apiKey }));
+        setShowingPlainKeys(prev => ({ ...prev, [providerType]: true }));
+        
+        // 5秒后自动隐藏明文（安全考虑）
+        setTimeout(() => {
+          setShowingPlainKeys(prev => ({ ...prev, [providerType]: false }));
+          setPlainAPIKeys(prev => {
+            const newKeys = { ...prev };
+            delete newKeys[providerType];
+            return newKeys;
+          });
+        }, 5000);
+        
+      } catch (err) {
+        message.error('获取API密钥失败');
+      }
     }
   };
 
@@ -152,39 +197,50 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  // 批量操作处理
+  const handleBatchModelAction = async (action: string, selectedKeys: React.Key[]) => {
+    if (!selectedProvider) return;
+    
+    const providerModels = models[selectedProvider] || [];
+    const selectedModels = providerModels.filter((model: ModelInfo) => 
+      selectedKeys.includes(model.name)
+    );
+    
+    try {
+      const promises = selectedModels.map((model: ModelInfo) => {
+        switch (action) {
+          case 'enable':
+            return dispatch(toggleModel({
+              provider: selectedProvider,
+              model: model.name,
+              enabled: true,
+            })).unwrap();
+          case 'disable':
+            return dispatch(toggleModel({
+              provider: selectedProvider,
+              model: model.name,
+              enabled: false,
+            })).unwrap();
+          default:
+            return Promise.resolve();
+        }
+      });
+      
+      await Promise.all(promises);
+      message.success(`批量${action === 'enable' ? '启用' : '禁用'}成功，共处理 ${selectedModels.length} 个模型`);
+    } catch (err) {
+      message.error(`批量操作失败`);
+    }
+  };
+
   const handleRefreshProviders = () => {
     dispatch(fetchProviders());
     if (selectedProvider) {
-      dispatch(fetchModels(selectedProvider));
+      dispatch(fetchAllModels(selectedProvider));
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setIsLoading(true);
-      const values = await form.validateFields();
-      dispatch(loadSettings(values));
-      setHasChanges(false);
-      message.success('设置已保存');
-    } catch (err) {
-      message.error('保存设置失败');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleReset = () => {
-    dispatch(resetSettings());
-    form.resetFields();
-    setHasChanges(false);
-    message.success('设置已重置为默认值');
-  };
-
-
-
-  const handleFormChange = () => {
-    setHasChanges(true);
-  };
 
   // MCP工具相关函数
   const handleInitializeMCP = () => {
@@ -196,107 +252,14 @@ const SettingsPage: React.FC = () => {
     dispatch(fetchMCPLogs());
   };
 
-  const handleExecuteMCPTool = async (values: Record<string, any>) => {
-    if (!selectedTool) return;
-
-    try {
-      await dispatch(executeMCPTool({
-        name: selectedTool.name,
-        arguments: values,
-      })).unwrap();
-      
-      message.success('工具执行成功');
-      setExecuteModalVisible(false);
-      mcpForm.resetFields();
-      dispatch(fetchMCPLogs()); // 刷新日志
-    } catch (err) {
-      message.error('工具执行失败');
-    }
+  // 调试用：手动检查MCP状态
+  const handleCheckMCPStatus = () => {
+    dispatch(checkMCPStatus());
   };
 
-  const renderExecutionForm = (inputSchema: any) => {
-    if (!inputSchema || !inputSchema.properties) {
-      return <div>该工具无需参数</div>;
-    }
 
-    const properties = inputSchema.properties;
-    const required = inputSchema.required || [];
 
-    return Object.entries(properties).map(([key, schema]: [string, any]) => {
-      const isRequired = required.includes(key);
-      const rules = isRequired ? [{ required: true, message: `请输入${schema.title || key}` }] : [];
 
-      if (schema.type === 'string') {
-        if (schema.enum) {
-          return (
-            <Form.Item
-              key={key}
-              name={key}
-              label={schema.title || key}
-              rules={rules}
-            >
-              <Select placeholder={schema.description}>
-                {schema.enum.map((option: string) => (
-                  <Select.Option key={option} value={option}>
-                    {option}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-          );
-        } else {
-          return (
-            <Form.Item
-              key={key}
-              name={key}
-              label={schema.title || key}
-              rules={rules}
-            >
-              <Input placeholder={schema.description} />
-            </Form.Item>
-          );
-        }
-      } else if (schema.type === 'number' || schema.type === 'integer') {
-        return (
-          <Form.Item
-            key={key}
-            name={key}
-            label={schema.title || key}
-            rules={rules}
-          >
-            <InputNumber
-              placeholder={schema.description}
-              min={schema.minimum}
-              max={schema.maximum}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-        );
-      } else if (schema.type === 'boolean') {
-        return (
-          <Form.Item
-            key={key}
-            name={key}
-            label={schema.title || key}
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-        );
-      } else {
-        return (
-          <Form.Item
-            key={key}
-            name={key}
-            label={schema.title || key}
-            rules={rules}
-          >
-            <TextArea placeholder={schema.description} rows={3} />
-          </Form.Item>
-        );
-      }
-    });
-  };
 
   // 提供商表格列定义
   const providerColumns: ColumnsType<ProviderInfo> = [
@@ -338,11 +301,46 @@ const SettingsPage: React.FC = () => {
       title: 'API密钥',
       key: 'apiKey',
       render: (_, record: ProviderInfo) => {
-        const hasKey = apiKeys[record.name];
+        const keyInfo = apiKeyStatus && apiKeyStatus[record.type];
+        const hasKey = keyInfo?.has_key || false;
+        const maskedKey = keyInfo?.masked_key;
+        const isShowingPlain = showingPlainKeys[record.type];
+        const plainKey = plainAPIKeys[record.type];
+        
         return (
-          <Tag color={hasKey ? 'green' : 'orange'}>
-            {hasKey ? '已配置' : '未配置'}
-          </Tag>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Tag color={hasKey ? 'green' : 'orange'}>
+                {hasKey ? '已配置' : '未配置'}
+              </Tag>
+              {hasKey && (
+                <Button
+                  type="text"
+                  size="small"
+                  icon={isShowingPlain ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  onClick={() => handleTogglePlainText(record.type)}
+                  title={isShowingPlain ? '隐藏明文' : '显示明文'}
+                />
+              )}
+            </div>
+            {hasKey && (
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                {isShowingPlain ? (
+                  <span style={{ 
+                    fontFamily: 'monospace', 
+                    backgroundColor: '#f5f5f5', 
+                    padding: '2px 4px', 
+                    borderRadius: '2px',
+                    color: '#d32f2f'
+                  }}>
+                    {plainKey}
+                  </span>
+                ) : (
+                  maskedKey
+                )}
+              </div>
+            )}
+          </div>
         );
       },
     },
@@ -442,14 +440,13 @@ const SettingsPage: React.FC = () => {
     {
       title: '操作',
       key: 'actions',
-      render: (_, record: MCPTool) => (
+      render: () => (
         <Button
           type="primary"
           size="small"
           icon={<PlayCircleOutlined />}
           onClick={() => {
-            setSelectedTool(record);
-            setExecuteModalVisible(true);
+            message.info('工具执行功能正在开发中');
           }}
         >
           执行
@@ -465,10 +462,12 @@ const SettingsPage: React.FC = () => {
   const mcpSettings = (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <Title level={4} style={{ margin: 0 }}>
-          <ToolOutlined style={{ marginRight: '8px' }} />
-          MCP工具系统
-        </Title>
+        <div>
+          <Title level={4} style={{ margin: 0 }}>
+            <ToolOutlined style={{ marginRight: '8px' }} />
+            MCP工具系统
+          </Title>
+        </div>
         <Space>
           {!mcpInitialized && (
             <Button
@@ -481,52 +480,17 @@ const SettingsPage: React.FC = () => {
             </Button>
           )}
           <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefreshMCPTools}
+            onClick={handleCheckMCPStatus}
             loading={mcpLoading}
-            disabled={!mcpInitialized}
           >
-            刷新工具
+            检查状态 (调试)
           </Button>
         </Space>
       </div>
 
-      {/* 状态统计 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="初始化状态"
-              value={mcpInitialized ? '已初始化' : '未初始化'}
-              prefix={mcpInitialized ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
-              valueStyle={{ color: mcpInitialized ? '#3f8600' : '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="可用工具"
-              value={(mcpTools || []).length}
-              prefix={<ToolOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="日志条数"
-              value={(mcpLogs || []).length}
-              prefix={<HistoryOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
 
       {!mcpInitialized ? (
-        <Card>
+        <Card key={`uninitialized-${forceRender}`}>
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <ExclamationCircleOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
             <h3>MCP工具系统未初始化</h3>
@@ -545,98 +509,25 @@ const SettingsPage: React.FC = () => {
           </div>
         </Card>
       ) : (
-        <>
+        <div key={`initialized-${forceRender}`}>
           {/* 工具列表 */}
-          <Card title="可用工具" style={{ marginBottom: '24px' }}>
-            <Table
-              columns={toolColumns}
-              dataSource={mcpTools}
-              rowKey="name"
-              loading={mcpLoading}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total) => `共 ${total} 个工具`,
-              }}
-            />
-          </Card>
+          <SearchableTable<MCPTool>
+            columns={toolColumns}
+            dataSource={mcpTools}
+            rowKey="name"
+            loading={mcpLoading}
+            searchFields={['name', 'description']}
+            searchPlaceholder="搜索工具..."
+            showRefresh={true}
+            onRefresh={() => dispatch(fetchMCPTools())}
+            refreshLoading={mcpLoading}
+            title="可用工具"
+          />
 
-          {/* 执行日志 */}
-          <Card title="执行日志" style={{ marginBottom: '24px' }}>
-            <List
-              dataSource={mcpLogs}
-              loading={mcpLoading}
-              renderItem={(log: MCPMessage) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<CodeOutlined style={{ color: '#1890ff' }} />}
-                    title={
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>{log.message || '系统消息'}</span>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                          {new Date(log.timestamp).toLocaleString()}
-                        </Text>
-                      </div>
-                    }
-                    description={
-                      <div>
-                        <Paragraph ellipsis={{ rows: 2, expandable: true }}>
-                          {log.data ? (typeof log.data === 'object' ? JSON.stringify(log.data, null, 2) : String(log.data)) : '-'}
-                        </Paragraph>
-                        <Tag color={log.level === 'error' ? 'red' : log.level === 'warn' ? 'orange' : 'blue'}>
-                          {log.level.toUpperCase()}
-                        </Tag>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: false,
-                showQuickJumper: false,
-              }}
-            />
-          </Card>
 
-          {/* 基础设置 */}
-          <Card title="MCP工具设置" style={{ marginBottom: 16 }}>
-            <Form.Item
-              name={['mcp', 'autoInitialize']}
-              label="自动初始化"
-              valuePropName="checked"
-              tooltip="启动时自动初始化MCP工具"
-            >
-              <Switch />
-            </Form.Item>
 
-            <Form.Item
-              name={['mcp', 'timeout']}
-              label="超时时间 (秒)"
-              tooltip="MCP工具执行超时时间"
-            >
-              <InputNumber min={1} max={300} style={{ width: '100%' }} />
-            </Form.Item>
 
-            <Form.Item
-              name={['mcp', 'maxRetries']}
-              label="最大重试次数"
-              tooltip="工具执行失败时的最大重试次数"
-            >
-              <InputNumber min={0} max={10} style={{ width: '100%' }} />
-            </Form.Item>
-
-            <Form.Item
-              name={['mcp', 'enableLogging']}
-              label="启用日志"
-              valuePropName="checked"
-              tooltip="记录MCP工具的执行日志"
-            >
-              <Switch />
-            </Form.Item>
-          </Card>
-        </>
+        </div>
       )}
 
       {mcpError && (
@@ -656,36 +547,29 @@ const SettingsPage: React.FC = () => {
   // 提供商管理组件
   const providersManagement = (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <Title level={4} style={{ margin: 0 }}>
-            <CloudOutlined style={{ marginRight: '8px' }} />
-            AI大模型管理
-          </Title>
-          <Text type="secondary">配置和管理AI服务提供商</Text>
-        </div>
-        <Button
-          type="primary"
-          icon={<ReloadOutlined />}
-          onClick={handleRefreshProviders}
-          loading={providersLoading}
-        >
-          刷新状态
-        </Button>
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          <CloudOutlined style={{ marginRight: '8px' }} />
+          AI大模型管理
+        </Title>
+        <Text type="secondary">配置和管理AI服务提供商</Text>
       </div>
 
 
 
       {/* 提供商列表 */}
-      <Card title="AI提供商列表" style={{ marginBottom: '24px' }}>
-        <Table
-          columns={providerColumns}
-          dataSource={providers}
-          rowKey="name"
-          loading={providersLoading}
-          pagination={false}
-        />
-      </Card>
+      <SearchableTable<ProviderInfo>
+        columns={providerColumns}
+        dataSource={providers}
+        rowKey="name"
+        loading={providersLoading}
+        searchFields={['name', 'description']}
+        searchPlaceholder="搜索提供商..."
+        showRefresh={true}
+        onRefresh={handleRefreshProviders}
+        refreshLoading={providersLoading}
+        title="AI提供商列表"
+      />
 
       {/* 模型管理 */}
       {selectedProvider && (
@@ -705,58 +589,35 @@ const SettingsPage: React.FC = () => {
             </Button>
           }
         >
-          <Table
+          <SearchableTable<ModelInfo>
             columns={modelColumns}
             dataSource={models[selectedProvider] || []}
             rowKey="name"
             loading={providersLoading}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total) => `共 ${total} 个模型`,
-            }}
+            searchFields={['name', 'display_name']}
+            searchPlaceholder="搜索模型..."
+            showRefresh={true}
+            onRefresh={() => selectedProvider && dispatch(fetchAllModels(selectedProvider))}
+            refreshLoading={providersLoading}
+            enableBatchSelection={true}
+            batchActions={[
+              { key: 'enable', label: '批量启用' },
+              { key: 'disable', label: '批量禁用' },
+            ]}
+            onBatchAction={handleBatchModelAction}
           />
         </Card>
       )}
 
       {/* API密钥设置模态框 */}
-      <Modal
-        title={`设置 ${selectedProvider} API密钥`}
+      <APIKeyForm
+        provider={selectedProvider || ''}
         open={apiKeyModalVisible}
-        onCancel={() => {
-          setApiKeyModalVisible(false);
-          apiKeyForm.resetFields();
-        }}
-        footer={null}
-      >
-        <Form
-          form={apiKeyForm}
-          layout="vertical"
-          onFinish={handleSetAPIKey}
-        >
-          <Form.Item
-            name="apiKey"
-            label="API密钥"
-            rules={[{ required: true, message: '请输入API密钥' }]}
-          >
-            <Input.Password placeholder="请输入API密钥" />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                保存
-              </Button>
-              <Button onClick={() => {
-                setApiKeyModalVisible(false);
-                apiKeyForm.resetFields();
-              }}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        onCancel={() => setApiKeyModalVisible(false)}
+        onFinish={handleSetAPIKey}
+        form={apiKeyForm}
+        loading={providersLoading}
+      />
     </div>
   );
 
@@ -816,24 +677,7 @@ const SettingsPage: React.FC = () => {
           </Title>
           <Text type="secondary">配置应用程序的各项设置</Text>
         </div>
-        <Space>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleReset}
-            disabled={isLoading}
-          >
-            重置
-          </Button>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            onClick={handleSave}
-            loading={isLoading}
-            disabled={!hasChanges}
-          >
-            保存设置
-          </Button>
-        </Space>
+
       </div>
 
 
@@ -841,20 +685,29 @@ const SettingsPage: React.FC = () => {
       <Form
         form={form}
         layout="vertical"
-        onValuesChange={handleFormChange}
         initialValues={settings}
       >
-        <Tabs defaultActiveKey="providers" type="card">
-          <TabPane tab={<span><CloudOutlined />AI大模型管理</span>} key="providers">
-            {providersManagement}
-          </TabPane>
-          <TabPane tab="MCP工具" key="mcp">
-            {mcpSettings}
-          </TabPane>
-          <TabPane tab="关于" key="about">
-            {aboutInfo}
-          </TabPane>
-        </Tabs>
+        <Tabs 
+          defaultActiveKey="providers" 
+          type="card"
+          items={[
+            {
+              key: 'providers',
+              label: <span><CloudOutlined />AI大模型管理</span>,
+              children: providersManagement,
+            },
+            {
+              key: 'mcp',
+              label: 'MCP工具',
+              children: mcpSettings,
+            },
+            {
+              key: 'about',
+              label: '关于',
+              children: aboutInfo,
+            },
+          ]}
+        />
       </Form>
     </div>
   );

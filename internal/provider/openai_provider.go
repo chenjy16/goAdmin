@@ -81,9 +81,32 @@ func (p *OpenAIProvider) ChatCompletionStream(ctx context.Context, req *ChatRequ
 	return p.service.ChatCompletionStream(ctx, openaiReq)
 }
 
-// ListModels 列出可用模型
+// ListModels 列出可用模型（仅启用的）
 func (p *OpenAIProvider) ListModels(ctx context.Context) (map[string]*ModelConfig, error) {
 	models, err := p.service.ListModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 转换OpenAI模型配置为统一模型配置
+	result := make(map[string]*ModelConfig)
+	for name, config := range models {
+		result[name] = &ModelConfig{
+			Name:        config.Name,
+			DisplayName: config.Name, // OpenAI使用Name作为显示名称
+			MaxTokens:   config.MaxTokens,
+			Temperature: config.Temperature,
+			TopP:        config.TopP,
+			Enabled:     config.Enabled,
+		}
+	}
+	
+	return result, nil
+}
+
+// ListAllModels 列出所有模型（包括禁用的）
+func (p *OpenAIProvider) ListAllModels(ctx context.Context) (map[string]*ModelConfig, error) {
+	models, err := p.service.ListAllModels(ctx)
 	if err != nil {
 		return nil, err
 	}

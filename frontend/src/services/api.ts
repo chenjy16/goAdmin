@@ -1,11 +1,10 @@
-import axios from 'axios';
-import type { AxiosInstance, AxiosResponse } from 'axios';
+import { BaseService } from './base/BaseService';
+import { serviceFactory, getProviderService, getMCPService, getAssistantService } from './ServiceFactory';
 import type {
   ApiResponse,
   ProvidersResponse,
   ModelsResponse,
   ModelConfigResponse,
-  SetAPIKeyRequest,
   ValidateAPIKeyResponse,
   MCPToolsResponse,
   MCPExecuteRequest,
@@ -13,145 +12,130 @@ import type {
   MCPMessage,
   ChatRequest,
   ChatResponse,
-  HealthResponse
+  HealthResponse,
+  APIKeyInfo
 } from '../types/api';
 
-class ApiService {
-  private api: AxiosInstance;
-  private baseURL: string;
-
+/**
+ * 统一API服务类
+ * 作为所有服务的统一入口点，保持向后兼容性
+ * @deprecated 建议直接使用具体的服务类（ProviderService, MCPService, AssistantService）
+ */
+class ApiService extends BaseService {
   constructor() {
-    // 在开发环境使用代理，生产环境使用环境变量
-    this.baseURL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080');
-    this.api = axios.create({
-      baseURL: this.baseURL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    super();
+    // 确保服务工厂已初始化
+    this.ensureServicesInitialized();
+  }
 
-    // 请求拦截器
-    this.api.interceptors.request.use(
-      (config) => {
-        // 可以在这里添加认证token等
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
+  private async ensureServicesInitialized(): Promise<void> {
+    if (!serviceFactory.isInitialized()) {
+      try {
+        await serviceFactory.initialize();
+      } catch (error) {
+        console.warn('Failed to initialize services:', error);
       }
-    );
-
-    // 响应拦截器
-    this.api.interceptors.response.use(
-      (response: AxiosResponse) => {
-        return response;
-      },
-      (error) => {
-        // 统一错误处理
-        const errorMessage = error.response?.data?.message || error.message || '请求失败';
-        return Promise.reject(new Error(errorMessage));
-      }
-    );
+    }
   }
 
   // 健康检查
   async healthCheck(): Promise<HealthResponse> {
-    const response = await this.api.get<HealthResponse>('/health');
-    return response.data;
+    return this.get<HealthResponse>('/health');
   }
 
-  // 提供商相关API
+  // 提供商相关API - 委托给ProviderService
   async getProviders(): Promise<ProvidersResponse> {
-    const response = await this.api.get<ProvidersResponse>('/api/v1/ai/providers');
-    return response.data;
+    return getProviderService().getProviders();
   }
 
-  // 模型相关API
   async getModels(provider: string): Promise<ModelsResponse> {
-    const response = await this.api.get<ModelsResponse>(`/api/v1/ai/${provider}/models`);
-    return response.data;
+    return getProviderService().getModels(provider);
+  }
+
+  async getAllModels(provider: string): Promise<ModelsResponse> {
+    return getProviderService().getAllModels(provider);
   }
 
   async getModelConfig(provider: string, model: string): Promise<ModelConfigResponse> {
-    const response = await this.api.get<ModelConfigResponse>(`/api/v1/ai/${provider}/config/${model}`);
-    return response.data;
+    return getProviderService().getModelConfig(provider, model);
   }
 
   async enableModel(provider: string, model: string): Promise<ApiResponse> {
-    const response = await this.api.put<ApiResponse>(`/api/v1/ai/${provider}/models/${model}/enable`);
-    return response.data;
+    return getProviderService().enableModel(provider, model);
   }
 
   async disableModel(provider: string, model: string): Promise<ApiResponse> {
-    const response = await this.api.put<ApiResponse>(`/api/v1/ai/${provider}/models/${model}/disable`);
-    return response.data;
+    return getProviderService().disableModel(provider, model);
   }
 
-  // API密钥相关API
   async setAPIKey(provider: string, apiKey: string): Promise<ApiResponse> {
-    const response = await this.api.post<ApiResponse>(`/api/v1/ai/${provider}/api-key`, {
-      api_key: apiKey
-    } as SetAPIKeyRequest);
-    return response.data;
+    return getProviderService().setAPIKey(provider, apiKey);
   }
 
   async validateAPIKey(provider: string): Promise<ValidateAPIKeyResponse> {
-    const response = await this.api.post<ValidateAPIKeyResponse>(`/api/v1/ai/${provider}/validate`);
-    return response.data;
+    return getProviderService().validateAPIKey(provider);
   }
 
+  async getAPIKeyStatus(): Promise<ApiResponse<Record<string, APIKeyInfo>>> {
+    return getProviderService().getAPIKeyStatus();
+  }
 
+  async getPlainAPIKey(provider: string): Promise<ApiResponse<{ provider: string; api_key: string }>> {
+    return getProviderService().getPlainAPIKey(provider);
+  }
 
-  // MCP工具相关API
+  // MCP工具相关API - 委托给MCPService
   async initializeMCP(): Promise<ApiResponse> {
-    const response = await this.api.post<ApiResponse>('/api/v1/mcp/initialize', {
-      protocolVersion: '2024-11-05',
-      clientInfo: {
-        name: 'Admin Frontend',
-        version: '1.0.0'
-      }
-    });
-    return response.data;
+    const mcpService = getMCPService();
+    await mcpService.initialize();
+    return { message: 'MCP initialized successfully', status: 'success' };
   }
 
   async getMCPTools(): Promise<MCPToolsResponse> {
-    const response = await this.api.get<MCPToolsResponse>('/api/v1/mcp/tools');
-    return response.data;
+    return getMCPService().getTools();
   }
 
   async executeMCPTool(request: MCPExecuteRequest): Promise<MCPExecuteResponse> {
-    const response = await this.api.post<MCPExecuteResponse>('/api/v1/mcp/execute', request);
-    return response.data;
+    return getMCPService().executeTool(request);
   }
 
   async getMCPLogs(): Promise<MCPMessage[]> {
-    const response = await this.api.get<MCPMessage[]>('/api/v1/mcp/logs');
-    return response.data;
+    return getMCPService().getLogs();
   }
 
   async getMCPLog(id: string): Promise<MCPMessage> {
-    const response = await this.api.get<MCPMessage>(`/api/v1/mcp/logs/${id}`);
-    return response.data;
+    return getMCPService().getLog(id);
   }
 
-  // MCP SSE事件流
   createMCPEventSource(): EventSource {
-    return new EventSource(`${this.baseURL}/api/v1/mcp/sse`);
+    return getMCPService().createEventSource();
   }
 
-  // AI助手相关API
+  async getMCPStatus(): Promise<{ initialized: boolean; toolCount: number; lastActivity?: string }> {
+    const response = await getMCPService().getStatus();
+    return response.data || { initialized: false, toolCount: 0 };
+  }
+
+  // AI助手相关API - 委托给AssistantService
   async initializeAssistant(): Promise<ApiResponse> {
-    const response = await this.api.post<ApiResponse>('/api/v1/assistant/initialize');
-    return response.data;
+    const assistantService = getAssistantService();
+    await assistantService.initialize();
+    return { message: 'Assistant initialized successfully', status: 'success' };
   }
 
   async assistantChat(request: ChatRequest): Promise<ChatResponse> {
-    const response = await this.api.post<{code: number; message: string; data: ChatResponse}>('/api/v1/assistant/chat', request);
-    return response.data.data;
+    return getAssistantService().chat(request);
   }
 }
 
 // 创建单例实例
 export const apiService = new ApiService();
 export default apiService;
+
+// 同时导出新的服务架构
+export {
+  serviceFactory,
+  getProviderService,
+  getMCPService,
+  getAssistantService
+} from './ServiceFactory';

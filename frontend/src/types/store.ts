@@ -5,6 +5,7 @@ import type { ConfigSliceState } from '../store/slices/configSlice';
 export interface ProvidersState {
   providers: ProviderInfo[];
   models: Record<string, ModelInfo[]>; // provider -> models
+  apiKeyStatus: Record<string, any>; // provider -> APIKeyInfo
   selectedProvider: string | null;
   isLoading: boolean;
   error: string | null;

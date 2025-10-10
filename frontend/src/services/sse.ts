@@ -35,7 +35,6 @@ export class SSEService {
     this.eventSource = new EventSource(this.url);
 
     this.eventSource.onopen = (event) => {
-      console.log('SSE连接已建立');
       this.isConnecting = false;
       this.reconnectAttempts = 0;
       this.options.onOpen?.(event);
@@ -93,7 +92,6 @@ export class SSEService {
     if (!this.shouldReconnect) return;
 
     this.reconnectAttempts++;
-    console.log(`尝试重连 SSE (${this.reconnectAttempts}/${this.options.maxReconnectAttempts})`);
 
     setTimeout(() => {
       if (this.shouldReconnect) {
@@ -174,16 +172,16 @@ export const createChatSSE = (
   onMessage: (event: SSEEvent) => void,
   onError?: (error: Event) => void
 ): SSEService => {
-  const url = `/api/chat/${conversationId}/stream`;
+  const url = `/api/v1/chat/${conversationId}/stream`;
   
   return sseManager.createConnection(`chat-${conversationId}`, url, {
     onMessage,
     onError,
     onOpen: () => {
-      console.log(`聊天SSE连接已建立: ${conversationId}`);
+      // Chat SSE connection established
     },
     onClose: () => {
-      console.log(`聊天SSE连接已关闭: ${conversationId}`);
+      // Chat SSE connection closed
     },
     reconnectInterval: 2000,
     maxReconnectAttempts: 3,
@@ -195,16 +193,16 @@ export const createMCPSSE = (
   onMessage: (event: SSEEvent) => void,
   onError?: (error: Event) => void
 ): SSEService => {
-  const url = '/api/mcp/stream';
+  const url = '/api/v1/mcp/sse';
   
   return sseManager.createConnection('mcp-tools', url, {
     onMessage,
     onError,
     onOpen: () => {
-      console.log('MCP工具SSE连接已建立');
+      // MCP tools SSE connection established
     },
     onClose: () => {
-      console.log('MCP工具SSE连接已关闭');
+      // MCP tools SSE connection closed
     },
     reconnectInterval: 3000,
     maxReconnectAttempts: 5,
@@ -217,16 +215,16 @@ export const createAssistantSSE = (
   onMessage: (event: SSEEvent) => void,
   onError?: (error: Event) => void
 ): SSEService => {
-  const url = `/api/assistant/${conversationId}/stream`;
+  const url = `/api/v1/assistant/${conversationId}/stream`;
   
   return sseManager.createConnection(`assistant-${conversationId}`, url, {
     onMessage,
     onError,
     onOpen: () => {
-      console.log(`助手SSE连接已建立: ${conversationId}`);
+      // Assistant SSE connection established
     },
     onClose: () => {
-      console.log(`助手SSE连接已关闭: ${conversationId}`);
+      // Assistant SSE connection closed
     },
     reconnectInterval: 2000,
     maxReconnectAttempts: 3,

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"go-springAi/internal/database/generated/api_keys"
 	"go-springAi/internal/database/generated/users"
 	"go-springAi/internal/logger"
 
@@ -13,8 +14,9 @@ import (
 
 // DB wraps the database connection and provides access to generated queries
 type DB struct {
-	conn  *sql.DB
-	Users *users.Queries
+	conn    *sql.DB
+	Users   *users.Queries
+	APIKeys *api_keys.Queries
 }
 
 // NewConnection creates a new database connection
@@ -49,8 +51,9 @@ func NewConnection(driverName, dataSourceName string) (*DB, error) {
 		logger.String("driver", driverName))
 
 	return &DB{
-		conn:  conn,
-		Users: users.New(conn),
+		conn:    conn,
+		Users:   users.New(conn),
+		APIKeys: api_keys.New(conn),
 	}, nil
 }
 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Card,
-  Table,
   Button,
   Space,
   Modal,
@@ -11,23 +10,18 @@ import {
   message,
   Tag,
   Divider,
-  Row,
-  Col,
-  Statistic,
   List,
   Typography,
   Collapse,
   Alert,
 } from 'antd';
+
 import {
   ToolOutlined,
   PlayCircleOutlined,
-  ReloadOutlined,
   SettingOutlined,
-  CheckCircleOutlined,
   ExclamationCircleOutlined,
   CodeOutlined,
-  HistoryOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -36,8 +30,10 @@ import {
   fetchMCPTools,
   executeMCPTool,
   fetchMCPLogs,
+  checkMCPStatus,
 } from '../store/slices/mcpSlice';
 import type { MCPTool, MCPMessage } from '../types/api';
+import { SearchableTable, FormModal } from '../components/common';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
@@ -56,10 +52,23 @@ const MCPToolsPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<MCPTool | null>(null);
   const [form] = Form.useForm();
 
+  // 检查MCP状态并加载数据
   useEffect(() => {
-    if (!isInitialized) {
-      dispatch(initializeMCP());
-    } else {
+    // 首先检查MCP状态
+    dispatch(checkMCPStatus()).then((result) => {
+      if (checkMCPStatus.fulfilled.match(result)) {
+        // 如果已初始化，加载工具和日志
+        if (result.payload.initialized) {
+          dispatch(fetchMCPTools());
+          dispatch(fetchMCPLogs());
+        }
+      }
+    });
+  }, [dispatch]);
+
+  // 当MCP状态变为已初始化时，加载数据
+  useEffect(() => {
+    if (isInitialized) {
       dispatch(fetchMCPTools());
       dispatch(fetchMCPLogs());
     }
@@ -67,11 +76,6 @@ const MCPToolsPage: React.FC = () => {
 
   const handleInitializeMCP = () => {
     dispatch(initializeMCP());
-  };
-
-  const handleRefreshTools = () => {
-    dispatch(fetchMCPTools());
-    dispatch(fetchMCPLogs());
   };
 
   const handleExecuteTool = async (values: Record<string, any>) => {
@@ -252,61 +256,19 @@ const MCPToolsPage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1>MCP工具系统</h1>
-        <Space>
-          {!isInitialized && (
-            <Button
-              type="primary"
-              icon={<SettingOutlined />}
-              onClick={handleInitializeMCP}
-              loading={isLoading}
-            >
-              初始化MCP
-            </Button>
-          )}
+        {!isInitialized && (
           <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefreshTools}
+            type="primary"
+            icon={<SettingOutlined />}
+            onClick={handleInitializeMCP}
             loading={isLoading}
-            disabled={!isInitialized}
           >
-            刷新工具
+            初始化MCP
           </Button>
-        </Space>
+        )}
       </div>
 
-      {/* 状态统计 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="初始化状态"
-              value={isInitialized ? '已初始化' : '未初始化'}
-              prefix={isInitialized ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
-              valueStyle={{ color: isInitialized ? '#3f8600' : '#cf1322' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="可用工具"
-              value={(tools || []).length}
-              prefix={<ToolOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="日志条数"
-              value={(logs || []).length}
-              prefix={<HistoryOutlined />}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+
 
       {!isInitialized ? (
         <Card>
@@ -330,20 +292,18 @@ const MCPToolsPage: React.FC = () => {
       ) : (
         <>
           {/* 工具列表 */}
-          <Card title="可用工具" style={{ marginBottom: '24px' }}>
-            <Table
-              columns={toolColumns}
-              dataSource={tools}
-              rowKey="name"
-              loading={isLoading}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total) => `共 ${total} 个工具`,
-              }}
-            />
-          </Card>
+          <SearchableTable<MCPTool>
+            columns={toolColumns}
+            dataSource={tools}
+            rowKey="name"
+            loading={isLoading}
+            searchFields={['name', 'description']}
+            searchPlaceholder="搜索工具..."
+            showRefresh={true}
+            onRefresh={() => dispatch(fetchMCPTools())}
+            refreshLoading={isLoading}
+            title="可用工具"
+          />
 
           {/* 执行日志 */}
           <Card title="执行日志" extra={
@@ -400,7 +360,7 @@ const MCPToolsPage: React.FC = () => {
       )}
 
       {/* 工具执行模态框 */}
-      <Modal
+      <FormModal
         title={`执行工具: ${selectedTool?.name}`}
         open={executeModalVisible}
         onCancel={() => {
@@ -408,38 +368,21 @@ const MCPToolsPage: React.FC = () => {
           form.resetFields();
           setSelectedTool(null);
         }}
-        footer={null}
+        onFinish={handleExecuteTool}
+        form={form}
+        loading={isLoading}
         width={600}
+        okText="执行工具"
+        cancelText="取消"
       >
         {selectedTool && (
           <div>
             <Paragraph>{selectedTool.description}</Paragraph>
             <Divider />
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleExecuteTool}
-            >
-              {renderExecutionForm(selectedTool.inputSchema)}
-              
-              <Form.Item style={{ marginBottom: 0, marginTop: '24px' }}>
-                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                  <Button onClick={() => {
-                    setExecuteModalVisible(false);
-                    form.resetFields();
-                    setSelectedTool(null);
-                  }}>
-                    取消
-                  </Button>
-                  <Button type="primary" htmlType="submit" loading={isLoading}>
-                    执行工具
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
+            {renderExecutionForm(selectedTool.inputSchema)}
           </div>
         )}
-      </Modal>
+      </FormModal>
 
       {error && (
         <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff2f0', border: '1px solid #ffccc7', borderRadius: '6px' }}>

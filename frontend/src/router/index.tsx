@@ -1,9 +1,11 @@
+import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import AssistantPage from '../pages/AssistantPage';
 import SettingsPage from '../pages/SettingsPage';
+import MCPToolsPage from '../pages/MCPToolsPage';
+import AssistantPage from '../pages/AssistantPage';
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
@@ -13,12 +15,16 @@ export const router = createBrowserRouter([
         element: <Navigate to="/assistant" replace />,
       },
       {
-        path: 'assistant',
-        element: <AssistantPage />,
-      },
-      {
         path: 'settings',
         element: <SettingsPage />,
+      },
+      {
+        path: 'mcp-tools',
+        element: <MCPToolsPage />,
+      },
+      {
+        path: 'assistant',
+        element: <AssistantPage />,
       },
     ],
   },

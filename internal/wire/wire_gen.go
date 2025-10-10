@@ -7,10 +7,12 @@
 package wire
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"go-springAi/internal/config"
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
+	"go-springAi/internal/dto"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
@@ -43,13 +45,14 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	}
 	openAIService := ProvideOpenAIService(config, logger)
 	mcpService := ProvideMCPService(repositoryManager, googleAIService, openAIService, logger)
+	apiKeyService := ProvideAPIKeyService(repositoryManager)
 	manager := ProvideProviderManager(openAIService, googleAIService, logger)
 	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, logger)
 	mcpController := ProvideMCPController(mcpService, logger)
 	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger)
-	aiController := ProvideAIController(manager, logger)
-	engine := ProvideRouter(mcpController, aiController, aiAssistantController, logger)
-	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, aiAssistantService, mcpController, aiAssistantController, manager, aiController, engine)
+	aiController := ProvideAIController(manager, apiKeyService, logger)
+	engine := ProvideRouter(jwtManager, mcpController, aiController, aiAssistantController, logger)
+	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, apiKeyService, aiAssistantService, mcpController, aiAssistantController, manager, aiController, engine)
 	return app, func() {
 		cleanup()
 	}, nil
@@ -68,6 +71,7 @@ type App struct {
 	MCPService            service.MCPService
 	OpenAIService         *service.OpenAIService
 	GoogleAIService       *service.GoogleAIService
+	APIKeyService         service.APIKeyService
 	AIAssistantService    *service.AIAssistantService
 	MCPController         *controllers.MCPController
 	AIAssistantController *controllers.AIAssistantController
@@ -86,6 +90,7 @@ func NewApp(config2 *config.Config,
 	mcpService service.MCPService,
 	openaiService *service.OpenAIService,
 	googleaiService *service.GoogleAIService,
+	apiKeyService service.APIKeyService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
 	aiAssistantController *controllers.AIAssistantController,
@@ -103,6 +108,7 @@ func NewApp(config2 *config.Config,
 		MCPService:            mcpService,
 		OpenAIService:         openaiService,
 		GoogleAIService:       googleaiService,
+		APIKeyService:         apiKeyService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
 		AIAssistantController: aiAssistantController,
@@ -110,6 +116,8 @@ func NewApp(config2 *config.Config,
 		AIController:          aiController,
 		Router:                router,
 	}
+
+	app.initializeMCPSystem()
 
 	cleanup := func() {
 		if app.DB != nil {
@@ -121,4 +129,36 @@ func NewApp(config2 *config.Config,
 	}
 
 	return app, cleanup
+}
+
+// initializeMCPSystem 自动初始化MCP系统
+func (app *App) initializeMCPSystem() {
+	if app.MCPService == nil {
+		app.Logger.Warn("MCP service is not available, skipping auto-initialization")
+		return
+	}
+
+	initReq := &dto.MCPInitializeRequest{
+		ProtocolVersion: "2024-11-05",
+		Capabilities: dto.MCPCapabilities{
+			Tools: &dto.MCPToolsCapability{
+				ListChanged: true,
+			},
+			Logging: &dto.MCPLoggingCapability{},
+		},
+		ClientInfo: dto.MCPClientInfo{
+			Name:    "Auto-initialized MCP Server",
+			Version: "1.0.0",
+		},
+	}
+
+	ctx := context.Background()
+
+	response, err := app.MCPService.Initialize(ctx, initReq)
+	if err != nil {
+		app.Logger.Error("Failed to auto-initialize MCP system", zap.Error(err), zap.String("module", "startup"), zap.String("operation", "mcp_auto_init"))
+		return
+	}
+
+	app.Logger.Info("MCP system auto-initialized successfully", zap.String("protocolVersion", response.ProtocolVersion), zap.String("serverName", response.ServerInfo.Name), zap.String("serverVersion", response.ServerInfo.Version), zap.String("module", "startup"), zap.String("operation", "mcp_auto_init"))
 }

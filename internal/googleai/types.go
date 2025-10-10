@@ -98,6 +98,9 @@ type Client interface {
 
 	// ValidateAPIKey 验证API密钥
 	ValidateAPIKey(ctx context.Context) error
+
+	// ResetClient 重置客户端，强制重新初始化
+	ResetClient()
 }
 
 // ModelManager 模型管理器接口

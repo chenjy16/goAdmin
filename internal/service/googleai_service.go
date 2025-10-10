@@ -171,7 +171,7 @@ func (s *GoogleAIService) ChatCompletionStream(ctx context.Context, req *GoogleA
 	return stream, nil
 }
 
-// ListModels 列出可用模型
+// ListModels 列出可用模型（仅启用的）
 func (s *GoogleAIService) ListModels(ctx context.Context) (map[string]*googleai.ModelConfig, error) {
 	s.logger.Info("Listing Google AI models")
 	
@@ -188,6 +188,17 @@ func (s *GoogleAIService) ListModels(ctx context.Context) (map[string]*googleai.
 	
 	s.logger.Info("Listed Google AI models", logger.Int("count", len(enabledModels)))
 	return enabledModels, nil
+}
+
+// ListAllModels 列出所有模型（包括禁用的）
+func (s *GoogleAIService) ListAllModels(ctx context.Context) (map[string]*googleai.ModelConfig, error) {
+	s.logger.Info("Listing all Google AI models")
+	
+	// 获取本地配置的所有模型
+	models := s.modelManager.ListModels()
+	
+	s.logger.Info("Listed all Google AI models", logger.Int("count", len(models)))
+	return models, nil
 }
 
 // ValidateAPIKey 验证 API 密钥
@@ -213,6 +224,10 @@ func (s *GoogleAIService) SetAPIKey(key string) error {
 		s.logger.Error("Failed to set API key", logger.ZapError(err))
 		return fmt.Errorf("failed to set API key: %w", err)
 	}
+	
+	// 重置客户端，强制使用新的API密钥重新初始化
+	s.client.ResetClient()
+	s.logger.Info("Client reset after API key update")
 	
 	s.logger.Info("API key set successfully")
 	return nil

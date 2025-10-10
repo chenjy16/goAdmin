@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   Card,
-  Table,
   Button,
   Switch,
   Tag,
   Space,
-  Modal,
   Form,
-  Input,
   message,
-  Row,
-  Col,
   Statistic,
 } from 'antd';
 import {
@@ -26,17 +21,19 @@ import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   fetchProviders,
-  fetchModels,
+  fetchAllModels,
   setAPIKey,
   validateAPIKey,
   toggleModel,
+  fetchAPIKeyStatus,
 } from '../store/slices/providersSlice';
+import { setAPIKey as setSettingsAPIKey } from '../store/slices/settingsSlice';
 import type { ProviderInfo, ModelInfo } from '../types/api';
+import { SearchableTable, APIKeyForm } from '../components/common';
 
 const ProvidersPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { providers, models, isLoading, error } = useAppSelector(state => state.providers);
-  const { apiKeys } = useAppSelector(state => state.settings);
+  const { providers, models, apiKeyStatus, isLoading, error } = useAppSelector(state => state.providers);
 
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
@@ -44,11 +41,12 @@ const ProvidersPage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchProviders());
+    dispatch(fetchAPIKeyStatus());
   }, [dispatch]);
 
   useEffect(() => {
     if (selectedProvider) {
-      dispatch(fetchModels(selectedProvider));
+      dispatch(fetchAllModels(selectedProvider));
     }
   }, [dispatch, selectedProvider]);
 
@@ -61,12 +59,16 @@ const ProvidersPage: React.FC = () => {
         apiKey: values.apiKey,
       })).unwrap();
       
+      // 同时更新本地settings状态
+      dispatch(setSettingsAPIKey(selectedProvider, values.apiKey));
+      
       await dispatch(validateAPIKey(selectedProvider)).unwrap();
 
       message.success('API密钥设置成功');
       setApiKeyModalVisible(false);
       form.resetFields();
       dispatch(fetchProviders()); // 刷新提供商状态
+      dispatch(fetchAPIKeyStatus()); // 刷新API密钥状态
     } catch (err) {
       message.error('API密钥设置失败');
     }
@@ -88,7 +90,7 @@ const ProvidersPage: React.FC = () => {
   const handleRefreshProviders = () => {
     dispatch(fetchProviders());
     if (selectedProvider) {
-      dispatch(fetchModels(selectedProvider));
+      dispatch(fetchAllModels(selectedProvider));
     }
   };
 
@@ -131,11 +133,21 @@ const ProvidersPage: React.FC = () => {
       title: 'API密钥',
       key: 'apiKey',
       render: (_, record: ProviderInfo) => {
-        const hasKey = apiKeys[record.name];
+        const keyInfo = apiKeyStatus && apiKeyStatus[record.type];
+        const hasKey = keyInfo?.has_key || false;
+        const maskedKey = keyInfo?.masked_key;
+        
         return (
-          <Tag color={hasKey ? 'green' : 'orange'}>
-            {hasKey ? '已配置' : '未配置'}
-          </Tag>
+          <div>
+            <Tag color={hasKey ? 'green' : 'orange'}>
+              {hasKey ? '已配置' : '未配置'}
+            </Tag>
+            {hasKey && maskedKey && (
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                {maskedKey}
+              </div>
+            )}
+          </div>
         );
       },
     },
@@ -210,7 +222,7 @@ const ProvidersPage: React.FC = () => {
       render: (enabled: boolean, record: ModelInfo) => (
         <Switch
           checked={enabled}
-          onChange={(checked) => handleToggleModel(selectedProvider!, record.id, checked)}
+          onChange={(checked) => handleToggleModel(selectedProvider!, record.name, checked)}
           checkedChildren="启用"
           unCheckedChildren="禁用"
         />
@@ -218,68 +230,34 @@ const ProvidersPage: React.FC = () => {
     },
   ];
 
-  const healthyProviders = (providers || []).filter(p => p.healthy).length;
-  const configuredProviders = (providers || []).filter(p => apiKeys[p.name]).length;
+
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <h1>AI提供商管理</h1>
-        <Button
-          type="primary"
-          icon={<ReloadOutlined />}
-          onClick={handleRefreshProviders}
-          loading={isLoading}
-        >
-          刷新状态
-        </Button>
       </div>
 
-      {/* 统计信息 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="提供商总数"
-              value={(providers || []).length}
-              prefix={<CloudOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="健康状态"
-              value={healthyProviders}
-              suffix={`/ ${(providers || []).length}`}
-              valueStyle={{ color: healthyProviders === (providers || []).length ? '#3f8600' : '#cf1322' }}
-              prefix={<CheckCircleOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="已配置密钥"
-              value={configuredProviders}
-              suffix={`/ ${(providers || []).length}`}
-              valueStyle={{ color: configuredProviders === (providers || []).length ? '#3f8600' : '#fa8c16' }}
-              prefix={<KeyOutlined />}
-            />
-          </Card>
-        </Col>
-      </Row>
+
 
       {/* 提供商列表 */}
-      <Card title="AI提供商列表" style={{ marginBottom: '24px' }}>
-        <Table
-          columns={providerColumns}
-          dataSource={providers}
-          rowKey="name"
-          loading={isLoading}
-          pagination={false}
-        />
-      </Card>
+      <SearchableTable<ProviderInfo>
+        columns={providerColumns}
+        dataSource={providers}
+        rowKey="name"
+        loading={isLoading}
+        searchFields={['name', 'description']}
+        searchPlaceholder="搜索提供商..."
+        showRefresh={true}
+        onRefresh={() => dispatch(fetchProviders())}
+        refreshLoading={isLoading}
+        title="AI提供商列表"
+        onRow={(record) => ({
+          onClick: () => {
+            setSelectedProvider(record.name);
+          },
+        })}
+      />
 
       {/* 模型管理 */}
       {selectedProvider && (
@@ -299,65 +277,29 @@ const ProvidersPage: React.FC = () => {
             </Button>
           }
         >
-          <Table
+          <SearchableTable<ModelInfo>
             columns={modelColumns}
             dataSource={models[selectedProvider] || []}
             rowKey="id"
             loading={isLoading}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total) => `共 ${total} 个模型`,
-            }}
+            searchFields={['name', 'description']}
+            searchPlaceholder="搜索模型..."
+            showRefresh={true}
+            onRefresh={() => selectedProvider && dispatch(fetchAllModels(selectedProvider))}
+            refreshLoading={isLoading}
           />
         </Card>
       )}
 
       {/* API密钥设置模态框 */}
-      <Modal
-        title={`设置 ${selectedProvider} API密钥`}
+      <APIKeyForm
+        provider={selectedProvider || ''}
         open={apiKeyModalVisible}
-        onCancel={() => {
-          setApiKeyModalVisible(false);
-          form.resetFields();
-        }}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSetAPIKey}
-        >
-          <Form.Item
-            label="API密钥"
-            name="apiKey"
-            rules={[
-              { required: true, message: '请输入API密钥' },
-              { min: 10, message: 'API密钥长度至少10个字符' },
-            ]}
-          >
-            <Input.Password
-              placeholder="请输入API密钥"
-              autoComplete="off"
-            />
-          </Form.Item>
-          
-          <Form.Item style={{ marginBottom: 0 }}>
-            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={() => {
-                setApiKeyModalVisible(false);
-                form.resetFields();
-              }}>
-                取消
-              </Button>
-              <Button type="primary" htmlType="submit" loading={isLoading}>
-                保存并验证
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        onCancel={() => setApiKeyModalVisible(false)}
+        onFinish={handleSetAPIKey}
+        form={form}
+        loading={isLoading}
+      />
 
       {error && (
         <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff2f0', border: '1px solid #ffccc7', borderRadius: '6px' }}>

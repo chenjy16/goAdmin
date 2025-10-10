@@ -305,6 +305,54 @@ func (mc *MCPController) GetExecutionLog(c *gin.Context) {
 	response.Success(c, http.StatusOK, "Execution log retrieved successfully", result)
 }
 
+// GetStatus 获取MCP系统状态
+func (mc *MCPController) GetStatus(c *gin.Context) {
+	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,
+		logger.Module(logger.ModuleController),
+		logger.Component("mcp"),
+		logger.Operation("get_status"),
+		logger.String("method", c.Request.Method),
+		logger.String("path", c.Request.URL.Path))
+
+	// 检查MCP服务是否已初始化
+	isInitialized := mc.mcpService.IsInitialized()
+	
+	// 获取工具数量
+	var toolCount int
+	if isInitialized {
+		tools, err := mc.mcpService.ListTools(c.Request.Context())
+		if err != nil {
+			logger.WarnCtx(c.Request.Context(), logger.MsgAPIError,
+				logger.Module(logger.ModuleController),
+				logger.Component("mcp"),
+				logger.Operation("get_status"),
+				logger.ZapError(err))
+			toolCount = 0
+		} else {
+			toolCount = len(tools.Tools)
+		}
+	}
+
+	status := map[string]interface{}{
+		"initialized": isInitialized,
+		"toolCount":   toolCount,
+	}
+
+	if isInitialized {
+		status["lastActivity"] = time.Now().Format(time.RFC3339)
+	}
+
+	logger.InfoCtx(c.Request.Context(), logger.MsgAPIResponse,
+		logger.Module(logger.ModuleController),
+		logger.Component("mcp"),
+		logger.Operation("get_status"),
+		logger.Bool("initialized", isInitialized),
+		logger.Int("toolCount", toolCount),
+		logger.Int("status", http.StatusOK))
+
+	response.Success(c, http.StatusOK, "MCP status retrieved successfully", status)
+}
+
 // ListExecutionLogs 列出执行日志
 func (mc *MCPController) ListExecutionLogs(c *gin.Context) {
 	logger.InfoCtx(c.Request.Context(), logger.MsgAPIRequest,

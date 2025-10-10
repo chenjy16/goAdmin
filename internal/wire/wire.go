@@ -4,9 +4,12 @@
 package wire
 
 import (
+	"context"
+	
 	"go-springAi/internal/config"
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
+	"go-springAi/internal/dto"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
@@ -42,6 +45,7 @@ func InitializeApp(configPath string) (*App, func(), error) {
 		ProvideMCPService,
 		ProvideOpenAIService,
 		ProvideGoogleAIService,
+		ProvideAPIKeyService,
 		ProvideAIAssistantService,
 
 		// Controllers
@@ -74,6 +78,7 @@ type App struct {
 	MCPService             service.MCPService
 	OpenAIService          *service.OpenAIService
 	GoogleAIService        *service.GoogleAIService
+	APIKeyService          service.APIKeyService
 	AIAssistantService     *service.AIAssistantService
 	MCPController          *controllers.MCPController
 	AIAssistantController  *controllers.AIAssistantController
@@ -93,6 +98,7 @@ func NewApp(
 	mcpService service.MCPService,
 	openaiService *service.OpenAIService,
 	googleaiService *service.GoogleAIService,
+	apiKeyService service.APIKeyService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
 	aiAssistantController *controllers.AIAssistantController,
@@ -110,6 +116,7 @@ func NewApp(
 		MCPService:            mcpService,
 		OpenAIService:         openaiService,
 		GoogleAIService:       googleaiService,
+		APIKeyService:         apiKeyService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
 		AIAssistantController: aiAssistantController,
@@ -117,6 +124,9 @@ func NewApp(
 		AIController:          aiController,
 		Router:                router,
 	}
+
+	// 自动初始化MCP系统
+	app.initializeMCPSystem()
 
 	// 清理函数
 	cleanup := func() {
@@ -129,4 +139,47 @@ func NewApp(
 	}
 
 	return app, cleanup
+}
+
+// initializeMCPSystem 自动初始化MCP系统
+func (app *App) initializeMCPSystem() {
+	if app.MCPService == nil {
+		app.Logger.Warn("MCP service is not available, skipping auto-initialization")
+		return
+	}
+
+	// 创建初始化请求
+	initReq := &dto.MCPInitializeRequest{
+		ProtocolVersion: "2024-11-05",
+		Capabilities: dto.MCPCapabilities{
+			Tools: &dto.MCPToolsCapability{
+				ListChanged: true,
+			},
+			Logging: &dto.MCPLoggingCapability{},
+		},
+		ClientInfo: dto.MCPClientInfo{
+			Name:    "Auto-initialized MCP Server",
+			Version: "1.0.0",
+		},
+	}
+
+	// 使用context.Background()进行初始化
+	ctx := context.Background()
+	
+	// 执行初始化
+	response, err := app.MCPService.Initialize(ctx, initReq)
+	if err != nil {
+		app.Logger.Error("Failed to auto-initialize MCP system",
+			zap.Error(err),
+			zap.String("module", "startup"),
+			zap.String("operation", "mcp_auto_init"))
+		return
+	}
+
+	app.Logger.Info("MCP system auto-initialized successfully",
+		zap.String("protocolVersion", response.ProtocolVersion),
+		zap.String("serverName", response.ServerInfo.Name),
+		zap.String("serverVersion", response.ServerInfo.Version),
+		zap.String("module", "startup"),
+		zap.String("operation", "mcp_auto_init"))
 }

@@ -13,9 +13,16 @@ sql:
         emit_interface: true
         emit_exact_table_names: false
         emit_empty_slices: true
-  # 未来可以添加其他模块 
-  # - engine: "sqlite" 
-  # queries: "./internal/database/queries/products" 
-  # schema: "./schemas/products/*.sql"
-  # package: "products" 
-  # out: "./internal/database/models/products"
+  - engine: "sqlite"
+    queries: "./internal/database/curd/api_keys.sql"
+    schema: "./schemas/api_keys/*.sql"
+    gen:
+      go:
+        package: "api_keys"
+        out: "./internal/database/generated/api_keys"
+        sql_package: "database/sql"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_exact_table_names: false
+        emit_empty_slices: true

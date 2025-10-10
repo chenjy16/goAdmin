@@ -1,8 +1,8 @@
-import { createSlice } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
 import type { SettingsState } from '../../types/store';
+import { createConfigSlice, createLocalStorageManager } from '../utils/configManager';
 
-const initialState: SettingsState = {
+// 默认设置配置
+const defaultSettings: SettingsState = {
   theme: 'light',
   language: 'zh',
   apiKeys: {},
@@ -18,56 +18,92 @@ const initialState: SettingsState = {
   },
 };
 
-const settingsSlice = createSlice({
-  name: 'settings',
-  initialState,
-  reducers: {
-    setTheme: (state, action: PayloadAction<'light' | 'dark'>) => {
-      state.theme = action.payload;
-    },
-    setLanguage: (state, action: PayloadAction<'zh' | 'en'>) => {
-      state.language = action.payload;
-    },
-    setAPIKey: (state, action: PayloadAction<{
-      provider: string;
-      apiKey: string;
-    }>) => {
-      const { provider, apiKey } = action.payload;
-      state.apiKeys[provider] = apiKey;
-    },
-    removeAPIKey: (state, action: PayloadAction<string>) => {
-      delete state.apiKeys[action.payload];
-    },
-    setDefaultProvider: (state, action: PayloadAction<string>) => {
-      state.defaultProvider = action.payload;
-    },
-    setDefaultModel: (state, action: PayloadAction<{
-      provider: string;
-      model: string;
-    }>) => {
-      const { provider, model } = action.payload;
-      state.defaultModel[provider] = model;
-    },
-    updateChatSettings: (state, action: PayloadAction<Partial<SettingsState['chatSettings']>>) => {
-      state.chatSettings = { ...state.chatSettings, ...action.payload };
-    },
-    resetSettings: () => initialState,
-    loadSettings: (state, action: PayloadAction<Partial<SettingsState>>) => {
-      return { ...state, ...action.payload };
-    },
-  },
-});
+// 设置验证器
+const validateSettings = (config: any): config is SettingsState => {
+  return (
+    config &&
+    typeof config === 'object' &&
+    ['light', 'dark'].includes(config.theme) &&
+    ['zh', 'en'].includes(config.language) &&
+    typeof config.apiKeys === 'object' &&
+    typeof config.defaultProvider === 'string' &&
+    typeof config.defaultModel === 'object' &&
+    typeof config.chatSettings === 'object' &&
+    typeof config.chatSettings.maxTokens === 'number' &&
+    typeof config.chatSettings.temperature === 'number' &&
+    typeof config.chatSettings.streamResponse === 'boolean'
+  );
+};
 
+// 创建本地存储管理器
+const settingsManager = createLocalStorageManager(
+  'app-settings',
+  defaultSettings,
+  validateSettings
+);
+
+// 创建设置slice
+const settingsConfig = createConfigSlice('settings', settingsManager);
+
+// 导出actions和reducer
 export const {
-  setTheme,
-  setLanguage,
-  setAPIKey,
-  removeAPIKey,
-  setDefaultProvider,
-  setDefaultModel,
-  updateChatSettings,
-  resetSettings,
-  loadSettings,
-} = settingsSlice.actions;
+  updateConfig: updateSettings,
+  setConfig: setSettings,
+  resetConfig: resetSettings,
+  markSaved,
+  clearError,
+  setLoading,
+  loadConfig: loadSettings,
+  saveConfig: saveSettings,
+} = settingsConfig.actions;
 
-export default settingsSlice.reducer;
+// 便捷的设置更新actions
+export const setTheme = (theme: 'light' | 'dark') => 
+  updateSettings({ theme });
+
+export const setLanguage = (language: 'zh' | 'en') => 
+  updateSettings({ language });
+
+export const setAPIKey = (provider: string, apiKey: string) => 
+  updateSettings({ 
+    apiKeys: { 
+      ...settingsManager.load().apiKeys, 
+      [provider]: apiKey 
+    } 
+  });
+
+export const removeAPIKey = (provider: string) => {
+  const currentSettings = settingsManager.load();
+  const { [provider]: removed, ...remainingKeys } = currentSettings.apiKeys;
+  return updateSettings({ apiKeys: remainingKeys });
+};
+
+export const setDefaultProvider = (provider: string) => 
+  updateSettings({ defaultProvider: provider });
+
+export const setDefaultModel = (provider: string, model: string) => 
+  updateSettings({ 
+    defaultModel: { 
+      ...settingsManager.load().defaultModel, 
+      [provider]: model 
+    } 
+  });
+
+export const updateChatSettings = (chatSettings: Partial<SettingsState['chatSettings']>) => 
+  updateSettings({ 
+    chatSettings: { 
+      ...settingsManager.load().chatSettings, 
+      ...chatSettings 
+    } 
+  });
+
+// 导出selectors
+export const {
+  selectConfig: selectSettings,
+  selectLoading: selectSettingsLoading,
+  selectError: selectSettingsError,
+  selectInitialized: selectSettingsInitialized,
+  selectIsDirty: selectSettingsIsDirty,
+} = settingsConfig.selectors;
+
+export default settingsConfig.reducer;

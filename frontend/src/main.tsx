@@ -7,7 +7,12 @@ import { ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import './index.css'
 import { store } from './store'
-import { router } from './router'
+import router from './router'
+
+// 在开发环境中将store暴露到window对象以便调试
+if (import.meta.env.DEV) {
+  (window as any).store = store;
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
