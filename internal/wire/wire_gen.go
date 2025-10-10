@@ -39,12 +39,12 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	jwtManager := ProvideJWTManager(config)
 	customValidator := utils.NewCustomValidator()
 	repositoryManager := repository.NewRepositoryManager(db)
+	mcpService := ProvideMCPService(repositoryManager, logger)
+	openAIService := ProvideOpenAIService(config, logger)
 	googleAIService, err := ProvideGoogleAIService(config, logger)
 	if err != nil {
 		return nil, nil, err
 	}
-	openAIService := ProvideOpenAIService(config, logger)
-	mcpService := ProvideMCPService(repositoryManager, googleAIService, openAIService, logger)
 	apiKeyService := ProvideAPIKeyService(repositoryManager)
 	manager := ProvideProviderManager(openAIService, googleAIService, logger)
 	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, logger)

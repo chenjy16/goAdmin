@@ -6,16 +6,15 @@ import {
   Tag,
   Space,
   Form,
-  message,
   Statistic,
+  message,
 } from 'antd';
 import {
   CloudOutlined,
   SettingOutlined,
+  KeyOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
-  KeyOutlined,
-  ReloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '../store';
@@ -30,6 +29,15 @@ import {
 import { setAPIKey as setSettingsAPIKey } from '../store/slices/settingsSlice';
 import type { ProviderInfo, ModelInfo } from '../types/api';
 import { SearchableTable, APIKeyForm } from '../components/common';
+import { useAsyncOperation } from '../hooks';
+import { 
+  createTextColumn, 
+  createStatusColumn, 
+  createSwitchColumn, 
+  createActionColumn,
+  commonActions,
+  mergeColumns 
+} from '../utils/tableColumns';
 
 const ProvidersPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -38,6 +46,31 @@ const ProvidersPage: React.FC = () => {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
   const [form] = Form.useForm();
+
+  // 使用通用异步操作hook
+  const setAPIKeyOperation = useAsyncOperation(
+    async (provider: string, apiKey: string) => {
+      await dispatch(setAPIKey({ provider, apiKey })).unwrap();
+      await dispatch(validateAPIKey(provider)).unwrap();
+      dispatch(setSettingsAPIKey({ [provider]: apiKey }));
+      dispatch(fetchProviders());
+      dispatch(fetchAPIKeyStatus());
+    },
+    {
+      successMessage: 'API密钥设置成功',
+      errorMessage: 'API密钥设置失败'
+    }
+  );
+
+  const toggleModelOperation = useAsyncOperation(
+    async (provider: string, modelId: string, enabled: boolean) => {
+      await dispatch(toggleModel({ provider, model: modelId, enabled })).unwrap();
+    },
+    {
+      successMessage: '',
+      errorMessage: '操作失败'
+    }
+  );
 
   useEffect(() => {
     dispatch(fetchProviders());
@@ -53,37 +86,18 @@ const ProvidersPage: React.FC = () => {
   const handleSetAPIKey = async (values: { apiKey: string }) => {
     if (!selectedProvider) return;
 
-    try {
-      await dispatch(setAPIKey({
-        provider: selectedProvider,
-        apiKey: values.apiKey,
-      })).unwrap();
-      
-      // 同时更新本地settings状态
-      dispatch(setSettingsAPIKey(selectedProvider, values.apiKey));
-      
-      await dispatch(validateAPIKey(selectedProvider)).unwrap();
-
-      message.success('API密钥设置成功');
+    const result = await setAPIKeyOperation.execute(selectedProvider, values.apiKey);
+    if (result) {
       setApiKeyModalVisible(false);
       form.resetFields();
-      dispatch(fetchProviders()); // 刷新提供商状态
-      dispatch(fetchAPIKeyStatus()); // 刷新API密钥状态
-    } catch (err) {
-      message.error('API密钥设置失败');
     }
   };
 
   const handleToggleModel = async (provider: string, modelId: string, enabled: boolean) => {
-    try {
-      await dispatch(toggleModel({
-        provider,
-        model: modelId,
-        enabled,
-      })).unwrap();
+    // 动态设置成功消息
+    const result = await toggleModelOperation.execute(provider, modelId, enabled);
+    if (result) {
       message.success(`模型${enabled ? '启用' : '禁用'}成功`);
-    } catch (err) {
-      message.error(`模型${enabled ? '启用' : '禁用'}失败`);
     }
   };
 
@@ -94,7 +108,7 @@ const ProvidersPage: React.FC = () => {
     }
   };
 
-  const providerColumns: ColumnsType<ProviderInfo> = [
+  const providerColumns = mergeColumns([
     {
       title: '提供商',
       dataIndex: 'name',
@@ -106,21 +120,18 @@ const ProvidersPage: React.FC = () => {
         </Space>
       ),
     },
-    {
+    createTextColumn<ProviderInfo>({
       title: '描述',
       dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: '状态',
-      dataIndex: 'health',
-      key: 'health',
-      render: (health: boolean) => (
-        <Tag color={health ? 'green' : 'red'} icon={health ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}>
-          {health ? '正常' : '异常'}
-        </Tag>
-      ),
-    },
+    }),
+    createStatusColumn<ProviderInfo>({
+      title: '健康状态',
+      dataIndex: 'healthy',
+      statusMap: {
+        true: { color: '#52c41a', text: '健康', icon: <CheckCircleOutlined /> },
+        false: { color: '#ff4d4f', text: '异常', icon: <ExclamationCircleOutlined /> }
+      }
+    }),
     {
       title: '模型数量',
       dataIndex: 'model_count',
@@ -131,66 +142,58 @@ const ProvidersPage: React.FC = () => {
     },
     {
       title: 'API密钥',
-      key: 'apiKey',
-      render: (_, record: ProviderInfo) => {
-        const keyInfo = apiKeyStatus && apiKeyStatus[record.type];
-        const hasKey = keyInfo?.has_key || false;
-        const maskedKey = keyInfo?.masked_key;
-        
+      key: 'api_key',
+      render: (_: any, record: ProviderInfo) => {
+        const status = apiKeyStatus[record.name];
         return (
           <div>
-            <Tag color={hasKey ? 'green' : 'orange'}>
-              {hasKey ? '已配置' : '未配置'}
-            </Tag>
-            {hasKey && maskedKey && (
+            {status?.configured ? (
+              <Tag color="green">已配置</Tag>
+            ) : (
+              <Tag color="red">未配置</Tag>
+            )}
+            {status?.configured && status.masked_key && (
               <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                {maskedKey}
+                {status.masked_key}
               </div>
             )}
           </div>
         );
       },
     },
-    {
-      title: '操作',
-      key: 'actions',
-      render: (_, record: ProviderInfo) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<KeyOutlined />}
-            onClick={() => {
-              setSelectedProvider(record.name);
-              setApiKeyModalVisible(true);
-            }}
-          >
-            设置密钥
-          </Button>
-          <Button
-            size="small"
-            icon={<SettingOutlined />}
-            onClick={() => setSelectedProvider(record.name)}
-          >
-            管理模型
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+    createActionColumn<ProviderInfo>({
+      actions: [
+        {
+          key: 'setKey',
+          label: '设置密钥',
+          type: 'primary',
+          icon: <KeyOutlined />,
+          onClick: (record) => {
+            setSelectedProvider(record.name);
+            setApiKeyModalVisible(true);
+          }
+        },
+        {
+          key: 'manageModels',
+          label: '管理模型',
+          icon: <SettingOutlined />,
+          onClick: (record) => setSelectedProvider(record.name)
+        }
+      ]
+    })
+  ]);
 
-  const modelColumns: ColumnsType<ModelInfo> = [
+  const modelColumns = mergeColumns([
     {
       title: '模型名称',
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => <span style={{ fontWeight: 'bold' }}>{name}</span>,
     },
-    {
+    createTextColumn<ModelInfo>({
       title: '描述',
       dataIndex: 'description',
-      key: 'description',
-    },
+    }),
     {
       title: '最大令牌',
       dataIndex: 'max_tokens',
@@ -215,20 +218,12 @@ const ProvidersPage: React.FC = () => {
       key: 'output_cost',
       render: (cost: number) => cost ? `$${cost}/1K tokens` : '-',
     },
-    {
+    createSwitchColumn<ModelInfo>({
       title: '状态',
       dataIndex: 'enabled',
-      key: 'enabled',
-      render: (enabled: boolean, record: ModelInfo) => (
-        <Switch
-          checked={enabled}
-          onChange={(checked) => handleToggleModel(selectedProvider!, record.name, checked)}
-          checkedChildren="启用"
-          unCheckedChildren="禁用"
-        />
-      ),
-    },
-  ];
+      onChange: (checked, record) => handleToggleModel(selectedProvider!, record.name, checked)
+    })
+  ]);
 
 
 

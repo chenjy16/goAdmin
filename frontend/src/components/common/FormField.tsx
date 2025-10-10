@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Input, Select, Switch, InputNumber, Slider } from 'antd';
 import type { Rule } from 'antd/es/form';
+import { colors, spacing, borderRadius, shadows, theme, combine } from '../../styles';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -16,6 +17,10 @@ interface BaseFieldProps {
   disabled?: boolean;
   required?: boolean;
   tooltip?: string;
+  className?: string;
+  style?: React.CSSProperties;
+  size?: 'small' | 'middle' | 'large';
+  variant?: 'outlined' | 'filled' | 'borderless';
 }
 
 interface InputFieldProps extends BaseFieldProps {
@@ -64,9 +69,50 @@ export type FormFieldProps =
   | SliderFieldProps;
 
 const FormField: React.FC<FormFieldProps> = (props) => {
-  const { name, label, type, placeholder, rules, disabled, required, tooltip } = props;
+  const { 
+    name, 
+    label, 
+    type, 
+    placeholder, 
+    rules, 
+    disabled, 
+    required, 
+    tooltip,
+    className = '',
+    style,
+    size = 'middle',
+    variant = 'outlined'
+  } = props;
 
   const baseRules = required ? [{ required: true, message: `请输入${label}` }, ...(rules || [])] : rules;
+
+  // 创建自定义样式
+  const getFieldStyle = () => {
+    const baseStyle = theme.getInputStyle();
+    const customStyle = combine(
+      baseStyle,
+      {
+        fontSize: size === 'small' ? '12px' : size === 'large' ? '16px' : '14px',
+        ...(variant === 'filled' && {
+          backgroundColor: colors.background('light'),
+          border: 'none'
+        }),
+        ...(variant === 'borderless' && {
+          border: 'none',
+          boxShadow: 'none'
+        }),
+        ...(disabled && {
+          backgroundColor: colors.background('light'),
+          color: colors.text('disabled'),
+          cursor: 'not-allowed'
+        })
+      },
+      style
+    );
+    return customStyle;
+  };
+
+  const fieldStyle = getFieldStyle();
 
   const renderField = () => {
     switch (type) {
@@ -78,6 +124,10 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             disabled={disabled}
             maxLength={inputProps.maxLength}
             showCount={inputProps.showCount}
+            size={size}
+            variant={variant}
+            style={fieldStyle}
+            className={className}
           />
         );
 
@@ -89,6 +139,10 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             disabled={disabled}
             maxLength={passwordProps.maxLength}
             autoComplete="off"
+            size={size}
+            variant={variant}
+            style={fieldStyle}
+            className={className}
           />
         );
 
@@ -101,6 +155,10 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             maxLength={textareaProps.maxLength}
             showCount={textareaProps.showCount}
             autoSize={textareaProps.autoSize}
+            size={size}
+            variant={variant}
+            style={fieldStyle}
+            className={className}
           />
         );
 
@@ -113,6 +171,10 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             mode={selectProps.mode}
             allowClear={selectProps.allowClear}
             showSearch={selectProps.showSearch}
+            size={size}
+            variant={variant}
+            style={fieldStyle}
+            className={className}
           >
             {selectProps.options.map(option => (
               <Option 
@@ -128,11 +190,21 @@ const FormField: React.FC<FormFieldProps> = (props) => {
 
       case 'switch':
         const switchProps = props as SwitchFieldProps;
+        const switchStyle = combine(
+          {
+            ...(size === 'small' && { transform: 'scale(0.8)' }),
+            ...(size === 'large' && { transform: 'scale(1.2)' })
+          },
+          style
+        );
         return (
           <Switch
             disabled={disabled}
             checkedChildren={switchProps.checkedChildren}
             unCheckedChildren={switchProps.unCheckedChildren}
+            size={size === 'small' ? 'small' : 'default'}
+            style={switchStyle}
+            className={className}
           />
         );
 
@@ -146,12 +218,19 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             max={numberProps.max}
             step={numberProps.step}
             precision={numberProps.precision}
-            style={{ width: '100%' }}
+            size={size}
+            variant={variant}
+            style={combine(fieldStyle, { width: '100%' })}
+            className={className}
           />
         );
 
       case 'slider':
         const sliderProps = props as SliderFieldProps;
+        const sliderStyle = combine(
+          spacing.marginY('sm'),
+          style
+        );
         return (
           <Slider
             disabled={disabled}
@@ -160,6 +239,8 @@ const FormField: React.FC<FormFieldProps> = (props) => {
             step={sliderProps.step}
             marks={sliderProps.marks}
             range={sliderProps.range}
+            style={sliderStyle}
+            className={className}
           />
         );
 
@@ -168,6 +249,12 @@ const FormField: React.FC<FormFieldProps> = (props) => {
     }
   };
 
+  // 创建Form.Item的样式
+  const formItemStyle = combine(
+    spacing.marginBottom('md'),
+    style
+  );
+
   return (
     <Form.Item
       name={name}
@@ -175,6 +262,8 @@ const FormField: React.FC<FormFieldProps> = (props) => {
       rules={baseRules}
       tooltip={tooltip}
       valuePropName={type === 'switch' ? 'checked' : 'value'}
+      style={formItemStyle}
+      className={className}
     >
       {renderField()}
     </Form.Item>

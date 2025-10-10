@@ -67,9 +67,9 @@ func ProvideJWTManager(cfg *config.Config) *utils.JWTManager {
 }
 
 // ProvideMCPService 提供MCP服务
-func ProvideMCPService(repoManager repository.RepositoryManager, googleaiService *service.GoogleAIService, openaiService *service.OpenAIService, logger *zap.Logger) service.MCPService {
+func ProvideMCPService(repoManager repository.RepositoryManager, logger *zap.Logger) service.MCPService {
 	userService := service.NewUserServiceAdapter(repoManager)
-	return service.NewMCPService(userService, googleaiService, openaiService, logger)
+	return service.NewMCPService(userService, logger)
 }
 
 // ProvideMCPController 提供MCP控制器

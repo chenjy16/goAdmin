@@ -292,7 +292,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 			
 			// 如果有工具调用结果，可以选择再次调用提供商生成最终回复
 			if s.shouldGenerateFinalResponse(executions) {
-				finalResp, err := s.generateFinalResponse(ctx, req, executions)
+				finalResp, err := s.generateFinalResponse(ctx, provider, req, executions)
 				if err != nil {
 					s.logger.Warn("Failed to generate final response", zap.Error(err))
 				} else {
@@ -403,11 +403,17 @@ func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatReques
 			
 			// 如果有工具调用结果，可以选择再次调用OpenAI生成最终回复
 			if s.shouldGenerateFinalResponse(executions) {
-				finalResp, err := s.generateFinalResponse(ctx, req, executions)
+				// 获取OpenAI提供商用于生成最终回复
+				openaiProvider, err := s.providerManager.GetProviderByName("OpenAI")
 				if err != nil {
-					s.logger.Warn("Failed to generate final response", zap.Error(err))
+					s.logger.Warn("Failed to get OpenAI provider for final response", zap.Error(err))
 				} else {
-					response.Choices[0].Message = finalResp
+					finalResp, err := s.generateFinalResponse(ctx, openaiProvider, req, executions)
+					if err != nil {
+						s.logger.Warn("Failed to generate final response", zap.Error(err))
+					} else {
+						response.Choices[0].Message = finalResp
+					}
 				}
 			}
 		}
@@ -526,7 +532,7 @@ func (s *AIAssistantService) shouldGenerateFinalResponse(executions []ToolCallEx
 }
 
 // generateFinalResponse 生成最终回复
-func (s *AIAssistantService) generateFinalResponse(ctx context.Context, originalReq *ChatRequest, executions []ToolCallExecution) (openai.Message, error) {
+func (s *AIAssistantService) generateFinalResponse(ctx context.Context, provider ProviderInterface, originalReq *ChatRequest, executions []ToolCallExecution) (openai.Message, error) {
 	// 构建包含工具执行结果的消息
 	var resultsBuilder strings.Builder
 	resultsBuilder.WriteString("Tool execution results:\n")
@@ -543,35 +549,51 @@ func (s *AIAssistantService) generateFinalResponse(ctx context.Context, original
 		resultsBuilder.WriteString("\n")
 	}
 	
-	// 添加工具结果到消息历史
-	messages := append(originalReq.Messages, openai.Message{
+	// 构建提供商请求的消息格式
+	providerMessages := make([]ProviderMessage, 0, len(originalReq.Messages)+2)
+	
+	// 转换原始消息
+	for _, msg := range originalReq.Messages {
+		providerMessages = append(providerMessages, ProviderMessage{
+			Role:    msg.Role,
+			Content: msg.Content,
+		})
+	}
+	
+	// 添加工具执行结果
+	providerMessages = append(providerMessages, ProviderMessage{
 		Role:    "assistant",
 		Content: resultsBuilder.String(),
 	})
 	
-	messages = append(messages, openai.Message{
+	// 添加生成最终回复的指令
+	providerMessages = append(providerMessages, ProviderMessage{
 		Role:    "user",
 		Content: "Please provide a natural language summary of the tool execution results above.",
 	})
 	
-	// 调用OpenAI生成最终回复
-	finalReq := &ChatCompletionRequest{
+	// 使用动态选择的提供商生成最终回复
+	finalReq := &ProviderChatRequest{
 		Model:       originalReq.Model,
-		Messages:    messages,
+		Messages:    providerMessages,
 		MaxTokens:   originalReq.MaxTokens,
 		Temperature: originalReq.Temperature,
 	}
 	
-	resp, err := s.openaiService.ChatCompletion(ctx, finalReq)
+	resp, err := provider.ChatCompletion(ctx, finalReq)
 	if err != nil {
-		return openai.Message{}, err
+		return openai.Message{}, fmt.Errorf("failed to generate final response with provider %s: %w", provider.GetName(), err)
 	}
 	
 	if len(resp.Choices) == 0 {
-		return openai.Message{}, fmt.Errorf("no response from OpenAI")
+		return openai.Message{}, fmt.Errorf("no response from provider %s", provider.GetName())
 	}
 	
-	return resp.Choices[0].Message, nil
+	// 转换回 openai.Message 格式
+	return openai.Message{
+		Role:    resp.Choices[0].Message.Role,
+		Content: resp.Choices[0].Message.Content,
+	}, nil
 }
 
 // Initialize 初始化AI助手服务

@@ -252,10 +252,7 @@ const SettingsPage: React.FC = () => {
     dispatch(fetchMCPLogs());
   };
 
-  // 调试用：手动检查MCP状态
-  const handleCheckMCPStatus = () => {
-    dispatch(checkMCPStatus());
-  };
+
 
 
 
@@ -425,34 +422,6 @@ const SettingsPage: React.FC = () => {
       key: 'description',
       ellipsis: true,
     },
-    {
-      title: '参数',
-      dataIndex: 'inputSchema',
-      key: 'inputSchema',
-      render: (schema: any) => {
-        if (!schema || !schema.properties) {
-          return <Tag color="blue">无参数</Tag>;
-        }
-        const paramCount = Object.keys(schema.properties).length;
-        return <Tag color="green">{paramCount} 个参数</Tag>;
-      },
-    },
-    {
-      title: '操作',
-      key: 'actions',
-      render: () => (
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlayCircleOutlined />}
-          onClick={() => {
-            message.info('工具执行功能正在开发中');
-          }}
-        >
-          执行
-        </Button>
-      ),
-    },
   ];
 
 
@@ -479,12 +448,6 @@ const SettingsPage: React.FC = () => {
               初始化MCP
             </Button>
           )}
-          <Button
-            onClick={handleCheckMCPStatus}
-            loading={mcpLoading}
-          >
-            检查状态 (调试)
-          </Button>
         </Space>
       </div>
 
@@ -636,33 +599,8 @@ const SettingsPage: React.FC = () => {
             description={new Date().toLocaleDateString()}
           />
         </List.Item>
-        <List.Item>
-          <List.Item.Meta
-            title="支持的提供商"
-            description={
-              <Space wrap>
-                <Tag color="blue">OpenAI</Tag>
-                <Tag color="green">Anthropic</Tag>
-                <Tag color="orange">Google</Tag>
-                <Tag color="purple">Azure</Tag>
-              </Space>
-            }
-          />
-        </List.Item>
-        <List.Item>
-          <List.Item.Meta
-            title="技术栈"
-            description={
-              <Space wrap>
-                <Tag>React</Tag>
-                <Tag>TypeScript</Tag>
-                <Tag>Ant Design</Tag>
-                <Tag>Redux Toolkit</Tag>
-                <Tag>Go</Tag>
-              </Space>
-            }
-          />
-        </List.Item>
+
+
       </List>
     </Card>
   );

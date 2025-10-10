@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ReactNode } from 'react';
+import { colors, spacing, size as sizeUtils, layout, borderRadius, animation, combine } from '../../styles';
 
 /**
  * 加载组件类型
@@ -56,22 +57,29 @@ export interface ProgressProps {
 /**
  * 旋转器组件
  */
-const Spinner: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = '#007bff' }) => {
-  const sizeMap = {
-    small: '16px',
-    medium: '24px',
-    large: '32px'
+const Spinner: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = colors.primary() }) => {
+  const sizeMap: Record<LoadingSize, number> = {
+    small: 16,
+    medium: 24,
+    large: 32
   };
+
+  const currentSize = sizeMap[size];
+  const spinnerStyle = combine(
+    sizeUtils.square(currentSize),
+    borderRadius.get('round'),
+    {
+      border: '2px solid transparent',
+      borderColor: `${color}20`,
+      borderTopColor: color,
+      animation: 'loading-spin 1s linear infinite'
+    }
+  );
 
   return (
     <div
       className={`loading-spinner loading-spinner--${size}`}
-      style={{
-        width: sizeMap[size],
-        height: sizeMap[size],
-        borderColor: `${color}20`,
-        borderTopColor: color
-      }}
+      style={spinnerStyle}
     />
   );
 };
@@ -79,25 +87,33 @@ const Spinner: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color 
 /**
  * 点状加载器组件
  */
-const Dots: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = '#007bff' }) => {
-  const sizeMap = {
-    small: '4px',
-    medium: '6px',
-    large: '8px'
+const Dots: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = colors.primary() }) => {
+  const sizeMap: Record<LoadingSize, number> = {
+    small: 4,
+    medium: 6,
+    large: 8
   };
 
+  const containerStyle = combine(
+    layout.flex('row', 'center', 'center'),
+    { gap: spacing.get('xs') }
+  );
+
   return (
-    <div className={`loading-dots loading-dots--${size}`}>
+    <div className={`loading-dots loading-dots--${size}`} style={containerStyle}>
       {[0, 1, 2].map(i => (
         <div
           key={i}
           className="loading-dots__dot"
-          style={{
-            width: sizeMap[size],
-            height: sizeMap[size],
-            backgroundColor: color,
-            animationDelay: `${i * 0.1}s`
-          }}
+          style={combine(
+             sizeUtils.square(sizeMap[size]),
+             borderRadius.get('round'),
+             {
+               backgroundColor: color,
+               animation: 'loading-bounce 1.4s ease-in-out infinite both',
+               animationDelay: `${i * 0.1}s`
+             }
+           )}
         />
       ))}
     </div>
@@ -107,21 +123,26 @@ const Dots: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = '
 /**
  * 脉冲加载器组件
  */
-const Pulse: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = '#007bff' }) => {
-  const sizeMap = {
-    small: '16px',
-    medium: '24px',
-    large: '32px'
+const Pulse: React.FC<{ size: LoadingSize; color?: string }> = ({ size, color = colors.primary() }) => {
+  const sizeMap: Record<LoadingSize, number> = {
+    small: 16,
+    medium: 24,
+    large: 32
   };
+
+  const pulseStyle = combine(
+    sizeUtils.square(sizeMap[size]),
+    borderRadius.get('round'),
+    {
+      backgroundColor: color,
+      animation: 'loading-pulse-animation 1.5s ease-in-out infinite'
+    }
+  );
 
   return (
     <div
       className={`loading-pulse loading-pulse--${size}`}
-      style={{
-        width: sizeMap[size],
-        height: sizeMap[size],
-        backgroundColor: color
-      }}
+      style={pulseStyle}
     />
   );
 };
@@ -138,28 +159,60 @@ const Skeleton: React.FC<SkeletonProps> = ({
   paragraph = true,
   className = ''
 }) => {
+  const skeletonStyle = combine(
+    layout.flex('row'),
+    { gap: spacing.get('sm') }
+  );
+
+  const avatarStyle = combine(
+    sizeUtils.square(40),
+    borderRadius.get('round'),
+    {
+      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'loading-skeleton-animation 1.5s infinite'
+    }
+  );
+
+  const titleStyle = combine(
+    {
+      height: 20,
+      width: typeof width === 'number' ? `${width}px` : width,
+      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'loading-skeleton-animation 1.5s infinite',
+      marginBottom: spacing.get('xs')
+    },
+    borderRadius.get('sm')
+  );
+
+  const lineStyle = (isLast: boolean) => combine(
+    {
+      height: typeof height === 'number' ? `${height}px` : height,
+      width: isLast ? '60%' : '100%',
+      background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+      backgroundSize: '200% 100%',
+      animation: 'loading-skeleton-animation 1.5s infinite'
+    },
+    borderRadius.get('sm')
+  );
+
   return (
-    <div className={`loading-skeleton ${className}`}>
+    <div className={`loading-skeleton ${className}`} style={skeletonStyle}>
       {avatar && (
-        <div className="loading-skeleton__avatar" />
+        <div className="loading-skeleton__avatar" style={avatarStyle} />
       )}
-      <div className="loading-skeleton__content">
+      <div className="loading-skeleton__content" style={{ flex: 1 }}>
         {title && (
-          <div 
-            className="loading-skeleton__title"
-            style={{ width: typeof width === 'number' ? `${width}px` : width }}
-          />
+          <div className="loading-skeleton__title" style={titleStyle} />
         )}
         {paragraph && (
-          <div className="loading-skeleton__paragraph">
-            {Array.from({ length: rows }, (_, i) => (
-              <div
-                key={i}
-                className="loading-skeleton__line"
-                style={{
-                  width: i === rows - 1 ? '60%' : '100%',
-                  height: typeof height === 'number' ? `${height}px` : height
-                }}
+          <div className="loading-skeleton__paragraph" style={combine(layout.flex('column'), { gap: spacing.get('xs') })}>
+            {Array.from({ length: rows }).map((_, index) => (
+               <div
+                 key={index}
+                 className="loading-skeleton__line"
+                 style={lineStyle(index === rows - 1)}
               />
             ))}
           </div>
@@ -179,25 +232,53 @@ const Progress: React.FC<ProgressProps> = ({
   strokeWidth = 8,
   className = ''
 }) => {
-  const statusColors = {
-    normal: '#007bff',
-    success: '#28a745',
-    error: '#dc3545'
+  const getStatusColor = () => {
+    switch (status) {
+      case 'success': return colors.success();
+      case 'error': return colors.error();
+      default: return colors.primary();
+    }
+  };
+
+  const progressStyle = combine(
+    layout.flex('row'),
+    { alignItems: 'center', gap: spacing.get('xs') }
+  );
+
+  const trackStyle = combine(
+    {
+      flex: 1,
+      height: strokeWidth,
+      backgroundColor: colors.background('light'),
+      overflow: 'hidden'
+    },
+    borderRadius.get('sm')
+  );
+
+  const barStyle = combine(
+    {
+      height: '100%',
+      width: `${Math.min(100, Math.max(0, percent))}%`,
+      backgroundColor: getStatusColor(),
+      transition: 'width 0.3s ease'
+    },
+    borderRadius.get('sm')
+  );
+
+  const textStyle = {
+    fontSize: '12px',
+    color: colors.text('secondary'),
+    minWidth: '35px',
+    textAlign: 'right' as const
   };
 
   return (
-    <div className={`loading-progress ${className}`}>
-      <div className="loading-progress__track" style={{ height: strokeWidth }}>
-        <div
-          className={`loading-progress__bar loading-progress__bar--${status}`}
-          style={{
-            width: `${Math.min(100, Math.max(0, percent))}%`,
-            backgroundColor: statusColors[status]
-          }}
-        />
+    <div className={`loading-progress ${className}`} style={progressStyle}>
+      <div className="loading-progress__track" style={trackStyle}>
+        <div className="loading-progress__bar" style={barStyle} />
       </div>
       {showPercent && (
-        <span className="loading-progress__text">
+        <span className="loading-progress__text" style={textStyle}>
           {Math.round(percent)}%
         </span>
       )}
@@ -286,10 +367,24 @@ export const LoadingComponent: React.FC<LoadingComponentProps> = ({
     }
   };
 
+  const contentStyle = combine(
+    layout.flexCenter(),
+    layout.flexColumn(),
+    { gap: spacing.get('xs') },
+    spacing.padding('lg'),
+    style
+  );
+
+  const textStyle = {
+    fontSize: '14px',
+    color: colors.text('secondary'),
+    textAlign: 'center' as const
+  };
+
   const loadingContent = (
-    <div className={`loading-content loading-content--${type} ${className}`} style={style}>
+    <div className={`loading-content loading-content--${type} ${className}`} style={contentStyle}>
       {renderLoadingIndicator()}
-      {text && <div className="loading-text">{text}</div>}
+      {text && <div className="loading-text" style={textStyle}>{text}</div>}
     </div>
   );
 
@@ -298,12 +393,35 @@ export const LoadingComponent: React.FC<LoadingComponentProps> = ({
   }
 
   if (overlay) {
+    const overlayStyle = { position: 'relative' as const };
+    
+    const backdropStyle = combine(
+      layout.absolute('0', '0', '0', '0'),
+      layout.flexCenter(),
+      {
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        zIndex: 1000
+      }
+    );
+
+    const hiddenContentStyle = {
+      opacity: 0.5,
+      pointerEvents: 'none' as const
+    };
+
     return (
-      <div className="loading-overlay">
-        {children}
-        <div className="loading-overlay__backdrop">
-          {loadingContent}
+      <div className="loading-overlay" style={overlayStyle}>
+        <div 
+          className={`loading-wrapper__content ${delayedLoading ? 'loading-wrapper__content--hidden' : ''}`}
+          style={delayedLoading ? hiddenContentStyle : undefined}
+        >
+          {children}
         </div>
+        {delayedLoading && (
+          <div className="loading-overlay__backdrop" style={backdropStyle}>
+            {loadingContent}
+          </div>
+        )}
       </div>
     );
   }

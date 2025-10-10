@@ -29,6 +29,10 @@ import {
   createAssistantConversation,
 } from '../store/slices/assistantSlice';
 import { loadConfigData, selectConfig } from '../store/slices/configSlice';
+import {
+  fetchMCPTools,
+  checkMCPStatus,
+} from '../store/slices/mcpSlice';
 import AssistantConfigPanel from '../components/AssistantConfigPanel';
 import type { ChatMessage } from '../types/api';
 
@@ -47,6 +51,7 @@ const AssistantPage: React.FC = () => {
   } = useAppSelector(state => state.assistant);
 
   const config = useAppSelector(selectConfig);
+  const { tools: mcpTools, isInitialized: mcpInitialized } = useAppSelector(state => state.mcp);
 
   const [inputValue, setInputValue] = useState('');
   const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
@@ -55,6 +60,13 @@ const AssistantPage: React.FC = () => {
   useEffect(() => {
     // 加载配置数据
     dispatch(loadConfigData());
+    
+    // 检查MCP状态并获取工具
+    dispatch(checkMCPStatus()).then((result) => {
+      if (checkMCPStatus.fulfilled.match(result) && result.payload.initialized) {
+        dispatch(fetchMCPTools());
+      }
+    });
     
     if (!isInitialized) {
       dispatch(initializeAssistant());
@@ -272,13 +284,26 @@ const AssistantPage: React.FC = () => {
               <Text type="secondary">AI助手已准备就绪，开始对话吧！</Text>
               <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  AI助手具备以下能力：
+                  {mcpInitialized && mcpTools.length > 0 ? 'AI助手工具：' : 'AI助手具备以下能力：'}
                 </Text>
                 <div style={{ marginTop: '8px' }}>
-                  <Tag>智能对话</Tag>
-                  <Tag>工具调用</Tag>
-                  <Tag>代码生成</Tag>
-                  <Tag>问题解答</Tag>
+                  {mcpInitialized && mcpTools.length > 0 ? (
+                    mcpTools.slice(0, 4).map((tool) => (
+                      <Tag key={tool.name} color="blue">
+                        {tool.name}
+                      </Tag>
+                    ))
+                  ) : (
+                    <>
+                      <Tag>智能对话</Tag>
+                      <Tag>工具调用</Tag>
+                      <Tag>代码生成</Tag>
+                      <Tag>问题解答</Tag>
+                    </>
+                  )}
+                  {mcpInitialized && mcpTools.length > 4 && (
+                    <Tag color="default">+{mcpTools.length - 4} 更多</Tag>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import type { ILogger } from '../../types/base';
+import { colors, spacing, borderRadius, shadows, theme, combine, layout } from '../../styles/utils';
 
 /**
  * 错误边界属性接口
@@ -178,24 +179,124 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const { error, errorInfo, errorId } = this.state;
     const isDevelopment = typeof window !== 'undefined' && 
       (window as any).__DEV__ !== false;
+
+    // 创建样式
+    const errorBoundaryStyle = combine(
+      layout.flexCenter(),
+      {
+        minHeight: '200px',
+        backgroundColor: colors.background('light'),
+        border: `1px solid ${colors.border()}`,
+        ...borderRadius.get('md'),
+        ...spacing.padding('lg')
+      }
+    );
+
+    const containerStyle = combine(
+      {
+        textAlign: 'center' as const,
+        maxWidth: '500px'
+      }
+    );
+
+    const titleStyle = combine(
+      {
+        color: colors.error(),
+        fontSize: '1.5rem',
+        fontWeight: 600,
+        ...spacing.marginBottom('md')
+      }
+    );
+
+    const messageStyle = combine(
+      {
+        color: colors.text('secondary'),
+        lineHeight: 1.5,
+        ...spacing.marginBottom('lg')
+      }
+    );
+
+    const actionsStyle = combine(
+      layout.flex(),
+      {
+        justifyContent: 'center',
+        gap: spacing.get('sm'),
+        ...spacing.marginBottom('md')
+      }
+    );
+
+    const buttonBaseStyle = combine(
+      {
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '14px',
+        transition: 'background-color 0.2s',
+        ...spacing.padding('md'),
+        ...borderRadius.get('sm')
+      }
+    );
+
+    const primaryButtonStyle = combine(
+      buttonBaseStyle,
+      {
+        backgroundColor: colors.primary(),
+        color: '#ffffff'
+      }
+    );
+
+    const secondaryButtonStyle = combine(
+      buttonBaseStyle,
+      {
+        backgroundColor: colors.text('secondary'),
+        color: '#ffffff'
+      }
+    );
+
+    const detailsStyle = combine(
+      {
+        textAlign: 'left' as const,
+        ...spacing.marginTop('md')
+      }
+    );
+
+    const errorInfoStyle = combine(
+      {
+        backgroundColor: colors.background('light'),
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        ...spacing.padding('sm'),
+        ...borderRadius.get('sm')
+      }
+    );
+
+    const stackStyle = combine(
+      {
+        backgroundColor: colors.background('dark'),
+        overflowX: 'auto' as const,
+        whiteSpace: 'pre-wrap' as const,
+        ...spacing.padding('xs'),
+        ...spacing.marginY('xs'),
+        ...borderRadius.get('sm')
+      }
+    );
     
     return (
-      <div className="error-boundary">
-        <div className="error-boundary__container">
-          <h2 className="error-boundary__title">出现了一些问题</h2>
-          <p className="error-boundary__message">
+      <div style={errorBoundaryStyle}>
+        <div style={containerStyle}>
+          <h2 style={titleStyle}>出现了一些问题</h2>
+          <p style={messageStyle}>
             抱歉，应用程序遇到了意外错误。请尝试刷新页面或联系技术支持。
           </p>
           
-          <div className="error-boundary__actions">
+          <div style={actionsStyle}>
             <button 
-              className="error-boundary__button error-boundary__button--primary"
+              style={primaryButtonStyle}
               onClick={this.resetErrorBoundary}
             >
               重试
             </button>
             <button 
-              className="error-boundary__button error-boundary__button--secondary"
+              style={secondaryButtonStyle}
               onClick={() => window.location.reload()}
             >
               刷新页面
@@ -203,16 +304,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </div>
 
           {isDevelopment && (
-            <details className="error-boundary__details">
+            <details style={detailsStyle}>
               <summary>错误详情 (开发模式)</summary>
-              <div className="error-boundary__error-info">
+              <div style={errorInfoStyle}>
                 <p><strong>错误ID:</strong> {errorId}</p>
                 <p><strong>错误信息:</strong> {error?.message}</p>
-                <pre className="error-boundary__stack">
+                <pre style={stackStyle}>
                   {error?.stack}
                 </pre>
                 {errorInfo && (
-                  <pre className="error-boundary__component-stack">
+                  <pre style={stackStyle}>
                     {errorInfo.componentStack}
                   </pre>
                 )}

@@ -15,6 +15,7 @@ import {
   Collapse,
   Alert,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 
 import {
   ToolOutlined,
@@ -23,7 +24,6 @@ import {
   ExclamationCircleOutlined,
   CodeOutlined,
 } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '../store';
 import {
   initializeMCP,
@@ -34,6 +34,12 @@ import {
 } from '../store/slices/mcpSlice';
 import type { MCPTool, MCPMessage } from '../types/api';
 import { SearchableTable, FormModal } from '../components/common';
+import { useAsyncOperation } from '../hooks';
+import { 
+  createTextColumn, 
+  createActionColumn,
+  mergeColumns 
+} from '../utils/tableColumns';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
@@ -74,26 +80,38 @@ const MCPToolsPage: React.FC = () => {
     }
   }, [dispatch, isInitialized]);
 
+  const initializeOperation = useAsyncOperation(
+    () => dispatch(initializeMCP()),
+    {
+      successMessage: 'MCP初始化成功',
+      errorMessage: 'MCP初始化失败'
+    }
+  );
+
+  const executeToolOperation = useAsyncOperation(
+    async (toolName: string, args: Record<string, any>) => {
+      await dispatch(executeMCPTool({
+        name: toolName,
+        arguments: args,
+      })).unwrap();
+      
+      setExecuteModalVisible(false);
+      form.resetFields();
+      dispatch(fetchMCPLogs()); // 刷新日志
+    },
+    {
+      successMessage: '工具执行成功',
+      errorMessage: '工具执行失败'
+    }
+  );
+
   const handleInitializeMCP = () => {
-    dispatch(initializeMCP());
+    initializeOperation.execute();
   };
 
   const handleExecuteTool = async (values: Record<string, any>) => {
     if (!selectedTool) return;
-
-    try {
-      await dispatch(executeMCPTool({
-        name: selectedTool.name,
-        arguments: values,
-      })).unwrap();
-      
-      message.success('工具执行成功');
-      setExecuteModalVisible(false);
-      form.resetFields();
-      dispatch(fetchMCPLogs()); // 刷新日志
-    } catch (err) {
-      message.error('工具执行失败');
-    }
+    await executeToolOperation.execute(selectedTool.name, values);
   };
 
   const renderInputSchema = (schema: any) => {
@@ -175,7 +193,7 @@ const MCPToolsPage: React.FC = () => {
     );
   };
 
-  const toolColumns: ColumnsType<MCPTool> = [
+  const toolColumns = mergeColumns<MCPTool>([
     {
       title: '工具名称',
       dataIndex: 'name',
@@ -187,55 +205,48 @@ const MCPToolsPage: React.FC = () => {
         </Space>
       ),
     },
-    {
+    createTextColumn({
       title: '描述',
       dataIndex: 'description',
-      key: 'description',
       ellipsis: true,
-    },
+    }),
     {
       title: '参数结构',
       dataIndex: 'inputSchema',
       key: 'inputSchema',
       render: (schema: any) => renderInputSchema(schema),
     },
-    {
-      title: '操作',
-      key: 'actions',
-      render: (_, record: MCPTool) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<PlayCircleOutlined />}
-            onClick={() => {
-              setSelectedTool(record);
-              setExecuteModalVisible(true);
-            }}
-          >
-            执行
-          </Button>
-          <Button
-            size="small"
-            icon={<CodeOutlined />}
-            onClick={() => {
-              Modal.info({
-                title: `${record.name} - 参数结构`,
-                content: (
-                  <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '4px' }}>
-                    {JSON.stringify(record.inputSchema, null, 2)}
-                  </pre>
-                ),
-                width: 600,
-              });
-            }}
-          >
-            查看结构
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+    createActionColumn({
+      actions: [
+        {
+          key: 'execute',
+          label: '执行',
+          type: 'primary',
+          icon: <PlayCircleOutlined />,
+          onClick: (record: MCPTool) => {
+            setSelectedTool(record);
+            setExecuteModalVisible(true);
+          }
+        },
+        {
+          key: 'view-schema',
+          label: '查看结构',
+          icon: <CodeOutlined />,
+          onClick: (record: MCPTool) => {
+            Modal.info({
+              title: `${record.name} - 参数结构`,
+              content: (
+                <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '4px' }}>
+                  {JSON.stringify(record.inputSchema, null, 2)}
+                </pre>
+              ),
+              width: 600,
+            });
+          }
+        }
+      ]
+    })
+  ]);
 
   const getLogLevelColor = (level: string) => {
     switch (level) {
