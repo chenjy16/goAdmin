@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
+	"time"
 
 	"go-springAi/internal/dto"
 	"go-springAi/internal/mcp"
@@ -464,17 +466,86 @@ func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatReques
 // buildToolsSystemMessage 构建工具系统消息
 func (s *AIAssistantService) buildToolsSystemMessage(tools []dto.MCPTool) string {
 	var builder strings.Builder
-	builder.WriteString("You are a professional financial AI assistant with access to comprehensive stock analysis tools. ")
-	builder.WriteString("When users ask about stocks, investments, or financial analysis, you should use the appropriate tools to provide accurate, data-driven insights. ")
-	builder.WriteString("When you need to use a tool, respond with a JSON object in this format: ")
+	builder.WriteString("# Financial AI Assistant - Professional Stock Analysis Expert\n\n")
+	
+	builder.WriteString("## Your Role & Expertise\n")
+	builder.WriteString("You are a senior financial analyst and investment advisor with deep expertise in:\n")
+	builder.WriteString("- **Stock Market Analysis**: Technical and fundamental analysis, market trends, sector analysis\n")
+	builder.WriteString("- **Investment Strategy**: Portfolio optimization, risk assessment, valuation models\n")
+	builder.WriteString("- **Financial Data Interpretation**: Reading financial statements, ratio analysis, performance metrics\n")
+	builder.WriteString("- **Market Intelligence**: Economic indicators, industry trends, competitive analysis\n\n")
+	
+	builder.WriteString("## Core Responsibilities\n")
+	builder.WriteString("1. **Data-Driven Analysis**: Always use tools to gather real-time, accurate financial data\n")
+	builder.WriteString("2. **Professional Insights**: Provide expert-level analysis suitable for serious investors\n")
+	builder.WriteString("3. **Risk Awareness**: Highlight potential risks and market uncertainties\n")
+	builder.WriteString("4. **Actionable Recommendations**: Offer practical, implementable investment guidance\n")
+	builder.WriteString("5. **Educational Value**: Explain complex financial concepts clearly\n\n")
+	
+	builder.WriteString("## Tool Usage Instructions\n")
+	
+	builder.WriteString("### When to Use Tools (Decision Matrix)\n")
+	builder.WriteString("**ALWAYS use tools when users ask about:**\n")
+	builder.WriteString("- Current stock prices, market data, or real-time information\n")
+	builder.WriteString("- Specific company financial performance or metrics\n")
+	builder.WriteString("- Stock comparisons or relative analysis\n")
+	builder.WriteString("- Historical price movements or trends\n")
+	builder.WriteString("- Portfolio analysis or investment recommendations\n\n")
+	
+	builder.WriteString("**DO NOT use tools for:**\n")
+	builder.WriteString("- General financial education or concept explanations\n")
+	builder.WriteString("- Hypothetical scenarios or theoretical discussions\n")
+	builder.WriteString("- Market news interpretation (unless specific data is needed)\n")
+	builder.WriteString("- Basic investment advice that doesn't require current data\n\n")
+	
+	builder.WriteString("### Tool Call Format\n")
+	builder.WriteString("When you need to use a tool, respond with a JSON object in this exact format:\n")
+	builder.WriteString("```json\n")
 	builder.WriteString(`{"tool_call": {"name": "tool_name", "arguments": {...}}}`)
-	builder.WriteString("\n\nAvailable tools:\n")
+	builder.WriteString("\n```\n\n")
+	
+	builder.WriteString("### Critical Guidelines\n")
+	builder.WriteString("- **One tool per response**: Never call multiple tools simultaneously\n")
+	builder.WriteString("- **Single line JSON**: Provide the tool_call JSON in exactly one line\n")
+	builder.WriteString("- **Complete arguments**: Include all required parameters with valid values\n")
+	builder.WriteString("- **Immediate execution**: Call tools as soon as you identify the need\n")
+	builder.WriteString("- **Clear intent**: Briefly explain what you're analyzing before the tool call\n\n")
+	
+	builder.WriteString("## Error Recovery Strategy\n")
+	builder.WriteString("If a tool call fails or returns an error:\n")
+	builder.WriteString("1. **Acknowledge the limitation**: Clearly state what data is unavailable\n")
+	builder.WriteString("2. **Provide alternative analysis**: Use available information or general market knowledge\n")
+	builder.WriteString("3. **Suggest manual verification**: Recommend users verify critical information independently\n")
+	builder.WriteString("4. **Maintain professionalism**: Continue providing valuable insights despite data limitations\n")
+	builder.WriteString("5. **Be transparent**: Explain how the missing data affects your analysis\n\n")
+	
+	builder.WriteString("## Complete Analysis Examples\n")
+	builder.WriteString("### Example 1: Single Stock Analysis\n")
+	builder.WriteString("**User Question**: \"How has Apple stock performed this year?\"\n")
+	builder.WriteString("**Your Response**: \"I'll analyze Apple's stock performance for you.\"\n")
+	builder.WriteString("**Tool Call**: ")
+	builder.WriteString(`{"tool_call": {"name": "stock_analysis", "arguments": {"symbol": "AAPL", "period": "1y"}}}`)
+	builder.WriteString("\n**Follow-up Analysis**: Provide comprehensive analysis of the results including price trends, volume patterns, key events, and investment implications.\n\n")
+	
+	builder.WriteString("### Example 2: Comparative Analysis\n")
+	builder.WriteString("**User Question**: \"Should I invest in Apple or Google?\"\n")
+	builder.WriteString("**Your Response**: \"Let me compare these two tech giants for you.\"\n")
+	builder.WriteString("**Tool Call**: ")
+	builder.WriteString(`{"tool_call": {"name": "stock_comparison", "arguments": {"symbols": ["AAPL", "GOOGL"], "metrics": ["price", "volume", "market_cap", "pe_ratio"]}}}`)
+	builder.WriteString("\n**Follow-up Analysis**: Compare financial metrics, growth prospects, risk factors, and provide investment recommendation based on data.\n\n")
+	
+	builder.WriteString("### Example 3: Error Handling\n")
+	builder.WriteString("**Scenario**: Tool call fails or returns incomplete data\n")
+	builder.WriteString("**Your Response**: \"I apologize, but I'm currently unable to access real-time data for [specific stock]. However, based on recent market trends and available information, I can provide the following analysis... I recommend verifying current prices through your broker or financial platform.\"\n\n")
+	
+	builder.WriteString("Available tools:\n")
 	
 	// 工具已经在调用方过滤过了，这里直接使用
 	for _, tool := range tools {
-		builder.WriteString(fmt.Sprintf("- %s: %s\n", tool.Name, tool.Description))
+		builder.WriteString(fmt.Sprintf("### %s\n", tool.Name))
+		builder.WriteString(fmt.Sprintf("Description: %s\n", tool.Description))
 		if schemaBytes, err := json.Marshal(tool.InputSchema); err == nil {
-			builder.WriteString(fmt.Sprintf("  Schema: %s\n", string(schemaBytes)))
+			builder.WriteString(fmt.Sprintf("Schema: %s\n\n", string(schemaBytes)))
 		}
 	}
 	
@@ -509,48 +580,240 @@ func (s *AIAssistantService) parseToolCalls(content string) []ToolCall {
 	
 	s.logger.Info("Parsing tool calls", zap.String("content", content))
 	
-	// 解析XML风格的tool_call标签
-	startTag := "<tool_call>"
-	endTag := "</tool_call>"
+	// 清理输入内容，移除多余的空白字符
+	content = strings.TrimSpace(content)
+	if content == "" {
+		s.logger.Warn("Empty content provided for tool call parsing")
+		return toolCalls
+	}
 	
-	startIndex := strings.Index(content, startTag)
-	s.logger.Info("Tool call search", zap.Int("startIndex", startIndex))
-	for startIndex != -1 {
-		endIndex := strings.Index(content[startIndex:], endTag)
-		if endIndex == -1 {
-			break
-		}
-		
-		// 提取tool_call内容
-		toolCallContent := content[startIndex+len(startTag) : startIndex+endIndex]
-		toolCallContent = strings.TrimSpace(toolCallContent)
-		
-		// 解析JSON内容
-		var toolCallData map[string]interface{}
-		if err := json.Unmarshal([]byte(toolCallContent), &toolCallData); err == nil {
-			if name, ok := toolCallData["name"].(string); ok {
-				toolCall := ToolCall{
-					Name: name,
-				}
-				if args, ok := toolCallData["arguments"].(map[string]interface{}); ok {
-					toolCall.Arguments = args
-				}
-				toolCalls = append(toolCalls, toolCall)
-			}
-		}
-		
-		// 继续查找下一个tool_call
-		nextSearchStart := startIndex + endIndex + len(endTag)
-		nextIndex := strings.Index(content[nextSearchStart:], startTag)
-		if nextIndex != -1 {
-			startIndex = nextSearchStart + nextIndex
-		} else {
-			startIndex = -1
+	// 支持多种JSON格式的解析策略
+	strategies := []func(string) []ToolCall{
+		s.parseDirectJSON,
+		s.parseWrappedToolCall,
+		s.parseCodeBlockJSON,
+		s.parseMultipleToolCalls,
+	}
+	
+	for i, strategy := range strategies {
+		if parsedCalls := strategy(content); len(parsedCalls) > 0 {
+			s.logger.Info("Tool calls parsed successfully", 
+				zap.Int("strategy", i+1), 
+				zap.Int("count", len(parsedCalls)))
+			return parsedCalls
 		}
 	}
 	
-	s.logger.Info("Tool calls parsed", zap.Int("count", len(toolCalls)))
+	s.logger.Warn("No tool calls found in content", zap.String("content_preview", s.truncateString(content, 100)))
 	return toolCalls
+}
+
+// parseDirectJSON 尝试直接解析整个内容作为JSON
+func (s *AIAssistantService) parseDirectJSON(content string) []ToolCall {
+	var toolCalls []ToolCall
+	
+	// 尝试解析为单个工具调用
+	var singleCall ToolCall
+	if err := json.Unmarshal([]byte(content), &singleCall); err == nil && singleCall.Name != "" {
+		if singleCall.Arguments == nil {
+			singleCall.Arguments = make(map[string]interface{})
+		}
+		toolCalls = append(toolCalls, singleCall)
+		return toolCalls
+	}
+	
+	// 尝试解析为工具调用数组
+	var multipleCalls []ToolCall
+	if err := json.Unmarshal([]byte(content), &multipleCalls); err == nil && len(multipleCalls) > 0 {
+		for _, call := range multipleCalls {
+			if call.Name != "" {
+				if call.Arguments == nil {
+					call.Arguments = make(map[string]interface{})
+				}
+				toolCalls = append(toolCalls, call)
+			}
+		}
+		return toolCalls
+	}
+	
+	return toolCalls
+}
+
+// parseWrappedToolCall 解析包装在tool_call字段中的JSON
+func (s *AIAssistantService) parseWrappedToolCall(content string) []ToolCall {
+	var toolCalls []ToolCall
+	
+	var wrapper map[string]interface{}
+	if err := json.Unmarshal([]byte(content), &wrapper); err != nil {
+		return toolCalls
+	}
+	
+	// 检查tool_call字段
+	if toolCallData, ok := wrapper["tool_call"]; ok {
+		if call := s.extractToolCallFromInterface(toolCallData); call != nil {
+			toolCalls = append(toolCalls, *call)
+		}
+	}
+	
+	// 检查tool_calls字段（数组）
+	if toolCallsData, ok := wrapper["tool_calls"]; ok {
+		if callsArray, ok := toolCallsData.([]interface{}); ok {
+			for _, callData := range callsArray {
+				if call := s.extractToolCallFromInterface(callData); call != nil {
+					toolCalls = append(toolCalls, *call)
+				}
+			}
+		}
+	}
+	
+	return toolCalls
+}
+
+// parseCodeBlockJSON 从代码块中提取JSON
+func (s *AIAssistantService) parseCodeBlockJSON(content string) []ToolCall {
+	var toolCalls []ToolCall
+	
+	// 使用正则表达式查找JSON代码块
+	jsonBlockRegex := regexp.MustCompile("```(?:json)?\n?([^`]+)\n?```")
+	matches := jsonBlockRegex.FindAllStringSubmatch(content, -1)
+	
+	for _, match := range matches {
+		if len(match) > 1 {
+			jsonContent := strings.TrimSpace(match[1])
+			if calls := s.parseDirectJSON(jsonContent); len(calls) > 0 {
+				toolCalls = append(toolCalls, calls...)
+			}
+		}
+	}
+	
+	return toolCalls
+}
+
+// parseMultipleToolCalls 使用改进的括号匹配算法查找多个工具调用
+func (s *AIAssistantService) parseMultipleToolCalls(content string) []ToolCall {
+	var toolCalls []ToolCall
+	
+	// 查找所有可能的JSON对象起始位置
+	patterns := []string{`{"tool_call"`, `{"name"`, `[{"name"`}
+	
+	for _, pattern := range patterns {
+		startIndex := 0
+		for {
+			index := strings.Index(content[startIndex:], pattern)
+			if index == -1 {
+				break
+			}
+			
+			actualIndex := startIndex + index
+			if jsonStr := s.extractJSONObject(content, actualIndex); jsonStr != "" {
+				// 尝试解析提取的JSON
+				if calls := s.parseDirectJSON(jsonStr); len(calls) > 0 {
+					toolCalls = append(toolCalls, calls...)
+				} else if calls := s.parseWrappedToolCall(jsonStr); len(calls) > 0 {
+					toolCalls = append(toolCalls, calls...)
+				}
+			}
+			
+			startIndex = actualIndex + 1
+		}
+	}
+	
+	return s.deduplicateToolCalls(toolCalls)
+}
+
+// extractJSONObject 从指定位置提取完整的JSON对象
+func (s *AIAssistantService) extractJSONObject(content string, startIndex int) string {
+	if startIndex >= len(content) {
+		return ""
+	}
+	
+	remaining := content[startIndex:]
+	braceCount := 0
+	inString := false
+	escaped := false
+	
+	for i, char := range remaining {
+		if escaped {
+			escaped = false
+			continue
+		}
+		
+		if char == '\\' {
+			escaped = true
+			continue
+		}
+		
+		if char == '"' {
+			inString = !inString
+			continue
+		}
+		
+		if !inString {
+			if char == '{' {
+				braceCount++
+			} else if char == '}' {
+				braceCount--
+				if braceCount == 0 {
+					return remaining[:i+1]
+				}
+			}
+		}
+	}
+	
+	return ""
+}
+
+// extractToolCallFromInterface 从interface{}中提取ToolCall
+func (s *AIAssistantService) extractToolCallFromInterface(data interface{}) *ToolCall {
+	callMap, ok := data.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	
+	name, ok := callMap["name"].(string)
+	if !ok || name == "" {
+		return nil
+	}
+	
+	toolCall := &ToolCall{
+		Name:      name,
+		Arguments: make(map[string]interface{}),
+	}
+	
+	if args, ok := callMap["arguments"].(map[string]interface{}); ok {
+		toolCall.Arguments = args
+	}
+	
+	return toolCall
+}
+
+// deduplicateToolCalls 去除重复的工具调用
+func (s *AIAssistantService) deduplicateToolCalls(toolCalls []ToolCall) []ToolCall {
+	seen := make(map[string]bool)
+	var unique []ToolCall
+	
+	for _, call := range toolCalls {
+		// 创建唯一标识符
+		key := call.Name
+		if argsBytes, err := json.Marshal(call.Arguments); err == nil {
+			key += string(argsBytes)
+		}
+		
+		if !seen[key] {
+			seen[key] = true
+			unique = append(unique, call)
+		}
+	}
+	
+	return unique
+}
+
+// truncateString 截断字符串用于日志记录
+func (s *AIAssistantService) truncateString(str string, maxLen int) string {
+	if len(str) <= maxLen {
+		return str
+	}
+	return str[:maxLen] + "..."
 }
 
 // executeToolCall 执行工具调用
@@ -560,16 +823,16 @@ func (s *AIAssistantService) executeToolCall(ctx context.Context, toolCall ToolC
 		Arguments: toolCall.Arguments,
 	}
 	
-	// 执行MCP工具
+	// 执行MCP工具，带有超时控制和重试机制
 	mcpReq := &dto.MCPExecuteRequest{
 		Name:      toolCall.Name,
 		Arguments: toolCall.Arguments,
 	}
 	
-	result, err := s.mcpClient.ExecuteTool(ctx, mcpReq)
+	result, err := s.executeToolWithRetry(ctx, mcpReq, toolCall.Name)
 	if err != nil {
 		execution.Error = err.Error()
-		s.logger.Error("Tool execution failed",
+		s.logger.Error("Tool execution failed after retries",
 			zap.String("tool", toolCall.Name),
 			zap.Error(err))
 	} else {
@@ -580,6 +843,137 @@ func (s *AIAssistantService) executeToolCall(ctx context.Context, toolCall ToolC
 	}
 	
 	return execution
+}
+
+// executeToolWithRetry 执行工具调用，带有超时控制和重试机制
+func (s *AIAssistantService) executeToolWithRetry(ctx context.Context, req *dto.MCPExecuteRequest, toolName string) (*dto.MCPExecuteResponse, error) {
+	const (
+		maxRetries = 3
+		baseDelay  = 1 * time.Second
+		maxDelay   = 10 * time.Second
+		timeout    = 30 * time.Second
+	)
+	
+	var lastErr error
+	
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		// 为每次尝试创建带超时的上下文
+		timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+		
+		s.logger.Info("Executing tool",
+			zap.String("tool", toolName),
+			zap.Int("attempt", attempt+1),
+			zap.Int("max_attempts", maxRetries))
+		
+		result, err := s.mcpClient.ExecuteTool(timeoutCtx, req)
+		cancel() // 立即释放资源
+		
+		if err == nil {
+			if result != nil && !result.IsError {
+				// 成功执行
+				if attempt > 0 {
+					s.logger.Info("Tool execution succeeded after retry",
+						zap.String("tool", toolName),
+						zap.Int("attempt", attempt+1))
+				}
+				return result, nil
+			} else if result != nil && result.IsError {
+				// 工具返回了错误结果，但这不是网络或系统错误
+				errorContent := ""
+				if len(result.Content) > 0 {
+					if contentBytes, err := json.Marshal(result.Content); err == nil {
+						errorContent = string(contentBytes)
+					}
+				}
+				s.logger.Warn("Tool returned error result",
+					zap.String("tool", toolName),
+					zap.String("error", errorContent))
+				return result, nil
+			}
+		}
+		
+		lastErr = err
+		
+		// 检查是否应该重试
+		if !s.shouldRetryError(err) {
+			s.logger.Warn("Error is not retryable, stopping attempts",
+				zap.String("tool", toolName),
+				zap.Error(err))
+			break
+		}
+		
+		// 如果不是最后一次尝试，等待后重试
+		if attempt < maxRetries-1 {
+			delay := s.calculateBackoffDelay(attempt, baseDelay, maxDelay)
+			s.logger.Info("Tool execution failed, retrying",
+				zap.String("tool", toolName),
+				zap.Int("attempt", attempt+1),
+				zap.Duration("retry_delay", delay),
+				zap.Error(err))
+			
+			select {
+			case <-time.After(delay):
+				// 继续重试
+			case <-ctx.Done():
+				// 上下文被取消
+				return nil, ctx.Err()
+			}
+		}
+	}
+	
+	return nil, fmt.Errorf("tool execution failed after %d attempts: %w", maxRetries, lastErr)
+}
+
+// shouldRetryError 判断错误是否应该重试
+func (s *AIAssistantService) shouldRetryError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errStr := err.Error()
+	
+	// 网络相关错误通常可以重试
+	retryableErrors := []string{
+		"timeout",
+		"connection refused",
+		"connection reset",
+		"temporary failure",
+		"network is unreachable",
+		"no such host",
+		"context deadline exceeded",
+		"i/o timeout",
+		"EOF",
+	}
+	
+	for _, retryableErr := range retryableErrors {
+		if strings.Contains(strings.ToLower(errStr), retryableErr) {
+			return true
+		}
+	}
+	
+	// 检查是否是上下文超时
+	if err == context.DeadlineExceeded || err == context.Canceled {
+		return true
+	}
+	
+	return false
+}
+
+// calculateBackoffDelay 计算指数退避延迟
+func (s *AIAssistantService) calculateBackoffDelay(attempt int, baseDelay, maxDelay time.Duration) time.Duration {
+	// 指数退避：baseDelay * 2^attempt
+	delay := baseDelay * time.Duration(1<<uint(attempt))
+	
+	// 添加一些随机性以避免雷群效应
+	jitter := time.Duration(float64(delay) * 0.1 * (0.5 - float64(attempt%2)))
+	delay += jitter
+	
+	// 确保不超过最大延迟
+	if delay > maxDelay {
+		delay = maxDelay
+	}
+	
+	return delay
 }
 
 // shouldGenerateFinalResponse 判断是否需要生成最终回复
@@ -597,22 +991,51 @@ func (s *AIAssistantService) shouldGenerateFinalResponse(executions []ToolCallEx
 func (s *AIAssistantService) generateFinalResponse(ctx context.Context, provider ProviderInterface, originalReq *ChatRequest, executions []ToolCallExecution) (openai.Message, error) {
 	// 构建包含工具执行结果的消息
 	var resultsBuilder strings.Builder
-	resultsBuilder.WriteString("Tool execution results:\n")
+	resultsBuilder.WriteString("## Tool Execution Results\n\n")
 	
-	for _, exec := range executions {
-		resultsBuilder.WriteString(fmt.Sprintf("Tool: %s\n", exec.ToolName))
+	successCount := 0
+	errorCount := 0
+	
+	for i, exec := range executions {
+		resultsBuilder.WriteString(fmt.Sprintf("### Tool %d: %s\n", i+1, exec.ToolName))
+		
+		// 添加工具参数信息
+		if len(exec.Arguments) > 0 {
+			if argsBytes, err := json.Marshal(exec.Arguments); err == nil {
+				resultsBuilder.WriteString(fmt.Sprintf("**Parameters:** %s\n", string(argsBytes)))
+			}
+		}
+		
 		if exec.Error != "" {
-			resultsBuilder.WriteString(fmt.Sprintf("Error: %s\n", exec.Error))
+			resultsBuilder.WriteString(fmt.Sprintf("**Status:** ❌ Error\n"))
+			resultsBuilder.WriteString(fmt.Sprintf("**Error Details:** %s\n", exec.Error))
+			errorCount++
 		} else if exec.Result != nil {
+			if exec.Result.IsError {
+				resultsBuilder.WriteString(fmt.Sprintf("**Status:** ⚠️ Tool Error\n"))
+				errorCount++
+			} else {
+				resultsBuilder.WriteString(fmt.Sprintf("**Status:** ✅ Success\n"))
+				successCount++
+			}
+			
+			resultsBuilder.WriteString("**Results:**\n")
 			for _, content := range exec.Result.Content {
-				resultsBuilder.WriteString(fmt.Sprintf("Result: %s\n", content.Text))
+				resultsBuilder.WriteString(fmt.Sprintf("- %s\n", content.Text))
 			}
 		}
 		resultsBuilder.WriteString("\n")
 	}
 	
 	// 构建提供商请求的消息格式
-	providerMessages := make([]ProviderMessage, 0, len(originalReq.Messages)+2)
+	providerMessages := make([]ProviderMessage, 0, len(originalReq.Messages)+3)
+	
+	// 添加系统消息，定义分析师角色
+	systemPrompt := s.buildAnalysisSystemPrompt(successCount, errorCount)
+	providerMessages = append(providerMessages, ProviderMessage{
+		Role:    "system",
+		Content: systemPrompt,
+	})
 	
 	// 转换原始消息
 	for _, msg := range originalReq.Messages {
@@ -628,10 +1051,11 @@ func (s *AIAssistantService) generateFinalResponse(ctx context.Context, provider
 		Content: resultsBuilder.String(),
 	})
 	
-	// 添加生成最终回复的指令
+	// 添加生成最终回复的详细指令
+	analysisPrompt := s.buildAnalysisPrompt(executions)
 	providerMessages = append(providerMessages, ProviderMessage{
 		Role:    "user",
-		Content: "Please provide a natural language summary of the tool execution results above.",
+		Content: analysisPrompt,
 	})
 	
 	// 使用动态选择的提供商生成最终回复
@@ -656,6 +1080,78 @@ func (s *AIAssistantService) generateFinalResponse(ctx context.Context, provider
 		Role:    resp.Choices[0].Message.Role,
 		Content: resp.Choices[0].Message.Content,
 	}, nil
+}
+
+// buildAnalysisSystemPrompt 构建分析系统提示
+func (s *AIAssistantService) buildAnalysisSystemPrompt(successCount, errorCount int) string {
+	var builder strings.Builder
+	builder.WriteString("You are a professional financial analyst with expertise in stock market analysis, investment strategies, and financial data interpretation. ")
+	builder.WriteString("Your role is to provide comprehensive, data-driven financial analysis based on the tool execution results.\n\n")
+	
+	builder.WriteString("## Analysis Guidelines:\n")
+	builder.WriteString("1. **Data Interpretation**: Analyze the numerical data, trends, and patterns from the tool results\n")
+	builder.WriteString("2. **Context Integration**: Consider market conditions, company fundamentals, and industry trends\n")
+	builder.WriteString("3. **Risk Assessment**: Identify potential risks and opportunities\n")
+	builder.WriteString("4. **Professional Tone**: Use clear, professional language suitable for investors\n")
+	builder.WriteString("5. **Actionable Insights**: Provide practical recommendations when appropriate\n\n")
+	
+	if errorCount > 0 {
+		builder.WriteString("⚠️ **Note**: Some tools encountered errors. Acknowledge these limitations in your analysis and work with available data.\n\n")
+	}
+	
+	return builder.String()
+}
+
+// buildAnalysisPrompt 构建分析提示
+func (s *AIAssistantService) buildAnalysisPrompt(executions []ToolCallExecution) string {
+	var builder strings.Builder
+	
+	builder.WriteString("Based on the tool execution results above, please provide a comprehensive financial analysis report with the following structure:\n\n")
+	
+	builder.WriteString("## 📊 Executive Summary\n")
+	builder.WriteString("Provide a concise overview of the key findings and main insights.\n\n")
+	
+	builder.WriteString("## 📈 Data Analysis\n")
+	builder.WriteString("Analyze the specific data points, metrics, and trends from the tool results. Include:\n")
+	builder.WriteString("- Key financial metrics and their implications\n")
+	builder.WriteString("- Trend analysis and patterns\n")
+	builder.WriteString("- Comparative analysis (if applicable)\n\n")
+	
+	builder.WriteString("## 🎯 Investment Insights\n")
+	builder.WriteString("Provide investment-focused analysis including:\n")
+	builder.WriteString("- Market position and competitive advantages\n")
+	builder.WriteString("- Growth prospects and potential catalysts\n")
+	builder.WriteString("- Valuation considerations\n\n")
+	
+	builder.WriteString("## ⚠️ Risk Factors\n")
+	builder.WriteString("Identify and explain potential risks and challenges.\n\n")
+	
+	// 根据工具类型添加特定指导
+	toolTypes := make(map[string]bool)
+	for _, exec := range executions {
+		toolTypes[exec.ToolName] = true
+	}
+	
+	if toolTypes["stock_comparison"] {
+		builder.WriteString("## 🔄 Comparative Analysis\n")
+		builder.WriteString("Provide detailed comparison between the analyzed stocks, highlighting relative strengths and weaknesses.\n\n")
+	}
+	
+	if toolTypes["yahoo_finance"] || toolTypes["stock_analysis"] {
+		builder.WriteString("## 📊 Technical & Fundamental Analysis\n")
+		builder.WriteString("Combine technical indicators with fundamental analysis for a comprehensive view.\n\n")
+	}
+	
+	builder.WriteString("## 💡 Recommendations\n")
+	builder.WriteString("Provide clear, actionable recommendations based on your analysis. Include:\n")
+	builder.WriteString("- Investment thesis (if applicable)\n")
+	builder.WriteString("- Suggested actions or considerations\n")
+	builder.WriteString("- Timeline and monitoring points\n\n")
+	
+	builder.WriteString("**Important**: Ensure your analysis is objective, data-driven, and acknowledges any limitations from tool errors or missing data. ")
+	builder.WriteString("Use professional financial terminology and provide context for technical concepts when necessary.")
+	
+	return builder.String()
 }
 
 // Initialize 初始化AI助手服务

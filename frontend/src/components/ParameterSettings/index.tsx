@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card, Slider, InputNumber, Row, Col, Space, Typography } from 'antd';
+import { Card, Slider, InputNumber, Row, Col, Space, Typography, Divider } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 interface ParameterSettingsProps {
   temperature: number;
@@ -41,43 +41,76 @@ const ParameterControl: React.FC<ParameterControlProps> = ({
 }) => {
   return (
     <div style={{ 
-      padding: '16px',
-      backgroundColor: '#fafafa',
-      borderRadius: '6px',
-      border: '1px solid #f0f0f0'
+      padding: '20px',
+      backgroundColor: '#ffffff',
+      borderRadius: '8px',
+      border: '1px solid #e8e8e8',
+      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.04)',
+      transition: 'all 0.2s ease',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <div style={{ marginBottom: '12px' }}>
-        <Text strong style={{ fontSize: '14px', color: '#262626' }}>{label}</Text>
-        <Text type="secondary" style={{ marginLeft: '8px', fontSize: '12px' }}>
-          ({description})
+      <div style={{ 
+        marginBottom: '16px',
+        textAlign: 'center',
+        flex: '0 0 auto'
+      }}>
+        <Title level={5} style={{ 
+          margin: 0, 
+          marginBottom: '4px',
+          fontSize: '16px', 
+          color: '#262626',
+          fontWeight: 600
+        }}>
+          {label}
+        </Title>
+        <Text type="secondary" style={{ 
+          fontSize: '12px',
+          lineHeight: '1.4'
+        }}>
+          {description}
         </Text>
       </div>
-      <Row gutter={12}>
-        <Col span={16}>
+      
+      <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ marginBottom: '16px' }}>
           <Slider
             min={min}
             max={max}
             step={step}
             value={value}
             onChange={onChange}
-            trackStyle={{ backgroundColor: color }}
-            handleStyle={{ borderColor: color }}
+            trackStyle={{ backgroundColor: color, height: '6px' }}
+            handleStyle={{ 
+              borderColor: color, 
+              backgroundColor: color,
+              width: '16px',
+              height: '16px',
+              marginTop: '-5px'
+            }}
+            railStyle={{ height: '6px', backgroundColor: '#f0f0f0' }}
           />
-        </Col>
-        <Col span={8}>
+        </div>
+        
+        <div style={{ textAlign: 'center' }}>
           <InputNumber
             min={min}
             max={max}
             step={step}
             value={value}
             onChange={(val) => onChange(val || min)}
-            style={{ width: '100%' }}
-            size="small"
+            style={{ 
+              width: '100px',
+              textAlign: 'center'
+            }}
+            size="middle"
             formatter={formatter}
             parser={parser}
+            controls={false}
           />
-        </Col>
-      </Row>
+        </div>
+      </div>
     </div>
   );
 };
@@ -94,21 +127,39 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
   return (
     <Card 
       className={className}
-      type="inner" 
       title={
-        <Space size="middle">
-          <SettingOutlined style={{ color: '#722ed1' }} />
-          <span style={{ fontSize: '15px', fontWeight: 500 }}>高级设置</span>
+        <Space size="middle" style={{ alignItems: 'center' }}>
+          <SettingOutlined style={{ 
+            color: '#722ed1', 
+            fontSize: '18px'
+          }} />
+          <span style={{ 
+            fontSize: '16px', 
+            fontWeight: 600,
+            color: '#262626'
+          }}>
+            高级设置
+          </span>
         </Space>
       }
       style={{ 
-        borderRadius: '6px',
-        border: '1px solid #f9f0ff'
+        borderRadius: '12px',
+        border: '1px solid #e8e8e8',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+        background: 'linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%)'
       }}
-      bodyStyle={{ padding: '20px' }}
+      bodyStyle={{ 
+        padding: '24px',
+        background: 'transparent'
+      }}
+      headStyle={{
+        borderBottom: '1px solid #e8e8e8',
+        background: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: '12px 12px 0 0'
+      }}
     >
-      <Row gutter={[24, 24]}>
-        <Col span={8}>
+      <Row gutter={[24, 24]} style={{ minHeight: '200px' }}>
+        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
             label="Temperature"
             description="创造性: 0-2"
@@ -121,7 +172,7 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
           />
         </Col>
 
-        <Col span={8}>
+        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
             label="Max Tokens"
             description="最大输出长度"
@@ -135,7 +186,7 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
           />
         </Col>
 
-        <Col span={8}>
+        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
             label="Top-p"
             description="多样性: 0-1"

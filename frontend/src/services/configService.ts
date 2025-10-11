@@ -206,7 +206,7 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
     return {
       selectedProvider: '',
       selectedModel: '',
-      selectedTool: '',
+      selectedTool: '股票分析',
       temperature: 0.7,
       maxTokens: 2048,
       topP: 1.0
