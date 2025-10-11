@@ -48,10 +48,7 @@ func (ac *AIAssistantController) Chat(c *gin.Context) {
 		return
 	}
 
-	// 设置默认模型
-	if req.Model == "" {
-		req.Model = "gpt-3.5-turbo"
-	}
+	// 不再在控制器层设置默认模型，让服务层处理提供商和模型的选择
 
 	result, err := ac.aiAssistantService.Chat(c.Request.Context(), &req)
 	if err != nil {

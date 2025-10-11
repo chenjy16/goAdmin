@@ -7,8 +7,11 @@ import (
 	"go-springAi/internal/config"
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
+	"go-springAi/internal/dto"
 	"go-springAi/internal/googleai"
+	"go-springAi/internal/handler"
 	"go-springAi/internal/logger"
+	"go-springAi/internal/mcp"
 	"go-springAi/internal/openai"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
@@ -174,7 +177,7 @@ func ProvideAIController(providerManager *provider.Manager, apiKeyService servic
 }
 
 // ProvideAIAssistantService 提供AI助手服务
-func ProvideAIAssistantService(mcpService service.MCPService, openaiService *service.OpenAIService, providerManager *provider.Manager, logger *zap.Logger) *service.AIAssistantService {
+func ProvideAIAssistantService(mcpService service.MCPService, openaiService *service.OpenAIService, providerManager *provider.Manager, stockAnalysisService *service.StockAnalysisService, logger *zap.Logger) *service.AIAssistantService {
 	// 创建适配器来实现接口
 	adapter := &ProviderManagerAdapter{manager: providerManager}
 	return service.NewAIAssistantService(mcpService, openaiService, adapter, logger)
@@ -291,7 +294,26 @@ func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService
 	return controllers.NewAIAssistantController(aiAssistantService, logger)
 }
 
+// ProvideInternalMCPClient 提供内部MCP客户端
+func ProvideInternalMCPClient(mcpService service.MCPService) mcp.InternalMCPClient {
+	clientInfo := dto.MCPClientInfo{
+		Name:    "stock-analysis",
+		Version: "1.0.0",
+	}
+	return mcp.NewInternalMCPClient(mcpService, clientInfo)
+}
+
+// ProvideStockAnalysisService 提供股票分析服务
+func ProvideStockAnalysisService(mcpClient mcp.InternalMCPClient, logger *zap.Logger) *service.StockAnalysisService {
+	return service.NewStockAnalysisService(mcpClient, logger)
+}
+
+// ProvideStockHandler 提供股票处理器
+func ProvideStockHandler(stockAnalysisService *service.StockAnalysisService, logger *zap.Logger) *handler.StockHandler {
+	return handler.NewStockHandler(stockAnalysisService, logger)
+}
+
 // ProvideRouter 提供路由器
-func ProvideRouter(jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, logger *zap.Logger) *gin.Engine {
-	return route.SetupRoutes(logger, jwtManager, mcpController, aiController, aiAssistantController)
+func ProvideRouter(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockHandler *handler.StockHandler) *gin.Engine {
+	return route.SetupRoutes(logger, jwtManager, mcpController, aiController, aiAssistantController, stockHandler)
 }

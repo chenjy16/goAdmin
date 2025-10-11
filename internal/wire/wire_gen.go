@@ -13,6 +13,7 @@ import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
 	"go-springAi/internal/dto"
+	"go-springAi/internal/handler"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
@@ -46,13 +47,16 @@ func InitializeApp(configPath string) (*App, func(), error) {
 		return nil, nil, err
 	}
 	apiKeyService := ProvideAPIKeyService(repositoryManager)
+	internalMCPClient := ProvideInternalMCPClient(mcpService)
+	stockAnalysisService := ProvideStockAnalysisService(internalMCPClient, logger)
 	manager := ProvideProviderManager(openAIService, googleAIService, logger)
-	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, logger)
+	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, stockAnalysisService, logger)
 	mcpController := ProvideMCPController(mcpService, logger)
 	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger)
+	stockHandler := ProvideStockHandler(stockAnalysisService, logger)
 	aiController := ProvideAIController(manager, apiKeyService, logger)
-	engine := ProvideRouter(jwtManager, mcpController, aiController, aiAssistantController, logger)
-	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, apiKeyService, aiAssistantService, mcpController, aiAssistantController, manager, aiController, engine)
+	engine := ProvideRouter(logger, jwtManager, mcpController, aiController, aiAssistantController, stockHandler)
+	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, apiKeyService, stockAnalysisService, aiAssistantService, mcpController, aiAssistantController, stockHandler, manager, aiController, engine)
 	return app, func() {
 		cleanup()
 	}, nil
@@ -72,9 +76,11 @@ type App struct {
 	OpenAIService         *service.OpenAIService
 	GoogleAIService       *service.GoogleAIService
 	APIKeyService         service.APIKeyService
+	StockAnalysisService  *service.StockAnalysisService
 	AIAssistantService    *service.AIAssistantService
 	MCPController         *controllers.MCPController
 	AIAssistantController *controllers.AIAssistantController
+	StockHandler          *handler.StockHandler
 	ProviderManager       *provider.Manager
 	AIController          *controllers.AIController
 	Router                *gin.Engine
@@ -91,9 +97,11 @@ func NewApp(config2 *config.Config,
 	openaiService *service.OpenAIService,
 	googleaiService *service.GoogleAIService,
 	apiKeyService service.APIKeyService,
+	stockAnalysisService *service.StockAnalysisService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
 	aiAssistantController *controllers.AIAssistantController,
+	stockHandler *handler.StockHandler,
 	providerManager *provider.Manager,
 	aiController *controllers.AIController,
 	router *gin.Engine,
@@ -109,9 +117,11 @@ func NewApp(config2 *config.Config,
 		OpenAIService:         openaiService,
 		GoogleAIService:       googleaiService,
 		APIKeyService:         apiKeyService,
+		StockAnalysisService:  stockAnalysisService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
 		AIAssistantController: aiAssistantController,
+		StockHandler:          stockHandler,
 		ProviderManager:       providerManager,
 		AIController:          aiController,
 		Router:                router,

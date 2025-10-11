@@ -3,6 +3,7 @@ package route
 import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/dto"
+	"go-springAi/internal/handler"
 	"go-springAi/internal/middleware"
 	"go-springAi/internal/utils"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // SetupRoutes 设置路由
-func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController) *gin.Engine {
+func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockHandler *handler.StockHandler) *gin.Engine {
 	// 创建Gin引擎
 	r := gin.New()
 
@@ -85,6 +86,25 @@ func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController
 			
 			// AI助手聊天端点
 			assistantGroup.POST("/chat", aiAssistantController.Chat)
+		}
+
+		// 股票分析端点
+		stockGroup := v1.Group("/stock")
+		{
+			// 股票分析
+			stockGroup.POST("/analyze", stockHandler.AnalyzeStock)
+			
+			// 股票比较
+			stockGroup.POST("/compare", stockHandler.CompareStocks)
+			
+			// 股票报价
+			stockGroup.GET("/quote/:symbol", stockHandler.GetStockQuote)
+			
+			// 股票历史数据
+			stockGroup.GET("/history/:symbol", stockHandler.GetStockHistory)
+			
+			// 市场摘要
+			stockGroup.GET("/market/summary", stockHandler.GetMarketSummary)
 		}
 	}
 

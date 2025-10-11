@@ -10,6 +10,7 @@ import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
 	"go-springAi/internal/dto"
+	"go-springAi/internal/handler"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
@@ -43,14 +44,17 @@ func InitializeApp(configPath string) (*App, func(), error) {
 
 		// Services
 		ProvideMCPService,
+		ProvideInternalMCPClient,
 		ProvideOpenAIService,
 		ProvideGoogleAIService,
 		ProvideAPIKeyService,
+		ProvideStockAnalysisService,
 		ProvideAIAssistantService,
 
 		// Controllers
 		ProvideMCPController,
 		ProvideAIAssistantController,
+		ProvideStockHandler,
 
 		// Provider Manager
 		ProvideProviderManager,
@@ -79,9 +83,11 @@ type App struct {
 	OpenAIService          *service.OpenAIService
 	GoogleAIService        *service.GoogleAIService
 	APIKeyService          service.APIKeyService
+	StockAnalysisService   *service.StockAnalysisService
 	AIAssistantService     *service.AIAssistantService
 	MCPController          *controllers.MCPController
 	AIAssistantController  *controllers.AIAssistantController
+	StockHandler           *handler.StockHandler
 	ProviderManager        *provider.Manager
 	AIController           *controllers.AIController
 	Router                 *gin.Engine
@@ -99,9 +105,11 @@ func NewApp(
 	openaiService *service.OpenAIService,
 	googleaiService *service.GoogleAIService,
 	apiKeyService service.APIKeyService,
+	stockAnalysisService *service.StockAnalysisService,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
 	aiAssistantController *controllers.AIAssistantController,
+	stockHandler *handler.StockHandler,
 	providerManager *provider.Manager,
 	aiController *controllers.AIController,
 	router *gin.Engine,
@@ -117,9 +125,11 @@ func NewApp(
 		OpenAIService:         openaiService,
 		GoogleAIService:       googleaiService,
 		APIKeyService:         apiKeyService,
+		StockAnalysisService:  stockAnalysisService,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
 		AIAssistantController: aiAssistantController,
+		StockHandler:          stockHandler,
 		ProviderManager:       providerManager,
 		AIController:          aiController,
 		Router:                router,

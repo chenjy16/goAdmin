@@ -59,24 +59,44 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
           onChange={onToolChange}
           style={{ width: '100%' }}
         >
-          <Row gutter={[12, 12]}>
+          <Row gutter={[12, 12]} align="stretch">
             {tools.map(tool => (
-              <Col span={12} key={tool.name}>
+              <Col span={12} key={tool.name} style={{ display: 'flex' }}>
                 <div style={{ 
                   padding: '12px',
                   border: '1px solid #f0f0f0',
                   borderRadius: '6px',
                   backgroundColor: '#fafafa',
                   transition: 'all 0.2s ease',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  width: '100%',
+                  minHeight: '80px',
+                  display: 'flex',
+                  alignItems: 'flex-start'
                 }}>
-                  <Checkbox value={tool.name}>
-                    <Space direction="vertical" size={4}>
-                      <Text strong style={{ fontSize: '14px' }}>{tool.name}</Text>
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                  <Checkbox value={tool.name} style={{ alignSelf: 'flex-start', marginTop: '2px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      gap: '4px',
+                      paddingLeft: '4px'
+                    }}>
+                      <Text strong style={{ 
+                        fontSize: '14px',
+                        lineHeight: '20px',
+                        display: 'block'
+                      }}>
+                        {tool.name}
+                      </Text>
+                      <Text type="secondary" style={{ 
+                        fontSize: '12px',
+                        lineHeight: '16px',
+                        display: 'block',
+                        wordBreak: 'break-word'
+                      }}>
                         {tool.description}
                       </Text>
-                    </Space>
+                    </div>
                   </Checkbox>
                 </div>
               </Col>

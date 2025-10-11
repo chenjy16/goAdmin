@@ -175,8 +175,18 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 				provider, err = s.providerManager.GetProviderByModel(req.Model)
 			}
 		} else {
-			// 如果没有指定模型，使用默认提供商
-			provider, err = s.providerManager.GetProviderByModel("gpt-3.5-turbo") // 默认模型
+			// 如果没有指定模型，使用Mock提供商作为默认提供商
+			s.logger.Info("No model specified, using default mock provider")
+			provider, err = s.providerManager.GetProviderByName("mock")
+			if err != nil {
+				s.logger.Warn("Failed to get mock provider, falling back to gpt-3.5-turbo", zap.Error(err))
+				provider, err = s.providerManager.GetProviderByModel("gpt-3.5-turbo") // 回退到默认模型
+			} else {
+				// 为Mock提供商设置默认模型
+				if req.Model == "" {
+					req.Model = "mock-gpt-3.5-turbo"
+				}
+			}
 		}
 	}
 	
@@ -218,7 +228,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 		}
 	}
 
-	// 如果有可用工具，添加工具信息到系统消息
+	// 检查是否需要添加工具信息到系统消息
 	if len(availableTools) > 0 {
 		toolsInfo := s.buildToolsSystemMessage(availableTools)
 		systemMsg := ProviderMessage{
@@ -277,6 +287,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 	}
 
 	// 4. 处理工具调用（如果需要）
+	// 检查是否有可用工具
 	if len(availableTools) > 0 && len(response.Choices) > 0 && response.Choices[0].Message.Content != "" {
 		toolCalls := s.parseToolCalls(response.Choices[0].Message.Content)
 		if len(toolCalls) > 0 {
@@ -335,15 +346,21 @@ func (s *AIAssistantService) filterTools(allTools []dto.MCPTool, selectedTools [
 func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
 	s.logger.Info("Falling back to OpenAI implementation")
 	
-	// 如果启用工具，先获取可用工具列表
+	// 如果启用工具或指定了工具，先获取可用工具列表
 	var availableTools []dto.MCPTool
-	if req.UseTools {
+	if req.UseTools || len(req.SelectedTools) > 0 {
 		toolsResp, err := s.mcpClient.ListTools(ctx)
 		if err != nil {
 			s.logger.Error("Failed to get available tools", zap.Error(err))
 			return nil, fmt.Errorf("failed to get available tools: %w", err)
 		}
-		availableTools = toolsResp.Tools
+		
+		// 根据SelectedTools过滤工具
+		if len(req.SelectedTools) > 0 {
+			availableTools = s.filterTools(toolsResp.Tools, req.SelectedTools)
+		} else {
+			availableTools = toolsResp.Tools
+		}
 	}
 
 	// 构建OpenAI请求
@@ -425,11 +442,13 @@ func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatReques
 // buildToolsSystemMessage 构建工具系统消息
 func (s *AIAssistantService) buildToolsSystemMessage(tools []dto.MCPTool) string {
 	var builder strings.Builder
-	builder.WriteString("You have access to the following tools. ")
+	builder.WriteString("You are a professional financial AI assistant with access to comprehensive stock analysis tools. ")
+	builder.WriteString("When users ask about stocks, investments, or financial analysis, you should use the appropriate tools to provide accurate, data-driven insights. ")
 	builder.WriteString("When you need to use a tool, respond with a JSON object in this format: ")
 	builder.WriteString(`{"tool_call": {"name": "tool_name", "arguments": {...}}}`)
 	builder.WriteString("\n\nAvailable tools:\n")
 	
+	// 工具已经在调用方过滤过了，这里直接使用
 	for _, tool := range tools {
 		builder.WriteString(fmt.Sprintf("- %s: %s\n", tool.Name, tool.Description))
 		if schemaBytes, err := json.Marshal(tool.InputSchema); err == nil {
@@ -466,28 +485,49 @@ type ToolCall struct {
 func (s *AIAssistantService) parseToolCalls(content string) []ToolCall {
 	var toolCalls []ToolCall
 	
-	// 简单的JSON解析，寻找tool_call对象
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.Contains(line, "tool_call") {
-			var parsed map[string]interface{}
-			if err := json.Unmarshal([]byte(line), &parsed); err == nil {
-				if toolCallData, ok := parsed["tool_call"].(map[string]interface{}); ok {
-					if name, ok := toolCallData["name"].(string); ok {
-						toolCall := ToolCall{
-							Name: name,
-						}
-						if args, ok := toolCallData["arguments"].(map[string]interface{}); ok {
-							toolCall.Arguments = args
-						}
-						toolCalls = append(toolCalls, toolCall)
-					}
+	s.logger.Info("Parsing tool calls", zap.String("content", content))
+	
+	// 解析XML风格的tool_call标签
+	startTag := "<tool_call>"
+	endTag := "</tool_call>"
+	
+	startIndex := strings.Index(content, startTag)
+	s.logger.Info("Tool call search", zap.Int("startIndex", startIndex))
+	for startIndex != -1 {
+		endIndex := strings.Index(content[startIndex:], endTag)
+		if endIndex == -1 {
+			break
+		}
+		
+		// 提取tool_call内容
+		toolCallContent := content[startIndex+len(startTag) : startIndex+endIndex]
+		toolCallContent = strings.TrimSpace(toolCallContent)
+		
+		// 解析JSON内容
+		var toolCallData map[string]interface{}
+		if err := json.Unmarshal([]byte(toolCallContent), &toolCallData); err == nil {
+			if name, ok := toolCallData["name"].(string); ok {
+				toolCall := ToolCall{
+					Name: name,
 				}
+				if args, ok := toolCallData["arguments"].(map[string]interface{}); ok {
+					toolCall.Arguments = args
+				}
+				toolCalls = append(toolCalls, toolCall)
 			}
+		}
+		
+		// 继续查找下一个tool_call
+		nextSearchStart := startIndex + endIndex + len(endTag)
+		nextIndex := strings.Index(content[nextSearchStart:], startTag)
+		if nextIndex != -1 {
+			startIndex = nextSearchStart + nextIndex
+		} else {
+			startIndex = -1
 		}
 	}
 	
+	s.logger.Info("Tool calls parsed", zap.Int("count", len(toolCalls)))
 	return toolCalls
 }
 

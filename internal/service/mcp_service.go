@@ -9,6 +9,7 @@ import (
 	"go-springAi/internal/dto"
 	"go-springAi/internal/logger"
 	"go-springAi/internal/mcp"
+	"go-springAi/internal/mcp/tools"
 	"go-springAi/internal/repository"
 
 	"github.com/google/uuid"
@@ -111,9 +112,21 @@ func NewMCPService(userService MCPUserService, logger *zap.Logger) MCPService {
 
 // registerDefaultTools 注册默认工具
 func (s *MCPServiceImpl) registerDefaultTools() {
-	// 注册回显工具
-	echoTool := mcp.NewEchoTool()
-	s.toolRegistry.Register(echoTool)
+	// 注册 Yahoo Finance 股票数据工具
+	yahooFinanceTool := tools.NewYahooFinanceTool()
+	s.toolRegistry.Register(yahooFinanceTool)
+
+	// 注册股票分析工具
+	stockAnalysisTool := tools.NewStockAnalysisTool()
+	s.toolRegistry.Register(stockAnalysisTool)
+
+	// 注册股票对比工具
+	stockCompareTool := tools.NewStockCompareTool()
+	s.toolRegistry.Register(stockCompareTool)
+
+	// 注册股票投资建议工具
+	stockAdviceTool := tools.NewStockAdviceTool()
+	s.toolRegistry.Register(stockAdviceTool)
 
 	s.logger.Info("Default MCP tools registered",
 		logger.Module(logger.ModuleService),

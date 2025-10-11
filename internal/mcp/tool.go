@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"go-springAi/internal/dto"
 )
@@ -79,47 +78,4 @@ func (bt *BaseTool) GetDefinition() dto.MCPTool {
 func (bt *BaseTool) Validate(args map[string]interface{}) error {
 	// 基础验证逻辑，可以在具体工具中重写
 	return nil
-}
-
-// EchoTool 回显工具（示例工具）
-type EchoTool struct {
-	*BaseTool
-}
-
-// NewEchoTool 创建回显工具
-func NewEchoTool() *EchoTool {
-	return &EchoTool{
-		BaseTool: &BaseTool{
-			Name:        "echo",
-			Description: "Echo the input message back to the user",
-			InputSchema: map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"message": map[string]interface{}{
-						"type":        "string",
-						"description": "The message to echo back",
-					},
-				},
-				"required": []string{"message"},
-			},
-		},
-	}
-}
-
-// Execute 执行回显工具
-func (et *EchoTool) Execute(ctx context.Context, args map[string]interface{}) (*dto.MCPExecuteResponse, error) {
-	message, ok := args["message"].(string)
-	if !ok {
-		return nil, fmt.Errorf("message parameter is required and must be a string")
-	}
-
-	return &dto.MCPExecuteResponse{
-		Content: []dto.MCPContent{
-			{
-				Type: "text",
-				Text: fmt.Sprintf("Echo: %s", message),
-			},
-		},
-		IsError: false,
-	}, nil
 }

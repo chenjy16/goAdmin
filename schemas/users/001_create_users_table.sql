@@ -18,10 +18,3 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
 CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
 
--- 创建触发器自动更新 updated_at 字段
-CREATE TRIGGER IF NOT EXISTS update_users_updated_at 
-    AFTER UPDATE ON users
-    FOR EACH ROW
-BEGIN
-    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;

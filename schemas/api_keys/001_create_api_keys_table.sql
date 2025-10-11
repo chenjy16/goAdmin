@@ -19,10 +19,3 @@ CREATE INDEX IF NOT EXISTS idx_api_keys_user_provider ON api_keys(user_id, provi
 CREATE INDEX IF NOT EXISTS idx_api_keys_is_active ON api_keys(is_active);
 CREATE INDEX IF NOT EXISTS idx_api_keys_created_at ON api_keys(created_at);
 
--- 创建触发器自动更新 updated_at 字段
-CREATE TRIGGER IF NOT EXISTS update_api_keys_updated_at 
-    AFTER UPDATE ON api_keys
-    FOR EACH ROW
-BEGIN
-    UPDATE api_keys SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
-END;

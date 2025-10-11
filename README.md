@@ -1,8 +1,22 @@
-# go-springAi
+# go-springAi - 智能股票分析AI助手
 
-这是一个现代化的全栈AI应用平台，采用前后端分离架构，提供完整的AI集成解决方案。项目在MCP协议支持、AI集成和用户界面方面表现出色，是一个功能完整的企业级AI应用框架。
+这是一个专业的股票分析AI助手平台，采用现代化的全栈架构设计，专注于为投资者和金融分析师提供智能化的股票分析服务。项目集成了多种AI模型和金融数据源，通过MCP协议支持和先进的AI技术，为用户提供实时股票分析、投资建议和市场洞察。
+
+## 🎯 项目愿景
+
+打造一个功能强大、易于使用的股票分析AI助手，帮助投资者做出更明智的投资决策。通过整合多种AI模型和实时金融数据，提供准确的股票分析、比较和投资建议，让每个人都能享受到专业级的投资分析服务。
 
 ## ✨ 特性
+
+### 📈 股票分析核心功能
+- 🔍 **智能股票分析**: 基于AI的深度股票分析，提供技术指标、基本面分析和市场趋势预测
+- 📊 **实时股票数据**: 集成Yahoo Finance API，获取实时股票报价、历史数据和市场信息
+- ⚖️ **股票对比分析**: 支持多只股票的横向对比，分析相对表现和投资价值
+- 💡 **智能投资建议**: AI驱动的投资建议系统，根据市场分析提供个性化投资策略
+- 📈 **技术指标计算**: 内置多种技术指标计算，包括移动平均线、RSI、MACD等
+- 🎯 **风险评估**: 智能风险评估模型，帮助投资者了解投资风险
+- 📱 **市场概览**: 提供全面的市场概览和行业分析
+- 🔔 **价格预警**: 支持股票价格监控和预警功能
 
 ### 🎨 前端用户界面
 - 💻 **现代化前端**: 基于 React 19 + TypeScript + Vite 构建的响应式Web应用
@@ -12,50 +26,53 @@
 - 🗂️ **多页面应用**: 包含仪表板、AI聊天、提供商管理、MCP工具、AI助手和系统设置
 
 ### 🤖 AI 集成能力
-- 🚀 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，支持统一的 API 接口
-- 🔄 **统一 AI API**: 提供统一的聊天完成、模型管理和配置接口
-- 🧠 **AI 助手服务**: 内置智能助手，支持工具调用和上下文管理
-- 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能
-- 📊 **模型管理**: 支持多模型切换和配置管理
-- 💬 **智能对话**: 支持流式响应和多轮对话
+- 🚀 **多 AI 提供商支持**: 集成 OpenAI 和 Google AI，专门优化用于股票分析和金融数据处理
+- 🔄 **统一 AI API**: 提供统一的聊天完成、模型管理和配置接口，支持股票分析专用提示
+- 🧠 **股票分析AI助手**: 内置专业的股票分析助手，支持金融工具调用和投资上下文管理
+- 📈 **金融数据理解**: AI模型专门训练用于理解和分析金融数据、市场趋势和投资指标
+- 🔑 **API 密钥管理**: 动态 API 密钥设置和验证功能，支持多个金融数据源
+- 📊 **模型管理**: 支持多模型切换和配置管理，针对不同分析场景优化
+- 💬 **智能投资对话**: 支持流式响应和多轮投资咨询对话，提供个性化建议
 
 ### 🔧 MCP 协议支持
-- 🛠️ **完整 MCP 实现**: 完整实现 Model Context Protocol 规范
-- 🔧 **AI 工具系统**: 内置 OpenAI 和 Google AI 工具，支持可扩展的工具注册和执行
-- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时事件推送和流式响应
-- 📝 **执行日志**: 完整的工具执行历史记录和性能监控
-- 🔄 **动态工具注册**: 支持运行时工具发现和注册
-- 🎯 **工具管理界面**: 提供可视化的工具管理和执行界面
+- 🛠️ **完整 MCP 实现**: 完整实现 Model Context Protocol 规范，专门优化金融分析工具集成
+- 🔧 **股票分析工具系统**: 内置专业的股票分析工具集，包括股票分析、对比、建议和数据获取工具
+- 📡 **SSE 流式通信**: 支持 Server-Sent Events 实时股票数据推送和流式分析响应
+- 📝 **分析执行日志**: 完整的股票分析执行历史记录和性能监控
+- 🔄 **动态工具注册**: 支持运行时股票分析工具发现和注册
+- 🎯 **工具管理界面**: 提供可视化的股票分析工具管理和执行界面
 
 ### 🏗️ 架构设计
-- 🚀 **高性能后端**: 基于 Gin 框架，提供高性能的 HTTP 服务
-- 🏗️ **清洁架构**: 采用分层架构设计，代码结构清晰，易于维护
-- ⚡ **依赖注入**: 使用 Google Wire 进行依赖注入管理
-- 🔧 **配置管理**: 使用 Viper 进行灵活的配置管理
-- 🛡️ **中间件支持**: 完整的 CORS、日志、错误处理和恢复中间件
-- 🔗 **前后端分离**: React前端 + Go后端，支持独立部署和扩展
+- 📊 **股票分析核心架构**: 专为金融数据处理和股票分析优化的微服务架构
+- 🚀 **高性能金融数据处理**: 基于 Gin 框架，提供毫秒级股票数据响应
+- 🏗️ **清洁架构**: 采用分层架构设计，股票分析逻辑与基础设施解耦
+- ⚡ **智能依赖注入**: 使用 Google Wire 管理股票分析工具和AI服务依赖
+- 🔧 **金融配置管理**: 使用 Viper 管理多数据源API密钥和分析参数
+- 🛡️ **金融级中间件**: 专为股票数据安全传输设计的中间件栈
+- 🔗 **股票分析前后端分离**: React股票分析界面 + Go金融数据后端
 
 ### 🗄️ 数据持久化
-- 🗄️ **数据库支持**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的数据库操作代码
-- 👤 **用户管理**: 完整的用户 CRUD 操作和认证系统
-- 🔐 **JWT 认证**: 基于 JWT 的用户认证和授权
-- 🔒 **密码安全**: 安全的密码哈希和验证机制
-- 💾 **状态管理**: 前端使用 Redux Toolkit 进行状态管理
+- 📈 **股票数据存储**: 高效存储历史股票数据、分析结果和投资组合信息
+- 🗄️ **金融数据库**: 支持 SQLite 数据库，使用 SQLC 生成类型安全的金融数据操作
+- 👤 **投资者管理**: 完整的用户投资偏好和风险评估数据管理
+- 🔐 **金融级认证**: 基于 JWT 的安全认证，保护敏感金融数据
+- 🔒 **数据安全**: 金融级密码哈希和数据加密机制
+- 💾 **股票状态管理**: 前端使用 Redux Toolkit 管理股票数据和分析状态
 
 ### 🛡️ 安全与监控
-- ✅ **数据验证**: 集成强大的数据验证功能
-- 🛡️ **错误处理**: 统一的错误处理和安全日志记录
-- 📊 **结构化日志**: 使用 Zap 提供详细的结构化日志记录
-- 🔍 **监控支持**: 完整的请求/响应日志和性能监控
-- 🚨 **安全日志**: 记录潜在安全威胁和异常行为
-- 🔐 **类型安全**: 前后端完整的 TypeScript 类型定义
+- 💰 **金融数据验证**: 专为股票数据设计的严格验证规则和数据完整性检查
+- 🛡️ **金融级错误处理**: 针对股票分析的统一错误处理和金融安全日志
+- 📊 **股票分析日志**: 使用 Zap 记录详细的股票分析执行过程和性能指标
+- 🔍 **投资监控**: 完整的股票分析请求监控和投资决策追踪
+- 🚨 **风险预警**: 实时监控异常交易模式和投资风险预警
+- 🔐 **金融类型安全**: 前后端完整的股票数据 TypeScript 类型定义
 
 ### 🧪 开发与测试
-- 🧪 **完整测试**: 包含单元测试和集成测试，确保代码质量
-- 🔨 **构建工具**: 完整的 Makefile 支持多种开发任务
-- 📚 **文档完善**: 详细的 API 文档和使用示例
-- 🔄 **热重载**: 支持 Air 热重载开发（后端）和 Vite HMR（前端）
-- 🛠️ **开发工具**: 集成 ESLint、TypeScript 等现代开发工具
+- 📈 **股票分析测试**: 包含股票数据处理、分析算法和投资策略的完整测试套件
+- 🔨 **金融构建工具**: 专为股票分析优化的 Makefile，支持数据回测和性能测试
+- 📚 **投资文档**: 详细的股票分析 API 文档和投资策略使用示例
+- 🔄 **实时开发**: 支持 Air 热重载（后端股票服务）和 Vite HMR（前端分析界面）
+- 🛠️ **金融开发工具**: 集成 ESLint、TypeScript 和股票数据验证工具
 
 ## 🛠️ 技术栈
 
@@ -103,6 +120,60 @@
 - **Makefile** - 构建和开发任务自动化
 - **npm** - 前端包管理器
 
+## 🔧 股票分析工具系统
+
+### 核心分析工具
+
+#### 📊 stock_analysis - 智能股票分析工具
+- **功能**: 基于AI的深度股票分析，提供全面的投资洞察
+- **输入参数**:
+  - `symbol`: 股票代码 (如: AAPL, GOOGL, TSLA)
+  - `period`: 分析周期 (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
+- **分析内容**:
+  - 技术指标分析 (移动平均线、RSI、MACD等)
+  - 基本面分析 (市盈率、市净率、收益增长等)
+  - 市场趋势预测
+  - 风险评估和投资建议
+
+#### 📈 yahoo_finance - 实时金融数据工具
+- **功能**: 获取实时股票数据和历史价格信息
+- **数据源**: Yahoo Finance API
+- **提供数据**:
+  - 实时股票报价
+  - 历史价格数据
+  - 交易量信息
+  - 市场指标
+  - 公司基本信息
+
+#### ⚖️ stock_compare - 股票对比分析工具
+- **功能**: 多只股票的横向对比分析
+- **输入参数**:
+  - `symbols`: 股票代码列表 (支持2-10只股票对比)
+  - `metrics`: 对比指标 (价格表现、波动率、收益率等)
+- **对比维度**:
+  - 价格表现对比
+  - 风险收益比分析
+  - 技术指标对比
+  - 行业地位分析
+
+#### 💡 stock_advice - 智能投资建议工具
+- **功能**: 基于AI分析提供个性化投资建议
+- **建议类型**:
+  - 买入/卖出/持有建议
+  - 目标价位预测
+  - 风险等级评估
+  - 投资时机分析
+  - 组合配置建议
+
+### 工具集成特性
+
+- **🔄 实时数据更新**: 所有工具都支持实时数据获取和分析
+- **🧠 AI驱动分析**: 结合OpenAI和Google AI的强大分析能力
+- **📊 多维度分析**: 从技术面、基本面、市场情绪等多角度分析
+- **🎯 个性化建议**: 根据用户风险偏好提供定制化投资建议
+- **📈 历史回测**: 支持投资策略的历史数据回测验证
+- **🔔 智能预警**: 基于设定条件的价格和指标预警功能
+
 ## 📁 项目结构
 
 ```
@@ -146,12 +217,15 @@ go-springAi/
 │   ├── logger/           # 日志系统
 │   │   ├── constants.go
 │   │   └── logger.go
-│   ├── mcp/              # MCP 工具系统
+│   ├── mcp/              # MCP 股票分析工具系统
 │   │   ├── client.go         # MCP 客户端实现
-│   │   ├── tool.go           # 基础工具定义
-│   │   ├── openai_tool.go    # OpenAI 工具
-│   │   ├── googleai_tool.go  # Google AI 工具
-│   │   └── *_test.go        # 工具测试文件
+│   │   ├── tool.go           # 基础工具定义和股票分析工具
+│   │   ├── stock_tools.go    # 股票分析核心工具集
+│   │   │   ├── StockAnalysisTool    # 智能股票分析工具
+│   │   │   ├── YahooFinanceTool     # Yahoo Finance数据工具
+│   │   │   ├── StockCompareTool     # 股票对比分析工具
+│   │   │   └── StockAdviceTool      # 智能投资建议工具
+│   │   └── *_test.go        # 股票分析工具测试文件
 │   ├── middleware/       # 中间件
 │   │   ├── cors.go
 │   │   ├── error_handler.go
@@ -181,10 +255,11 @@ go-springAi/
 │   ├── route/           # 路由配置
 │   │   └── routes.go
 │   ├── service/         # 业务逻辑层
-│   │   ├── ai_assistant_service.go # AI助手服务
-│   │   ├── mcp_service.go          # MCP 服务实现
-│   │   ├── openai_service.go       # OpenAI 服务
-│   │   ├── googleai_service.go     # Google AI 服务
+│   │   ├── stock_service.go        # 股票分析核心服务
+│   │   ├── ai_assistant_service.go # 股票分析AI助手服务
+│   │   ├── mcp_service.go          # MCP 股票工具服务实现
+│   │   ├── openai_service.go       # OpenAI 股票分析服务
+│   │   ├── googleai_service.go     # Google AI 股票分析服务
 │   │   └── user_service.go         # 用户服务
 │   ├── utils/           # 工具函数
 │   │   ├── jwt.go       # JWT 处理
@@ -207,30 +282,38 @@ go-springAi/
 │   │   │   │   └── index.tsx
 │   │   │   └── common/   # 通用组件
 │   │   ├── pages/        # 页面组件
-│   │   │   ├── DashboardPage.tsx    # 仪表板页面
-│   │   │   ├── ProvidersPage.tsx    # 提供商管理页面
-│   │   │   ├── MCPToolsPage.tsx     # MCP工具页面
-│   │   │   ├── AssistantPage.tsx    # AI助手页面
-│   │   │   └── SettingsPage.tsx     # 设置页面
+│   │   │   ├── StockDashboardPage.tsx   # 股票分析仪表板页面
+│   │   │   ├── StockAnalysisPage.tsx    # 股票分析页面
+│   │   │   ├── StockComparePage.tsx     # 股票对比页面
+│   │   │   ├── MCPToolsPage.tsx         # 股票分析工具页面
+│   │   │   ├── AssistantPage.tsx        # 股票分析AI助手页面
+│   │   │   ├── ProvidersPage.tsx        # AI提供商管理页面
+│   │   │   └── SettingsPage.tsx         # 设置页面
 │   │   ├── store/        # Redux状态管理
 │   │   │   ├── index.ts  # Store配置
 │   │   │   └── slices/   # 状态切片
-│   │   │       ├── authSlice.ts
-│   │   │       ├── providersSlice.ts
-│   │   │       ├── mcpSlice.ts
-│   │   │       └── assistantSlice.ts
+│   │   │       ├── stockSlice.ts     # 股票数据状态
+│   │   │       ├── analysisSlice.ts  # 股票分析状态
+│   │   │       ├── authSlice.ts      # 认证状态
+│   │   │       ├── providersSlice.ts # AI提供商状态
+│   │   │       ├── mcpSlice.ts       # 股票工具状态
+│   │   │       └── assistantSlice.ts # 股票AI助手状态
 │   │   ├── services/     # API服务
-│   │   │   ├── api.ts    # API配置
-│   │   │   ├── auth.ts   # 认证服务
-│   │   │   ├── providers.ts  # 提供商服务
-│   │   │   ├── mcp.ts    # MCP服务
-│   │   │   └── assistant.ts  # 助手服务
+│   │   │   ├── api.ts        # API配置
+│   │   │   ├── stock.ts      # 股票数据服务
+│   │   │   ├── analysis.ts   # 股票分析服务
+│   │   │   ├── auth.ts       # 认证服务
+│   │   │   ├── providers.ts  # AI提供商服务
+│   │   │   ├── mcp.ts        # 股票分析工具服务
+│   │   │   └── assistant.ts  # 股票AI助手服务
 │   │   ├── types/        # TypeScript类型定义
-│   │   │   ├── api.ts    # API类型
-│   │   │   ├── auth.ts   # 认证类型
-│   │   │   ├── providers.ts  # 提供商类型
-│   │   │   ├── mcp.ts    # MCP类型
-│   │   │   └── assistant.ts  # 助手类型
+│   │   │   ├── api.ts        # API类型
+│   │   │   ├── stock.ts      # 股票数据类型
+│   │   │   ├── analysis.ts   # 股票分析类型
+│   │   │   ├── auth.ts       # 认证类型
+│   │   │   ├── providers.ts  # AI提供商类型
+│   │   │   ├── mcp.ts        # 股票分析工具类型
+│   │   │   └── assistant.ts  # 股票AI助手类型
 │   │   ├── utils/        # 工具函数
 │   │   │   ├── request.ts    # 请求工具
 │   │   │   ├── storage.ts    # 存储工具
@@ -515,36 +598,41 @@ curl -X GET "http://localhost:8080/api/v1/ai/googleai/models" | jq
 curl -X GET http://localhost:8080/api/v1/mcp/tools | jq
 ```
 
-#### 2. 调用 Echo 工具
+#### 2. 调用股票分析工具
 ```bash
 curl -X POST http://localhost:8080/api/v1/mcp/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "echo",
+    "name": "stock_analysis",
     "arguments": {
-      "message": "Hello MCP Server!"
+      "symbol": "AAPL"
     }
   }' | jq
 ```
 
-#### 3. 调用 OpenAI 模型工具
+#### 3. 调用股票对比工具
 ```bash
 curl -X POST http://localhost:8080/api/v1/mcp/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "openai_models",
-    "arguments": {}
+    "name": "stock_compare",
+    "arguments": {
+      "symbols": ["AAPL", "GOOGL", "MSFT"],
+      "metrics": ["price_performance", "volatility", "market_cap"]
+    }
   }' | jq
 ```
 
-#### 4. 调用用户信息工具
+#### 4. 调用投资建议工具
 ```bash
 curl -X POST http://localhost:8080/api/v1/mcp/execute \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "get_user_info",
+    "name": "stock_advice",
     "arguments": {
-      "user_id": "12345"
+      "symbol": "TSLA",
+      "risk_tolerance": "moderate",
+      "investment_horizon": "long_term"
     }
   }' | jq
 ```
@@ -609,20 +697,38 @@ class MCPClient:
         response = requests.get(f"{self.base_url}/api/v1/mcp/logs")
         return response.json()
 
-# 使用示例
+# 股票分析使用示例
 client = MCPClient()
 
-# 获取工具列表
+# 获取可用的股票分析工具
 tools = client.get_tools()
-print("可用工具:", json.dumps(tools, indent=2, ensure_ascii=False))
+print("可用股票分析工具:", json.dumps(tools, indent=2, ensure_ascii=False))
 
-# 执行 echo 工具
-result = client.execute_tool("echo", {"message": "Hello from Python!"})
-print("执行结果:", json.dumps(result, indent=2, ensure_ascii=False))
+# 分析苹果公司股票
+apple_analysis = client.execute_tool("stock_analysis", {
+    "symbol": "AAPL", 
+    "period": "1mo"
+})
+print("苹果股票分析:", json.dumps(apple_analysis, indent=2, ensure_ascii=False))
+
+# 对比多只科技股
+comparison = client.execute_tool("stock_compare", {
+    "symbols": ["AAPL", "GOOGL", "MSFT", "TSLA"],
+    "metrics": ["price_performance", "volatility", "market_cap"]
+})
+print("科技股对比分析:", json.dumps(comparison, indent=2, ensure_ascii=False))
+
+# 获取特斯拉投资建议
+advice = client.execute_tool("stock_advice", {
+    "symbol": "TSLA",
+    "risk_tolerance": "moderate",
+    "investment_horizon": "long_term"
+})
+print("特斯拉投资建议:", json.dumps(advice, indent=2, ensure_ascii=False))
 
 # 获取执行日志
 logs = client.get_logs()
-print("执行日志:", json.dumps(logs, indent=2, ensure_ascii=False))
+print("分析执行日志:", json.dumps(logs, indent=2, ensure_ascii=False))
 ```
 
 ## 📚 API 文档
@@ -676,17 +782,17 @@ GET /api/v1/mcp/tools
 {
   "tools": [
     {
-      "name": "echo",
-      "description": "Echo back the input message",
+      "name": "stock_analysis",
+      "description": "Analyze stock performance and provide insights",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "message": {
+          "symbol": {
             "type": "string",
-            "description": "The message to echo back"
+            "description": "Stock symbol to analyze"
           }
         },
-        "required": ["message"]
+        "required": ["symbol"]
       }
     },
     {
@@ -713,9 +819,9 @@ POST /api/v1/mcp/execute
 Content-Type: application/json
 
 {
-  "name": "echo",
+  "name": "stock_analysis",
   "arguments": {
-    "message": "Hello World"
+    "symbol": "AAPL"
   }
 }
 ```
@@ -726,7 +832,7 @@ Content-Type: application/json
   "content": [
     {
       "type": "text",
-      "text": "Echo: Hello World"
+      "text": "Stock Analysis for AAPL: Current price $150.00, showing positive trend..."
     }
   ]
 }
@@ -750,11 +856,11 @@ GET /api/v1/mcp/logs
   "logs": [
     {
       "id": "log-id",
-      "tool_name": "echo",
-      "arguments": {"message": "Hello World"},
-      "result": {"content": [{"type": "text", "text": "Echo: Hello World"}]},
+      "tool_name": "stock_analysis",
+      "arguments": {"symbol": "AAPL"},
+      "result": {"content": [{"type": "text", "text": "Stock Analysis for AAPL: Current price $150.00, showing positive trend..."}]},
       "timestamp": "2024-01-01T00:00:00Z",
-      "duration_ms": 5
+      "duration_ms": 150
     }
   ]
 }
@@ -868,7 +974,9 @@ type Tool interface {
 - 可扩展的工具基类
 
 **具体工具实现**
-- `EchoTool`: 基础回显工具
+- `StockAnalysisTool`: 股票分析工具
+- `YahooFinanceTool`: Yahoo Finance 数据工具
+- `StockCompareTool`: 股票对比工具
 
 
 ### MCP 客户端调用关系
@@ -1617,24 +1725,24 @@ export interface MyApiResponse {
 
 #### 项目架构说明
 
-本项目采用清洁架构（Clean Architecture）设计：
+本项目采用清洁架构（Clean Architecture）设计，专为股票分析AI助手优化：
 
-- **Controllers**: 处理 HTTP 请求和响应，包括 MCP 协议端点
-- **Services**: 业务逻辑层，包括 MCP 服务实现
-- **Repository**: 数据访问层
-- **Models/DTO**: 数据传输对象，包括 MCP 协议相关结构
-- **Middleware**: 中间件（CORS、日志、错误处理、恢复等）
-- **MCP Tools**: 可扩展的工具系统
+- **Stock Controllers**: 处理股票分析 HTTP 请求和响应，包括股票数据获取和分析端点
+- **Stock Services**: 股票分析业务逻辑层，包括智能分析算法和投资策略服务
+- **Financial Repository**: 金融数据访问层，管理股票数据和用户投资组合
+- **Stock Models/DTO**: 股票数据传输对象，包括股票报价、分析结果和投资建议结构
+- **Financial Middleware**: 金融级中间件（数据验证、安全日志、错误处理、风险控制等）
+- **Stock Analysis Tools**: 可扩展的股票分析工具系统，支持多种分析策略
 
 ### MCP 协议支持
 
-项目完整实现了 Model Context Protocol 规范：
+项目完整实现了 Model Context Protocol 规范，专为股票分析优化：
 
-- **工具注册和发现**: 动态工具注册系统
-- **工具执行**: 安全的工具执行环境
-- **SSE 流式通信**: 实时事件推送
-- **执行日志**: 完整的工具执行历史记录
-- **错误处理**: 统一的 MCP 错误响应格式
+- **股票工具注册和发现**: 动态股票分析工具注册系统
+- **安全股票分析执行**: 安全的股票数据处理和分析执行环境
+- **实时股票数据流**: SSE 流式通信推送实时股票价格和分析结果
+- **投资决策日志**: 完整的股票分析和投资建议执行历史记录
+- **金融错误处理**: 统一的股票分析 MCP 错误响应格式和风险提示
 
 ### 错误处理
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 )
@@ -33,29 +34,13 @@ func NewMockProvider(name string, providerType ProviderType) *MockProvider {
 // initDefaultModels 初始化默认模型配置
 func (p *MockProvider) initDefaultModels() {
 	p.models = map[string]*ModelConfig{
-		"mock-model-1": {
-			Name:        "mock-model-1",
-			DisplayName: "Mock Model 1",
+		"mock-gpt-3.5-turbo": {
+			Name:        "mock-gpt-3.5-turbo",
+			DisplayName: "Mock GPT-3.5 Turbo",
 			MaxTokens:   4096,
 			Temperature: 0.7,
 			TopP:        0.9,
 			Enabled:     true,
-		},
-		"mock-model-2": {
-			Name:        "mock-model-2", 
-			DisplayName: "Mock Model 2",
-			MaxTokens:   8192,
-			Temperature: 0.7,
-			TopP:        0.9,
-			Enabled:     true,
-		},
-		"mock-model-3": {
-			Name:        "mock-model-3", 
-			DisplayName: "Mock Model 3 (Disabled)",
-			MaxTokens:   2048,
-			Temperature: 0.5,
-			TopP:        0.8,
-			Enabled:     false,
 		},
 	}
 }
@@ -72,7 +57,112 @@ func (p *MockProvider) GetName() string {
 
 // ChatCompletion 模拟聊天完成
 func (p *MockProvider) ChatCompletion(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
-	// 模拟响应
+	// 检查是否有系统消息包含工具信息
+	hasToolInfo := false
+	userMessage := ""
+	
+	for _, msg := range req.Messages {
+		if msg.Role == "system" {
+			if strings.Contains(msg.Content, "stock_analysis") || 
+				strings.Contains(msg.Content, "stock_compare") || 
+				strings.Contains(msg.Content, "stock_advice") {
+				hasToolInfo = true
+			}
+		}
+		if msg.Role == "user" {
+			userMessage = msg.Content
+		}
+	}
+	
+	var responseContent string
+	
+	// 如果有工具信息且用户询问股票相关问题，返回相应的工具调用
+	if hasToolInfo {
+		lowerMessage := strings.ToLower(userMessage)
+		
+		// 检测股票比较请求（优先级最高）
+		if strings.Contains(lowerMessage, "比较") || strings.Contains(lowerMessage, "compare") ||
+		   strings.Contains(lowerMessage, "vs") || strings.Contains(lowerMessage, "对比") {
+			
+			responseContent = `我来为您比较这两只股票。
+
+<tool_call>
+{
+  "name": "stock_compare",
+  "arguments": {
+    "symbol1": "AAPL",
+    "symbol2": "TSLA",
+    "comparison_type": "comprehensive"
+  }
+}
+</tool_call>`
+		
+		// 检测股票分析请求
+		} else if strings.Contains(lowerMessage, "分析") || strings.Contains(lowerMessage, "analysis") ||
+		   strings.Contains(lowerMessage, "aapl") || strings.Contains(lowerMessage, "苹果") ||
+		   strings.Contains(lowerMessage, "tsla") || strings.Contains(lowerMessage, "特斯拉") {
+			
+			symbol := "AAPL"
+			if strings.Contains(lowerMessage, "tsla") || strings.Contains(lowerMessage, "特斯拉") {
+				symbol = "TSLA"
+			}
+			
+			responseContent = fmt.Sprintf(`我来为您分析%s的股票。
+
+<tool_call>
+{
+  "name": "stock_analysis",
+  "arguments": {
+    "symbol": "%s",
+    "analysis_type": "comprehensive"
+  }
+}
+</tool_call>`, symbol, symbol)
+		
+		// 检测投资建议请求
+		} else if strings.Contains(lowerMessage, "建议") || strings.Contains(lowerMessage, "advice") ||
+				  strings.Contains(lowerMessage, "推荐") || strings.Contains(lowerMessage, "投资") {
+			
+			symbol := "AAPL"
+			if strings.Contains(lowerMessage, "tsla") || strings.Contains(lowerMessage, "特斯拉") {
+				symbol = "TSLA"
+			}
+			
+			responseContent = fmt.Sprintf(`我来为您提供%s的投资建议。
+
+<tool_call>
+{
+  "name": "stock_advice",
+  "arguments": {
+    "symbol": "%s",
+    "risk_tolerance": "moderate",
+    "investment_horizon": "long_term"
+  }
+}
+</tool_call>`, symbol, symbol)
+		
+		// 通用股票查询
+		} else if strings.Contains(lowerMessage, "股票") || strings.Contains(lowerMessage, "stock") {
+			responseContent = `我来为您分析股票。
+
+<tool_call>
+{
+  "name": "stock_analysis",
+  "arguments": {
+    "symbol": "AAPL",
+    "analysis_type": "comprehensive"
+  }
+}
+</tool_call>`
+		} else {
+			// 普通响应
+			responseContent = fmt.Sprintf("这是来自 %s 提供商的模拟响应，当前使用的模型是: %s。您的消息是: %s", p.name, req.Model, userMessage)
+		}
+	} else {
+		// 普通响应
+		responseContent = fmt.Sprintf("这是来自 %s 提供商的模拟响应，当前使用的模型是: %s。您的消息是: %s", p.name, req.Model, userMessage)
+	}
+	
 	response := &ChatResponse{
 		ID:      fmt.Sprintf("mock-%d", time.Now().Unix()),
 		Object:  "chat.completion",
@@ -83,7 +173,7 @@ func (p *MockProvider) ChatCompletion(ctx context.Context, req *ChatRequest) (*C
 				Index: 0,
 				Message: Message{
 					Role:    "assistant",
-					Content: fmt.Sprintf("这是来自 %s 提供商的模拟响应，当前使用的模型是: %s。您的消息是: %s", p.name, req.Model, req.Messages[len(req.Messages)-1].Content),
+					Content: responseContent,
 				},
 				FinishReason: "stop",
 			},
