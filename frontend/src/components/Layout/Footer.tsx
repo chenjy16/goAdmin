@@ -15,12 +15,19 @@ const Footer: React.FC = () => {
         borderTop: `1px solid ${token.colorBorder}`,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>AI Chat Management Platform ©2024</span>
-        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: token.colorTextSecondary }}>
-          <span>状态: 正常</span>
-          <span>版本: v1.0.0</span>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+        <a 
+          href="https://github.com/chenjy16/go-springAi" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{ 
+            color: token.colorPrimary,
+            textDecoration: 'none'
+          }}
+        >
+          https://github.com/chenjy16/go-springAi
+        </a>
+        <span style={{ color: token.colorTextSecondary }}>©2025</span>
       </div>
     </AntFooter>
   );

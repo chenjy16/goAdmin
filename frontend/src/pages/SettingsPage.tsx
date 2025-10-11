@@ -24,6 +24,7 @@ import {
   PlayCircleOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  GithubOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector, store } from '../store';
@@ -599,8 +600,22 @@ const SettingsPage: React.FC = () => {
             description={new Date().toLocaleDateString()}
           />
         </List.Item>
-
-
+        <List.Item>
+          <List.Item.Meta
+            avatar={<GithubOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
+            title="开源地址"
+            description={
+              <a 
+                href="https://github.com/chenjy16/go-springAi" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: '#1890ff' }}
+              >
+                https://github.com/chenjy16/go-springAi
+              </a>
+            }
+          />
+        </List.Item>
       </List>
     </Card>
   );
