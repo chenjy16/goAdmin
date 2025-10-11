@@ -11,7 +11,7 @@ export interface ConfigData {
 export interface ConfigState {
   selectedProvider: string;
   selectedModel: string;
-  selectedTools: string[];
+  selectedTool: string;
   temperature: number;
   maxTokens: number;
   topP: number;
@@ -206,7 +206,7 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
     return {
       selectedProvider: '',
       selectedModel: '',
-      selectedTools: [],
+      selectedTool: '',
       temperature: 0.7,
       maxTokens: 2048,
       topP: 1.0
@@ -257,10 +257,11 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
       }
 
       // 验证选择的工具是否存在
-      const availableTools = configData.tools.map(t => t.name);
-      const invalidTools = config.selectedTools.filter(tool => !availableTools.includes(tool));
-      if (invalidTools.length > 0) {
-        errors.push({ field: 'selectedTools', message: `以下工具不存在: ${invalidTools.join(', ')}` });
+      if (config.selectedTool) {
+        const availableTools = configData.tools.map(t => t.name);
+        if (!availableTools.includes(config.selectedTool)) {
+          errors.push({ field: 'selectedTool', message: `选择的工具不存在: ${config.selectedTool}` });
+        }
       }
     }
 
@@ -320,7 +321,7 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
    * 获取配置的摘要信息
    */
   getConfigSummary(config: ConfigState): string {
-    return `Provider: ${config.selectedProvider}, Model: ${config.selectedModel}, Tools: ${config.selectedTools.length}`;
+    return `Provider: ${config.selectedProvider}, Model: ${config.selectedModel}, Tool: ${config.selectedTool || 'None'}`;
   }
 }
 

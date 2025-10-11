@@ -10,7 +10,7 @@ import {
   selectConfigError,
   setProvider,
   setModel,
-  setTools,
+  setTool,
   setTemperature,
   setMaxTokens,
   setTopP
@@ -59,8 +59,8 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
     dispatch(setModel(model));
   };
 
-  const handleToolChange = (tools: string[]) => {
-    dispatch(setTools(tools));
+  const handleToolChange = (tool: string) => {
+    dispatch(setTool(tool));
   };
 
   const handleTemperatureChange = (value: number) => {
@@ -147,7 +147,7 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
         <Col span={24}>
           <ToolSelector
             tools={configData.tools}
-            selectedTools={config.selectedTools}
+            selectedTool={config.selectedTool}
             onToolChange={handleToolChange}
           />
         </Col>

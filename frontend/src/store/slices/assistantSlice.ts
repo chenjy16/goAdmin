@@ -25,9 +25,9 @@ export const sendAssistantMessage = createAsyncThunk(
     tools?: any[];
     useTools?: boolean;
     provider?: string;
-    selectedTools?: string[];
+    selectedTool?: string;
   }, { getState }) => {
-    const { conversationId, message, model, maxTokens, temperature, tools, useTools, provider, selectedTools } = params;
+    const { conversationId, message, model, maxTokens, temperature, tools, useTools, provider, selectedTool } = params;
     
     // 获取当前状态以获取完整的对话历史
     const state = getState() as any;
@@ -50,7 +50,7 @@ export const sendAssistantMessage = createAsyncThunk(
       tools,
       use_tools: useTools,
       provider,
-      selected_tools: selectedTools,
+      selected_tool: selectedTool,
     };
 
     const response = await apiService.assistantChat(request);

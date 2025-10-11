@@ -213,9 +213,11 @@ func (m *Manager) GetProviderByModel(modelName string) (Provider, error) {
 	case strings.HasPrefix(modelName, "claude-"):
 		// 为未来的Claude支持预留
 		return nil, fmt.Errorf("claude provider not implemented yet")
+	case strings.HasPrefix(modelName, "mock-"):
+		providerType = ProviderTypeMock
 	default:
-		// 默认使用OpenAI
-		providerType = ProviderTypeOpenAI
+		// 默认使用Mock提供商（免费）
+		providerType = ProviderTypeMock
 	}
 	
 	provider, exists := m.providers[providerType]

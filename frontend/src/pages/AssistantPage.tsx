@@ -109,9 +109,9 @@ const AssistantPage: React.FC = () => {
         model: config.selectedModel,
         temperature: config.temperature,
         maxTokens: config.maxTokens,
-        useTools: config.selectedTools.length > 0,
+        useTools: !!config.selectedTool,
         provider: config.selectedProvider,
-        selectedTools: config.selectedTools,
+        selectedTool: config.selectedTool,
       })).unwrap();
     } catch (err) {
       message.error('发送消息失败');

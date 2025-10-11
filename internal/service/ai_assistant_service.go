@@ -95,13 +95,13 @@ func NewAIAssistantService(
 
 // ChatRequest AI助手聊天请求
 type ChatRequest struct {
-	Messages      []openai.Message `json:"messages"`
-	Model         string           `json:"model,omitempty"`
-	MaxTokens     *int             `json:"max_tokens,omitempty"`
-	Temperature   *float32         `json:"temperature,omitempty"`
-	UseTools      bool             `json:"use_tools,omitempty"`
-	Provider      string           `json:"provider,omitempty"`      // 指定提供商
-	SelectedTools []string         `json:"selected_tools,omitempty"` // 指定要使用的工具列表
+	Messages     []openai.Message `json:"messages"`
+	Model        string           `json:"model,omitempty"`
+	MaxTokens    *int             `json:"max_tokens,omitempty"`
+	Temperature  *float32         `json:"temperature,omitempty"`
+	UseTools     bool             `json:"use_tools,omitempty"`
+	Provider     string           `json:"provider,omitempty"`     // 指定提供商
+	SelectedTool string           `json:"selected_tool,omitempty"` // 指定要使用的工具
 }
 
 // ChatResponse AI助手聊天响应
@@ -138,7 +138,7 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 		zap.String("provider", req.Provider),
 		zap.Int("message_count", len(req.Messages)),
 		zap.Bool("use_tools", req.UseTools),
-		zap.Strings("selected_tools", req.SelectedTools))
+		zap.String("selected_tool", req.SelectedTool))
 
 	// 1. 动态提供商选择和模型验证
 	var provider ProviderInterface
@@ -179,8 +179,8 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 			s.logger.Info("No model specified, using default mock provider")
 			provider, err = s.providerManager.GetProviderByName("mock")
 			if err != nil {
-				s.logger.Warn("Failed to get mock provider, falling back to gpt-3.5-turbo", zap.Error(err))
-				provider, err = s.providerManager.GetProviderByModel("gpt-3.5-turbo") // 回退到默认模型
+				s.logger.Warn("Failed to get mock provider, falling back to mock-gpt-3.5-turbo", zap.Error(err))
+				provider, err = s.providerManager.GetProviderByModel("mock-gpt-3.5-turbo") // 回退到免费的mock模型
 			} else {
 				// 为Mock提供商设置默认模型
 				if req.Model == "" {
@@ -198,16 +198,16 @@ func (s *AIAssistantService) Chat(ctx context.Context, req *ChatRequest) (*ChatR
 
 	// 2. 工具过滤和获取
 	var availableTools []dto.MCPTool
-	if req.UseTools || len(req.SelectedTools) > 0 {
+	if req.UseTools || req.SelectedTool != "" {
 		toolsResp, err := s.mcpClient.ListTools(ctx)
 		if err != nil {
 			s.logger.Error("Failed to get available tools", zap.Error(err))
 			return nil, fmt.Errorf("failed to get available tools: %w", err)
 		}
 		
-		// 根据SelectedTools过滤工具
-		if len(req.SelectedTools) > 0 {
-			availableTools = s.filterTools(toolsResp.Tools, req.SelectedTools)
+		// 根据SelectedTool过滤工具
+		if req.SelectedTool != "" {
+			availableTools = s.filterTool(toolsResp.Tools, req.SelectedTool)
 		} else {
 			availableTools = toolsResp.Tools
 		}
@@ -342,22 +342,44 @@ func (s *AIAssistantService) filterTools(allTools []dto.MCPTool, selectedTools [
 	return filtered
 }
 
+// filterTool 根据单个选定工具过滤工具列表
+func (s *AIAssistantService) filterTool(allTools []dto.MCPTool, selectedTool string) []dto.MCPTool {
+	if selectedTool == "" {
+		return allTools
+	}
+	
+	var filtered []dto.MCPTool
+	for _, tool := range allTools {
+		if tool.Name == selectedTool {
+			filtered = append(filtered, tool)
+			break // 只需要找到一个匹配的工具
+		}
+	}
+	
+	s.logger.Info("Filtered tool", 
+		zap.Int("total_tools", len(allTools)),
+		zap.Int("selected_tools", len(filtered)),
+		zap.String("tool_name", selectedTool))
+	
+	return filtered
+}
+
 // chatWithOpenAI 回退到原有的OpenAI实现（向后兼容）
 func (s *AIAssistantService) chatWithOpenAI(ctx context.Context, req *ChatRequest) (*ChatResponse, error) {
 	s.logger.Info("Falling back to OpenAI implementation")
 	
 	// 如果启用工具或指定了工具，先获取可用工具列表
 	var availableTools []dto.MCPTool
-	if req.UseTools || len(req.SelectedTools) > 0 {
+	if req.UseTools || req.SelectedTool != "" {
 		toolsResp, err := s.mcpClient.ListTools(ctx)
 		if err != nil {
 			s.logger.Error("Failed to get available tools", zap.Error(err))
 			return nil, fmt.Errorf("failed to get available tools: %w", err)
 		}
 		
-		// 根据SelectedTools过滤工具
-		if len(req.SelectedTools) > 0 {
-			availableTools = s.filterTools(toolsResp.Tools, req.SelectedTools)
+		// 根据SelectedTool过滤工具
+		if req.SelectedTool != "" {
+			availableTools = s.filterTool(toolsResp.Tools, req.SelectedTool)
 		} else {
 			availableTools = toolsResp.Tools
 		}

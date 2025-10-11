@@ -133,7 +133,7 @@ export interface ChatRequest {
   tool_choice?: string;
   use_tools?: boolean;
   provider?: string;
-  selected_tools?: string[];
+  selected_tool?: string;
 }
 
 export interface ChatResponse {

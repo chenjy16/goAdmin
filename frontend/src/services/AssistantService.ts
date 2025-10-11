@@ -51,7 +51,11 @@ export class AssistantService extends BaseService implements IInitializable, IVa
       throw new Error(`Validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`);
     }
 
-    return this.post<ChatResponse>('/api/v1/assistant/chat', request);
+    const response = await this.post<BaseApiResponse<ChatResponse>>('/api/v1/assistant/chat', request);
+    if (!response.data) {
+      throw new Error('Invalid response: missing data field');
+    }
+    return response.data;
   }
 
   /**

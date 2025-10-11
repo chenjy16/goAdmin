@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Checkbox, Row, Col, Space, Typography } from 'antd';
+import { Card, Radio, Row, Col, Space, Typography } from 'antd';
 import { ToolOutlined } from '@ant-design/icons';
 import type { MCPTool } from '../../types/api';
 
@@ -7,14 +7,14 @@ const { Text } = Typography;
 
 interface ToolSelectorProps {
   tools: MCPTool[];
-  selectedTools: string[];
-  onToolChange: (tools: string[]) => void;
+  selectedTool: string;
+  onToolChange: (tool: string) => void;
   className?: string;
 }
 
 const ToolSelector: React.FC<ToolSelectorProps> = ({
   tools,
-  selectedTools,
+  selectedTool,
   onToolChange,
   className
 }) => {
@@ -54,9 +54,9 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
           <div>暂无可用的MCP工具</div>
         </div>
       ) : (
-        <Checkbox.Group
-          value={selectedTools}
-          onChange={onToolChange}
+        <Radio.Group
+          value={selectedTool}
+          onChange={(e) => onToolChange(e.target.value)}
           style={{ width: '100%' }}
         >
           <Row gutter={[12, 12]} align="stretch">
@@ -74,7 +74,7 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
                   display: 'flex',
                   alignItems: 'flex-start'
                 }}>
-                  <Checkbox value={tool.name} style={{ alignSelf: 'flex-start', marginTop: '2px' }}>
+                  <Radio value={tool.name} style={{ alignSelf: 'flex-start', marginTop: '2px' }}>
                     <div style={{ 
                       display: 'flex', 
                       flexDirection: 'column',
@@ -97,12 +97,12 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
                         {tool.description}
                       </Text>
                     </div>
-                  </Checkbox>
+                  </Radio>
                 </div>
               </Col>
             ))}
           </Row>
-        </Checkbox.Group>
+        </Radio.Group>
       )}
     </Card>
   );

@@ -112,8 +112,8 @@ const configSlice = createSlice({
     },
     
     // 设置工具
-    setTools: (state, action: PayloadAction<string[]>) => {
-      state.config.selectedTools = action.payload;
+    setTool: (state, action: PayloadAction<string>) => {
+      state.config.selectedTool = action.payload;
       configService.saveConfig(state.config);
     },
     
@@ -216,7 +216,7 @@ export const {
   loadSavedConfig,
   setProvider,
   setModel,
-  setTools,
+  setTool,
   setTemperature,
   setMaxTokens,
   setTopP,
@@ -249,9 +249,9 @@ export const selectAvailableModels = (state: { config: ConfigSliceState }) => {
   return data.models[config.selectedProvider] || [];
 };
 
-export const selectSelectedTools = (state: { config: ConfigSliceState }) => {
+export const selectSelectedTool = (state: { config: ConfigSliceState }) => {
   const { data, config } = state.config;
-  return data.tools.filter(tool => config.selectedTools.includes(tool.name));
+  return data.tools.find(tool => tool.name === config.selectedTool);
 };
 
 export const selectConfigValidation = (state: { config: ConfigSliceState }) => {
