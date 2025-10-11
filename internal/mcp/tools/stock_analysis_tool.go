@@ -20,7 +20,7 @@ type StockAnalysisTool struct {
 func NewStockAnalysisTool() *StockAnalysisTool {
 	return &StockAnalysisTool{
 		BaseTool: &mcp.BaseTool{
-			Name:        "stock_analysis",
+			Name:        "股票分析",
 			Description: "分析单只股票的技术指标、基本面和风险评估",
 			InputSchema: map[string]interface{}{
 				"type": "object",
@@ -199,89 +199,89 @@ func (sa *StockAnalysisTool) Validate(args map[string]interface{}) error {
 // generateTechnicalAnalysis 生成技术分析
 func (sa *StockAnalysisTool) generateTechnicalAnalysis(symbol string, quote, history *dto.MCPExecuteResponse) string {
 	analysis := fmt.Sprintf("📊 %s 技术分析报告\n\n", symbol)
-	
+
 	// 从报价中提取基本信息
 	quoteText := quote.Content[0].Text
 	analysis += "💰 当前价格信息:\n"
 	analysis += extractPriceInfo(quoteText) + "\n\n"
-	
+
 	// 技术指标分析
 	analysis += "📈 技术指标分析:\n"
 	analysis += "• 移动平均线: 基于历史数据计算的趋势指标\n"
 	analysis += "• RSI指标: 相对强弱指数，衡量超买超卖状态\n"
 	analysis += "• MACD指标: 移动平均收敛发散，判断趋势变化\n"
 	analysis += "• 布林带: 价格波动区间，判断支撑阻力位\n\n"
-	
+
 	// 趋势分析
 	analysis += "📊 趋势分析:\n"
 	analysis += sa.analyzeTrend(quoteText) + "\n\n"
-	
+
 	// 支撑阻力位
 	analysis += "🎯 关键价位:\n"
 	analysis += sa.analyzeSupportResistance(quoteText) + "\n\n"
-	
+
 	analysis += "⚠️ 技术分析仅供参考，投资有风险，请谨慎决策。"
-	
+
 	return analysis
 }
 
 // generateFundamentalAnalysis 生成基本面分析
 func (sa *StockAnalysisTool) generateFundamentalAnalysis(symbol string, quote, info *dto.MCPExecuteResponse) string {
 	analysis := fmt.Sprintf("🏢 %s 基本面分析报告\n\n", symbol)
-	
+
 	// 公司基本信息
 	infoText := info.Content[0].Text
 	analysis += "📋 公司概况:\n"
 	analysis += extractCompanyInfo(infoText) + "\n\n"
-	
+
 	// 财务指标
 	analysis += "💼 财务指标:\n"
 	analysis += extractFinancialMetrics(infoText) + "\n\n"
-	
+
 	// 估值分析
 	analysis += "💰 估值分析:\n"
 	analysis += sa.analyzeValuation(infoText) + "\n\n"
-	
+
 	// 行业地位
 	analysis += "🏭 行业分析:\n"
 	analysis += sa.analyzeIndustryPosition(infoText) + "\n\n"
-	
+
 	analysis += "⚠️ 基本面分析基于公开信息，投资决策需综合考虑多种因素。"
-	
+
 	return analysis
 }
 
 // generateRiskAssessment 生成风险评估
 func (sa *StockAnalysisTool) generateRiskAssessment(symbol string, quote, history *dto.MCPExecuteResponse) string {
 	analysis := fmt.Sprintf("⚠️ %s 风险评估报告\n\n", symbol)
-	
+
 	// 价格波动性分析
 	analysis += "📊 波动性分析:\n"
 	analysis += sa.analyzeVolatility(quote.Content[0].Text) + "\n\n"
-	
+
 	// 流动性风险
 	analysis += "💧 流动性风险:\n"
 	analysis += sa.analyzeLiquidity(quote.Content[0].Text) + "\n\n"
-	
+
 	// 市场风险
 	analysis += "🌍 市场风险:\n"
 	analysis += "• 系统性风险: 整体市场下跌的风险\n"
 	analysis += "• 行业风险: 特定行业面临的挑战\n"
 	analysis += "• 公司特定风险: 个股特有的经营风险\n\n"
-	
+
 	// 风险等级评估
 	analysis += "🎯 风险等级评估:\n"
 	analysis += sa.assessRiskLevel(quote.Content[0].Text) + "\n\n"
-	
+
 	// 风险管理建议
 	analysis += "🛡️ 风险管理建议:\n"
 	analysis += "• 分散投资，不要将所有资金投入单一股票\n"
 	analysis += "• 设置止损点，控制最大损失\n"
 	analysis += "• 定期评估投资组合，及时调整\n"
 	analysis += "• 关注公司基本面变化和市场动态\n\n"
-	
+
 	analysis += "⚠️ 投资有风险，入市需谨慎。请根据自身风险承受能力做出投资决策。"
-	
+
 	return analysis
 }
 
@@ -289,29 +289,29 @@ func (sa *StockAnalysisTool) generateRiskAssessment(symbol string, quote, histor
 func (sa *StockAnalysisTool) generateComprehensiveAnalysis(symbol string, quote, history, info *dto.MCPExecuteResponse) string {
 	analysis := fmt.Sprintf("📋 %s 综合分析报告\n", symbol)
 	analysis += fmt.Sprintf("📅 报告生成时间: %s\n\n", time.Now().Format("2006-01-02 15:04:05"))
-	
+
 	// 执行摘要
 	analysis += "📊 执行摘要:\n"
 	analysis += sa.generateExecutiveSummary(symbol, quote.Content[0].Text) + "\n\n"
-	
+
 	// 技术面简要分析
 	analysis += "📈 技术面分析:\n"
 	analysis += sa.analyzeTrend(quote.Content[0].Text) + "\n\n"
-	
+
 	// 基本面简要分析
 	analysis += "🏢 基本面分析:\n"
 	analysis += extractCompanyInfo(info.Content[0].Text) + "\n\n"
-	
+
 	// 风险评估
 	analysis += "⚠️ 风险评估:\n"
 	analysis += sa.assessRiskLevel(quote.Content[0].Text) + "\n\n"
-	
+
 	// 投资建议
 	analysis += "💡 投资建议:\n"
 	analysis += sa.generateInvestmentRecommendation(quote.Content[0].Text, info.Content[0].Text) + "\n\n"
-	
+
 	analysis += "📝 免责声明: 本分析仅供参考，不构成投资建议。投资有风险，请谨慎决策。"
-	
+
 	return analysis
 }
 
@@ -321,8 +321,8 @@ func extractPriceInfo(quoteText string) string {
 	lines := strings.Split(quoteText, "\n")
 	var priceInfo []string
 	for _, line := range lines {
-		if strings.Contains(line, "当前价格") || strings.Contains(line, "前收盘价") || 
-		   strings.Contains(line, "涨跌") || strings.Contains(line, "成交量") {
+		if strings.Contains(line, "当前价格") || strings.Contains(line, "前收盘价") ||
+			strings.Contains(line, "涨跌") || strings.Contains(line, "成交量") {
 			priceInfo = append(priceInfo, "  "+strings.TrimSpace(line))
 		}
 	}
@@ -333,8 +333,8 @@ func extractCompanyInfo(infoText string) string {
 	lines := strings.Split(infoText, "\n")
 	var companyInfo []string
 	for _, line := range lines {
-		if strings.Contains(line, "公司名称") || strings.Contains(line, "行业") || 
-		   strings.Contains(line, "板块") || strings.Contains(line, "员工数") {
+		if strings.Contains(line, "公司名称") || strings.Contains(line, "行业") ||
+			strings.Contains(line, "板块") || strings.Contains(line, "员工数") {
 			companyInfo = append(companyInfo, "  "+strings.TrimSpace(line))
 		}
 	}
@@ -345,8 +345,8 @@ func extractFinancialMetrics(infoText string) string {
 	lines := strings.Split(infoText, "\n")
 	var metrics []string
 	for _, line := range lines {
-		if strings.Contains(line, "市值") || strings.Contains(line, "市盈率") || 
-		   strings.Contains(line, "股息收益率") || strings.Contains(line, "Beta") {
+		if strings.Contains(line, "市值") || strings.Contains(line, "市盈率") ||
+			strings.Contains(line, "股息收益率") || strings.Contains(line, "Beta") {
 			metrics = append(metrics, "  "+strings.TrimSpace(line))
 		}
 	}
@@ -403,7 +403,7 @@ func (sa *StockAnalysisTool) assessRiskLevel(quoteText string) string {
 	} else if strings.Contains(quoteText, "📉") {
 		riskLevel = "中高风险"
 	}
-	
+
 	return fmt.Sprintf("• 综合风险等级: %s\n• 适合投资者: 具有一定风险承受能力的投资者\n• 建议仓位: 不超过总资产的10-20%%", riskLevel)
 }
 
@@ -414,7 +414,7 @@ func (sa *StockAnalysisTool) generateExecutiveSummary(symbol, quoteText string) 
 	} else if strings.Contains(quoteText, "📉") {
 		trend = "下跌"
 	}
-	
+
 	return fmt.Sprintf("• %s 当前处于%s趋势\n• 基于技术和基本面分析，该股票具有投资价值\n• 建议投资者根据自身风险偏好进行配置", symbol, trend)
 }
 
@@ -425,6 +425,6 @@ func (sa *StockAnalysisTool) generateInvestmentRecommendation(quoteText, infoTex
 	} else if strings.Contains(quoteText, "📉") {
 		recommendation = "观望"
 	}
-	
+
 	return fmt.Sprintf("• 投资评级: %s\n• 目标价位: 基于技术分析确定合理价位区间\n• 投资期限: 建议中长期持有（3-12个月）\n• 风险提示: 密切关注市场变化和公司基本面", recommendation)
 }

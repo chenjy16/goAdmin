@@ -21,7 +21,7 @@ type StockCompareTool struct {
 func NewStockCompareTool() *StockCompareTool {
 	return &StockCompareTool{
 		BaseTool: &mcp.BaseTool{
-			Name:        "stock_compare",
+			Name:        "股票对比",
 			Description: "对比多只股票的表现和投资价值",
 			InputSchema: map[string]interface{}{
 				"type": "object",
@@ -188,16 +188,16 @@ func (sc *StockCompareTool) Validate(args map[string]interface{}) error {
 
 // StockData 股票数据结构
 type StockData struct {
-	Symbol      string
-	CurrentPrice float64
+	Symbol        string
+	CurrentPrice  float64
 	PreviousClose float64
-	Change      float64
+	Change        float64
 	ChangePercent float64
-	Volume      int64
-	MarketCap   string
-	PE          string
-	Industry    string
-	Sector      string
+	Volume        int64
+	MarketCap     string
+	PE            string
+	Industry      string
+	Sector        string
 }
 
 // getStockData 获取股票数据
@@ -262,11 +262,11 @@ func (sc *StockCompareTool) generatePerformanceComparison(symbols []string, stoc
 
 	// 表现排行榜
 	comparison += "🏆 涨跌幅排行:\n"
-	
+
 	// 按涨跌幅排序
 	sortedSymbols := make([]string, len(symbols))
 	copy(sortedSymbols, symbols)
-	
+
 	for i := 0; i < len(sortedSymbols)-1; i++ {
 		for j := i + 1; j < len(sortedSymbols); j++ {
 			if stockData[sortedSymbols[i]].ChangePercent < stockData[sortedSymbols[j]].ChangePercent {
@@ -283,15 +283,15 @@ func (sc *StockCompareTool) generatePerformanceComparison(symbols []string, stoc
 		} else if data.ChangePercent == 0 {
 			emoji = "➡️"
 		}
-		
-		comparison += fmt.Sprintf("%d. %s %s: $%.2f (%+.2f%%)\n", 
+
+		comparison += fmt.Sprintf("%d. %s %s: $%.2f (%+.2f%%)\n",
 			i+1, emoji, symbol, data.CurrentPrice, data.ChangePercent)
 	}
 
 	comparison += "\n💰 价格对比:\n"
 	for _, symbol := range symbols {
 		data := stockData[symbol]
-		comparison += fmt.Sprintf("• %s: $%.2f (前收盘: $%.2f)\n", 
+		comparison += fmt.Sprintf("• %s: $%.2f (前收盘: $%.2f)\n",
 			symbol, data.CurrentPrice, data.PreviousClose)
 	}
 
@@ -314,7 +314,7 @@ func (sc *StockCompareTool) generateValuationComparison(symbols []string, stockD
 
 	for _, symbol := range symbols {
 		data := stockData[symbol]
-		comparison += fmt.Sprintf("%-8s $%-11.2f %-15s %-10s\n", 
+		comparison += fmt.Sprintf("%-8s $%-11.2f %-15s %-10s\n",
 			symbol, data.CurrentPrice, data.MarketCap, data.PE)
 	}
 
@@ -367,7 +367,7 @@ func (sc *StockCompareTool) generateRiskComparison(symbols []string, stockData m
 	for _, symbol := range symbols {
 		data := stockData[symbol]
 		liquidityRisk := sc.assessLiquidityRisk(data.Volume)
-		comparison += fmt.Sprintf("• %s: %s (成交量: %s)\n", 
+		comparison += fmt.Sprintf("• %s: %s (成交量: %s)\n",
 			symbol, liquidityRisk, formatVolumeCompare(data.Volume))
 	}
 
@@ -389,15 +389,15 @@ func (sc *StockCompareTool) generateComprehensiveComparison(symbols []string, st
 	comparison += "📊 执行摘要:\n"
 	bestPerformer := sc.findBestPerformer(symbols, stockData)
 	worstPerformer := sc.findWorstPerformer(symbols, stockData)
-	comparison += fmt.Sprintf("• 最佳表现: %s (%+.2f%%)\n", 
+	comparison += fmt.Sprintf("• 最佳表现: %s (%+.2f%%)\n",
 		bestPerformer, stockData[bestPerformer].ChangePercent)
-	comparison += fmt.Sprintf("• 最差表现: %s (%+.2f%%)\n", 
+	comparison += fmt.Sprintf("• 最差表现: %s (%+.2f%%)\n",
 		worstPerformer, stockData[worstPerformer].ChangePercent)
 	comparison += fmt.Sprintf("• 对比股票数量: %d只\n\n", len(symbols))
 
 	// 详细对比表格
 	comparison += "📊 详细对比:\n"
-	comparison += fmt.Sprintf("%-8s %-12s %-10s %-15s %-12s\n", 
+	comparison += fmt.Sprintf("%-8s %-12s %-10s %-15s %-12s\n",
 		"股票", "当前价格", "涨跌幅", "成交量", "行业")
 	comparison += strings.Repeat("-", 65) + "\n"
 
@@ -409,8 +409,8 @@ func (sc *StockCompareTool) generateComprehensiveComparison(symbols []string, st
 		if len(industryStr) > 12 {
 			industryStr = industryStr[:12]
 		}
-		
-		comparison += fmt.Sprintf("%-8s $%-11.2f %-10s %-15s %-12s\n", 
+
+		comparison += fmt.Sprintf("%-8s $%-11.2f %-10s %-15s %-12s\n",
 			symbol, data.CurrentPrice, changeStr, volumeStr, industryStr)
 	}
 
@@ -509,11 +509,11 @@ func (sc *StockCompareTool) findWorstPerformer(symbols []string, stockData map[s
 
 func (sc *StockCompareTool) generateInvestmentRecommendations(symbols []string, stockData map[string]*StockData) string {
 	recommendations := ""
-	
+
 	for _, symbol := range symbols {
 		data := stockData[symbol]
 		var recommendation string
-		
+
 		if data.ChangePercent > 3 {
 			recommendation = "谨慎观望 (涨幅较大)"
 		} else if data.ChangePercent > 0 {
@@ -523,10 +523,10 @@ func (sc *StockCompareTool) generateInvestmentRecommendations(symbols []string, 
 		} else {
 			recommendation = "高风险，谨慎投资"
 		}
-		
+
 		recommendations += fmt.Sprintf("• %s: %s\n", symbol, recommendation)
 	}
-	
+
 	return recommendations
 }
 

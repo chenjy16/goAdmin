@@ -25,8 +25,8 @@ type YahooFinanceTool struct {
 func NewYahooFinanceTool() *YahooFinanceTool {
 	return &YahooFinanceTool{
 		BaseTool: &mcp.BaseTool{
-			Name:        "yahoo_finance",
-			Description: "Get stock data from Yahoo Finance including current price, historical data, and company information",
+			Name:        "雅虎财经",
+			Description: "获取股票数据",
 			InputSchema: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -399,25 +399,25 @@ func (yf *YahooFinanceTool) getHistory(ctx context.Context, symbol, period, inte
 	}
 
 	result := yahooResp.Chart.Result[0]
-	
+
 	// 格式化历史数据
 	historyText := fmt.Sprintf("📊 %s 历史数据 (%s, %s)\n\n", symbol, period, interval)
-	
+
 	if len(result.Timestamp) > 0 && result.Indicators.Quote != nil && len(result.Indicators.Quote) > 0 {
 		quote := result.Indicators.Quote[0]
-		
+
 		// 显示最近几个数据点
 		maxPoints := 10
 		if len(result.Timestamp) < maxPoints {
 			maxPoints = len(result.Timestamp)
 		}
-		
+
 		for i := len(result.Timestamp) - maxPoints; i < len(result.Timestamp); i++ {
 			timestamp := time.Unix(result.Timestamp[i], 0)
-			
+
 			if i < len(quote.Open) && i < len(quote.High) && i < len(quote.Low) && i < len(quote.Close) && i < len(quote.Volume) {
 				historyText += fmt.Sprintf("📅 %s\n", timestamp.Format("2006-01-02 15:04"))
-				historyText += fmt.Sprintf("   开盘: $%.2f | 最高: $%.2f | 最低: $%.2f | 收盘: $%.2f\n", 
+				historyText += fmt.Sprintf("   开盘: $%.2f | 最高: $%.2f | 最低: $%.2f | 收盘: $%.2f\n",
 					quote.Open[i], quote.High[i], quote.Low[i], quote.Close[i])
 				historyText += fmt.Sprintf("   成交量: %s\n\n", formatVolume(int64(quote.Volume[i])))
 			}
@@ -439,7 +439,7 @@ func (yf *YahooFinanceTool) getHistory(ctx context.Context, symbol, period, inte
 func (yf *YahooFinanceTool) getInfo(ctx context.Context, symbol string) (*dto.MCPExecuteResponse, error) {
 	// 使用 Yahoo Finance quoteSummary API
 	modules := []string{"summaryProfile", "summaryDetail", "financialData", "defaultKeyStatistics"}
-	apiURL := fmt.Sprintf("https://query1.finance.yahoo.com/v10/finance/quoteSummary/%s?modules=%s", 
+	apiURL := fmt.Sprintf("https://query1.finance.yahoo.com/v10/finance/quoteSummary/%s?modules=%s",
 		symbol, strings.Join(modules, ","))
 
 	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -522,10 +522,10 @@ func (yf *YahooFinanceTool) getInfo(ctx context.Context, symbol string) (*dto.MC
 	}
 
 	result := summaryResp.QuoteSummary.Result[0]
-	
+
 	// 格式化公司信息
 	infoText := fmt.Sprintf("🏢 %s 公司信息\n\n", symbol)
-	
+
 	if result.SummaryProfile != nil {
 		profile := result.SummaryProfile
 		infoText += fmt.Sprintf("📝 公司名称: %s\n", profile.LongName)
@@ -543,7 +543,7 @@ func (yf *YahooFinanceTool) getInfo(ctx context.Context, symbol string) (*dto.MC
 		}
 		infoText += "\n"
 	}
-	
+
 	if result.SummaryDetail != nil {
 		detail := result.SummaryDetail
 		infoText += "📊 关键指标:\n"
@@ -644,13 +644,13 @@ type YahooSummaryResponse struct {
 	QuoteSummary struct {
 		Result []struct {
 			SummaryProfile *struct {
-				LongName              string `json:"longName"`
-				Industry              string `json:"industry"`
-				Sector                string `json:"sector"`
-				Country               string `json:"country"`
-				Website               string `json:"website"`
-				FullTimeEmployees     int64  `json:"fullTimeEmployees"`
-				LongBusinessSummary   string `json:"longBusinessSummary"`
+				LongName            string `json:"longName"`
+				Industry            string `json:"industry"`
+				Sector              string `json:"sector"`
+				Country             string `json:"country"`
+				Website             string `json:"website"`
+				FullTimeEmployees   int64  `json:"fullTimeEmployees"`
+				LongBusinessSummary string `json:"longBusinessSummary"`
 			} `json:"summaryProfile"`
 			SummaryDetail *struct {
 				MarketCap *struct {

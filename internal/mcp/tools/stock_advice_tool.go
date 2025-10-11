@@ -21,7 +21,7 @@ type StockAdviceTool struct {
 func NewStockAdviceTool() *StockAdviceTool {
 	return &StockAdviceTool{
 		BaseTool: &mcp.BaseTool{
-			Name:        "stock_advice",
+			Name:        "股票投资建议",
 			Description: "基于股票分析提供投资建议和风险提示",
 			InputSchema: map[string]interface{}{
 				"type": "object",
@@ -179,14 +179,14 @@ func (sa *StockAdviceTool) generateInvestmentAdvice(symbol string, quoteResp, in
 	quoteData := sa.extractResponseText(quoteResp)
 	infoData := sa.extractResponseText(infoResp)
 	historyData := sa.extractResponseText(historyResp)
-	
+
 	currentPrice := sa.extractPrice(quoteData, "当前价格")
 	changePercent := sa.extractChangePercent(quoteData)
 	volume := sa.extractVolumeFromText(quoteData)
 	marketCap := sa.extractInfo(infoData, "市值")
 	pe := sa.extractInfo(infoData, "市盈率")
 	sector := sa.extractInfo(infoData, "行业")
-	
+
 	// 从历史数据中提取趋势信息
 	_ = historyData // 使用历史数据进行趋势分析（简化处理）
 
@@ -275,7 +275,7 @@ func (sa *StockAdviceTool) calculateInvestmentRating(price, changePercent float6
 
 	// 确定评级
 	var overall, buySignal, riskLevel string
-	
+
 	if score >= 70 {
 		overall = "强烈推荐"
 		buySignal = "强烈买入"
@@ -309,7 +309,7 @@ func (sa *StockAdviceTool) calculateInvestmentRating(price, changePercent float6
 // 生成基于投资期限的建议
 func (sa *StockAdviceTool) generateHorizonSpecificAdvice(symbol, horizon string, rating *InvestmentRating) string {
 	advice := "⏰ 投资期限建议:\n"
-	
+
 	switch horizon {
 	case "short_term":
 		advice += "• 短期投资 (1-6个月):\n"
@@ -342,14 +342,14 @@ func (sa *StockAdviceTool) generateHorizonSpecificAdvice(symbol, horizon string,
 			advice += "  - 考虑行业长期前景\n"
 		}
 	}
-	
+
 	return advice + "\n"
 }
 
 // 生成基于风险承受能力的建议
 func (sa *StockAdviceTool) generateRiskBasedAdvice(symbol, riskTolerance string, rating *InvestmentRating) string {
 	advice := "🎲 风险承受能力建议:\n"
-	
+
 	switch riskTolerance {
 	case "conservative":
 		advice += "• 保守型投资者:\n"
@@ -379,7 +379,7 @@ func (sa *StockAdviceTool) generateRiskBasedAdvice(symbol, riskTolerance string,
 			advice += "  - 严格设置止损策略\n"
 		}
 	}
-	
+
 	return advice + "\n"
 }
 
@@ -388,13 +388,13 @@ func (sa *StockAdviceTool) generatePositionAdvice(symbol string, currentPrice, i
 	advice := "💰 仓位建议:\n"
 	advice += fmt.Sprintf("• 投资金额: $%.2f\n", investmentAmount)
 	advice += fmt.Sprintf("• 当前股价: $%.2f\n", currentPrice)
-	
+
 	shares := int(investmentAmount / currentPrice)
 	actualAmount := float64(shares) * currentPrice
-	
+
 	advice += fmt.Sprintf("• 建议股数: %d 股\n", shares)
 	advice += fmt.Sprintf("• 实际投资: $%.2f\n", actualAmount)
-	
+
 	// 分批建仓建议
 	switch riskTolerance {
 	case "conservative":
@@ -407,24 +407,24 @@ func (sa *StockAdviceTool) generatePositionAdvice(symbol string, currentPrice, i
 		advice += "• 建仓策略: 可一次性建仓\n"
 		advice += "• 或分2批，快速建仓\n"
 	}
-	
+
 	return advice + "\n"
 }
 
 // 生成风险提示
 func (sa *StockAdviceTool) generateRiskWarnings(symbol string, changePercent, volume float64, sector string) string {
 	warnings := "⚠️ 风险提示:\n"
-	
+
 	// 波动性风险
 	if changePercent > 10 || changePercent < -10 {
 		warnings += "• 高波动性: 股价波动较大，注意风险控制\n"
 	}
-	
+
 	// 流动性风险
 	if volume < 1000000 {
 		warnings += "• 流动性风险: 成交量较低，可能影响买卖\n"
 	}
-	
+
 	// 行业风险
 	riskySectors := []string{"科技", "生物技术", "加密货币", "新能源"}
 	for _, rs := range riskySectors {
@@ -433,19 +433,19 @@ func (sa *StockAdviceTool) generateRiskWarnings(symbol string, changePercent, vo
 			break
 		}
 	}
-	
+
 	// 通用风险
 	warnings += "• 市场风险: 受整体市场环境影响\n"
 	warnings += "• 汇率风险: 如为外币计价，需关注汇率变化\n"
 	warnings += "• 政策风险: 关注相关政策法规变化\n"
-	
+
 	return warnings + "\n"
 }
 
 // 生成操作建议
 func (sa *StockAdviceTool) generateActionPlan(symbol string, rating *InvestmentRating, horizon string) string {
 	plan := "📋 操作建议:\n"
-	
+
 	if rating.Score >= 60 {
 		plan += "• 立即行动:\n"
 		plan += "  1. 确认投资金额和风险承受能力\n"
@@ -465,7 +465,7 @@ func (sa *StockAdviceTool) generateActionPlan(symbol string, rating *InvestmentR
 		plan += "  3. 等待风险降低\n"
 		plan += "  4. 考虑其他投资选择\n"
 	}
-	
+
 	// 监控指标
 	plan += "\n📊 关键监控指标:\n"
 	plan += "• 股价支撑位和阻力位\n"
@@ -473,7 +473,7 @@ func (sa *StockAdviceTool) generateActionPlan(symbol string, rating *InvestmentR
 	plan += "• 财报发布时间\n"
 	plan += "• 行业新闻和政策\n"
 	plan += "• 技术指标 (RSI, MACD, 移动平均线)\n"
-	
+
 	return plan + "\n"
 }
 
@@ -544,7 +544,7 @@ func (sa *StockAdviceTool) extractResponseText(resp *dto.MCPExecuteResponse) str
 	if resp == nil || len(resp.Content) == 0 {
 		return ""
 	}
-	
+
 	var text strings.Builder
 	for _, content := range resp.Content {
 		if content.Type == "text" && content.Text != "" {
@@ -552,6 +552,6 @@ func (sa *StockAdviceTool) extractResponseText(resp *dto.MCPExecuteResponse) str
 			text.WriteString("\n")
 		}
 	}
-	
+
 	return text.String()
 }

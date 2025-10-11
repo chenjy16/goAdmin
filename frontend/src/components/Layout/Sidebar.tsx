@@ -52,7 +52,7 @@ const Sidebar: React.FC = () => {
         <RobotOutlined style={{ fontSize: '24px', color: token.colorPrimary }} />
         {!sidebarCollapsed && (
           <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-            AI Chat Platform
+           股票分析AI助手
           </span>
         )}
       </div>
