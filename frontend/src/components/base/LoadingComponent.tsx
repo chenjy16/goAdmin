@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ReactNode } from 'react';
 import { colors, spacing, size as sizeUtils, layout, borderRadius, animation, combine } from '../../styles';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 加载组件类型

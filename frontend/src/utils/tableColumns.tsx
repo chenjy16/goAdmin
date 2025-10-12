@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Button, Space, Switch, Tag, Tooltip } from 'antd';
 import { 
   EditOutlined, 
@@ -9,6 +9,7 @@ import {
   ExclamationCircleOutlined 
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 
 // 通用列类型
 export interface BaseColumnConfig<T> {
@@ -73,33 +74,52 @@ export function createTextColumn<T>(config: BaseColumnConfig<T>) {
 }
 
 /**
- * 创建状态列
+ * 创建状态列工厂函数（支持国际化）
+ */
+export function createStatusColumnWithI18n<T>(t: (key: string) => string) {
+  return function(config: StatusColumnConfig<T>) {
+    const defaultStatusMap: Record<string, { color: string; text: string; icon?: React.ReactNode }> = {
+      active: { color: 'green', text: t('tableColumns.status.active'), icon: <CheckCircleOutlined /> },
+      inactive: { color: 'red', text: t('tableColumns.status.inactive'), icon: <ExclamationCircleOutlined /> },
+      enabled: { color: 'green', text: t('tableColumns.status.enabled'), icon: <CheckCircleOutlined /> },
+      disabled: { color: 'red', text: t('tableColumns.status.disabled'), icon: <ExclamationCircleOutlined /> },
+    };
+
+    const statusMap = { ...defaultStatusMap, ...config.statusMap };
+
+    return {
+      title: config.title,
+      dataIndex: config.dataIndex as string,
+      key: config.dataIndex as string,
+      width: config.width || 100,
+      sorter: config.sorter,
+      render: (status: string) => {
+        const statusConfig = statusMap[status] || { color: 'default', text: status };
+        return (
+          <Tag color={statusConfig.color} icon={statusConfig.icon}>
+            {statusConfig.text}
+          </Tag>
+        );
+      },
+    };
+  };
+}
+
+/**
+ * 创建状态列（向后兼容）
  */
 export function createStatusColumn<T>(config: StatusColumnConfig<T>) {
-  const defaultStatusMap: Record<string, { color: string; text: string; icon?: React.ReactNode }> = {
-    active: { color: 'green', text: '活跃', icon: <CheckCircleOutlined /> },
-    inactive: { color: 'red', text: '非活跃', icon: <ExclamationCircleOutlined /> },
-    enabled: { color: 'green', text: '启用', icon: <CheckCircleOutlined /> },
-    disabled: { color: 'red', text: '禁用', icon: <ExclamationCircleOutlined /> },
+  const defaultT = (key: string) => {
+    const translations: Record<string, string> = {
+      'tableColumns.status.active': '活跃',
+      'tableColumns.status.inactive': '非活跃',
+      'tableColumns.status.enabled': '启用',
+      'tableColumns.status.disabled': '禁用',
+    };
+    return translations[key] || key;
   };
 
-  const statusMap = { ...defaultStatusMap, ...config.statusMap };
-
-  return {
-    title: config.title,
-    dataIndex: config.dataIndex as string,
-    key: config.dataIndex as string,
-    width: config.width || 100,
-    sorter: config.sorter,
-    render: (status: string) => {
-      const statusConfig = statusMap[status] || { color: 'default', text: status };
-      return (
-        <Tag color={statusConfig.color} icon={statusConfig.icon}>
-          {statusConfig.text}
-        </Tag>
-      );
-    },
-  };
+  return createStatusColumnWithI18n<T>(defaultT)(config);
 }
 
 /**
@@ -153,42 +173,94 @@ export function createTagColumn<T>(config: TagColumnConfig<T>) {
 }
 
 /**
- * 创建操作列
+ * 创建操作列工厂函数（支持国际化）
  */
-export function createActionColumn<T>(config: ActionColumnConfig<T>) {
-  return {
-    title: '操作',
-    key: 'actions',
-    width: config.width || 150,
-    render: (_: any, record: T) => (
-      <Space size="small">
-        {config.actions.map((action) => {
-          const visible = action.visible ? action.visible(record) : true;
-          const disabled = action.disabled ? action.disabled(record) : false;
-          
-          if (!visible) return null;
-          
-          return (
-            <Button
-              key={action.key}
-              type={action.type || 'link'}
-              size="small"
-              icon={action.icon}
-              danger={action.danger}
-              disabled={disabled}
-              onClick={() => action.onClick(record)}
-            >
-              {action.label}
-            </Button>
-          );
-        })}
-      </Space>
-    ),
+export function createActionColumnWithI18n<T>(t: (key: string) => string) {
+  return function(config: ActionColumnConfig<T>) {
+    return {
+      title: t('tableColumns.actionsTitle'),
+      key: 'actions',
+      width: config.width || 150,
+      render: (_: any, record: T) => (
+        <Space size="small">
+          {config.actions.map((action) => {
+            const visible = action.visible ? action.visible(record) : true;
+            const disabled = action.disabled ? action.disabled(record) : false;
+            
+            if (!visible) return null;
+            
+            return (
+              <Button
+                key={action.key}
+                type={action.type || 'link'}
+                size="small"
+                icon={action.icon}
+                danger={action.danger}
+                disabled={disabled}
+                onClick={() => action.onClick(record)}
+              >
+                {action.label}
+              </Button>
+            );
+          })}
+        </Space>
+      ),
+    };
   };
 }
 
 /**
- * 创建常用的操作按钮配置
+ * 创建操作列（向后兼容）
+ */
+export function createActionColumn<T>(config: ActionColumnConfig<T>) {
+  const defaultT = (key: string) => {
+    const translations: Record<string, string> = {
+      'tableColumns.actionsTitle': '操作',
+    };
+    return translations[key] || key;
+  };
+
+  return createActionColumnWithI18n<T>(defaultT)(config);
+}
+
+/**
+ * 创建常用的操作按钮配置工厂函数（支持国际化）
+ */
+export function createCommonActionsWithI18n(t: (key: string) => string) {
+  return {
+    view: (onClick: (record: any) => void) => ({
+      key: 'view',
+      label: t('tableColumns.actions.view'),
+      icon: <EyeOutlined />,
+      onClick,
+    }),
+    
+    edit: (onClick: (record: any) => void) => ({
+      key: 'edit',
+      label: t('tableColumns.actions.edit'),
+      icon: <EditOutlined />,
+      onClick,
+    }),
+    
+    delete: (onClick: (record: any) => void) => ({
+      key: 'delete',
+      label: t('tableColumns.actions.delete'),
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick,
+    }),
+    
+    settings: (onClick: (record: any) => void) => ({
+      key: 'settings',
+      label: t('tableColumns.actions.settings'),
+      icon: <SettingOutlined />,
+      onClick,
+    }),
+  };
+}
+
+/**
+ * 创建常用的操作按钮配置（向后兼容）
  */
 export const commonActions = {
   view: (onClick: (record: any) => void) => ({
@@ -226,4 +298,17 @@ export const commonActions = {
  */
 export function mergeColumns<T>(...columnGroups: ColumnsType<T>[]): ColumnsType<T> {
   return columnGroups.flat();
+}
+
+/**
+ * 使用国际化的表格列工具 Hook
+ */
+export function useTableColumns() {
+  const { t } = useTranslation();
+  
+  return useMemo(() => ({
+    createStatusColumn: createStatusColumnWithI18n(t),
+    createActionColumn: createActionColumnWithI18n(t),
+    commonActions: createCommonActionsWithI18n(t),
+  }), [t]);
 }

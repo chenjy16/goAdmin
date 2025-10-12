@@ -1,4 +1,6 @@
 import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useMemo, useCallback } from 'react';
 
 // API错误类型
 export interface ApiError {
@@ -24,21 +26,22 @@ const defaultConfig: ErrorHandlerConfig = {
   silent: false,
 };
 
-// 错误消息映射
-const errorMessageMap: Record<string, string> = {
-  'NETWORK_ERROR': '网络连接失败，请检查网络设置',
-  'TIMEOUT': '请求超时，请稍后重试',
-  'UNAUTHORIZED': '未授权访问，请重新登录',
-  'FORBIDDEN': '权限不足，无法执行此操作',
-  'NOT_FOUND': '请求的资源不存在',
-  'INTERNAL_SERVER_ERROR': '服务器内部错误，请稍后重试',
-  'BAD_REQUEST': '请求参数错误',
-  'CONFLICT': '操作冲突，请刷新页面后重试',
-  'TOO_MANY_REQUESTS': '请求过于频繁，请稍后重试',
-};
+// 错误消息映射函数
+const getErrorMessageMap = (t: (key: string) => string): Record<string, string> => ({
+  NETWORK_ERROR: t('apiErrors.networkError'),
+  TIMEOUT: t('apiErrors.timeout'),
+  UNAUTHORIZED: t('apiErrors.unauthorized'),
+  FORBIDDEN: t('apiErrors.forbidden'),
+  NOT_FOUND: t('apiErrors.notFound'),
+  INTERNAL_SERVER_ERROR: t('apiErrors.internalServerError'),
+  BAD_REQUEST: t('apiErrors.badRequest'),
+  CONFLICT: t('apiErrors.conflict'),
+  TOO_MANY_REQUESTS: t('apiErrors.tooManyRequests'),
+});
 
 // 根据HTTP状态码获取错误消息
-function getErrorMessageByStatus(status: number): string {
+export const getErrorMessageByStatus = (status: number, t: (key: string) => string): string => {
+  const errorMessageMap = getErrorMessageMap(t);
   switch (status) {
     case 400:
       return errorMessageMap.BAD_REQUEST;
@@ -55,12 +58,14 @@ function getErrorMessageByStatus(status: number): string {
     case 500:
       return errorMessageMap.INTERNAL_SERVER_ERROR;
     default:
-      return '操作失败，请稍后重试';
+      return t('apiErrors.defaultError');
   }
-}
+};
 
 // 解析错误对象
-export function parseApiError(error: any): ApiError {
+export function parseApiError(error: any, t: (key: string) => string): ApiError {
+  const errorMessageMap = getErrorMessageMap(t);
+  
   // 如果已经是ApiError格式
   if (error && typeof error === 'object' && 'message' in error) {
     return {
@@ -77,7 +82,7 @@ export function parseApiError(error: any): ApiError {
     return {
       status,
       code: data?.code || `HTTP_${status}`,
-      message: data?.message || getErrorMessageByStatus(status),
+      message: data?.message || getErrorMessageByStatus(status, t),
       details: data?.details || data,
     };
   }
@@ -114,15 +119,72 @@ export function parseApiError(error: any): ApiError {
 
   // 默认错误
   return {
-    message: '未知错误',
+    message: t('apiErrors.unknownError'),
     details: error,
   };
 }
 
-// 处理API错误
+// Hook for API error handling with internationalization
+export const useApiErrorHandler = () => {
+  const { t } = useTranslation();
+
+  const getErrorMessageByStatusWithI18n = useMemo(() => 
+    (status: number) => getErrorMessageByStatus(status, t), 
+    [t]
+  );
+
+  const parseApiErrorWithI18n = useMemo(() => 
+    (error: any) => parseApiError(error, t), 
+    [t]
+  );
+
+  const handleApiError = useCallback(
+    (error: any, config: ErrorHandlerConfig = {}): ApiError => {
+      const finalConfig = { ...defaultConfig, ...config };
+      const apiError = parseApiErrorWithI18n(error);
+
+      // 使用自定义消息
+      if (finalConfig.customMessage) {
+        apiError.message = finalConfig.customMessage;
+      }
+
+      // 显示错误消息
+      if (finalConfig.showMessage && !finalConfig.silent) {
+        const messageType = finalConfig.messageType || 'error';
+        message[messageType](apiError.message);
+      }
+
+      // 执行自定义错误处理
+      if (finalConfig.onError) {
+        finalConfig.onError(apiError);
+      }
+
+      // 记录错误日志
+      console.error('API Error:', {
+        code: apiError.code,
+        message: apiError.message,
+        status: apiError.status,
+        details: apiError.details,
+        originalError: error,
+      });
+
+      return apiError;
+    }, 
+    [parseApiErrorWithI18n]
+  );
+
+  return {
+    getErrorMessageByStatus: getErrorMessageByStatusWithI18n,
+    parseApiError: parseApiErrorWithI18n,
+    handleApiError,
+  };
+};
+
+// 处理API错误 (保留原函数用于向后兼容)
 export function handleApiError(error: any, config: ErrorHandlerConfig = {}): ApiError {
+  const { t } = useTranslation();
   const finalConfig = { ...defaultConfig, ...config };
-  const apiError = parseApiError(error);
+  const apiError = parseApiError(error, t);
 
   // 使用自定义消息
   if (finalConfig.customMessage) {
@@ -175,6 +237,51 @@ export interface RetryConfig {
   onRetry?: (attempt: number, error: ApiError) => void;
 }
 
+// 创建重试函数工厂 (需要在组件中使用 useApiErrorHandler)
+export const createRetryFunction = (parseApiErrorFn: (error: any) => ApiError) => {
+  return function withRetry<T extends (...args: any[]) => Promise<any>>(
+    fn: T,
+    config: RetryConfig = {}
+  ): T {
+    const {
+      maxRetries = 3,
+      retryDelay = 1000,
+      retryCondition = (error) => error.status === 500 || error.code === 'NETWORK_ERROR',
+      onRetry,
+    } = config;
+
+    return (async (...args: any[]) => {
+      let lastError: ApiError;
+      
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          return await fn(...args);
+        } catch (error) {
+          lastError = parseApiErrorFn(error);
+          
+          // 如果是最后一次尝试或不满足重试条件，直接抛出错误
+          if (attempt === maxRetries || !retryCondition(lastError)) {
+            throw lastError;
+          }
+          
+          // 执行重试回调
+          if (onRetry) {
+            onRetry(attempt + 1, lastError);
+          }
+          
+          // 等待重试延迟
+          if (retryDelay > 0) {
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+          }
+        }
+      }
+      
+      throw lastError!;
+    }) as T;
+  };
+};
+
+// 保留原函数用于向后兼容 (但不推荐在组件中使用)
 export function withRetry<T extends (...args: any[]) => Promise<any>>(
   fn: T,
   config: RetryConfig = {}
@@ -193,7 +300,9 @@ export function withRetry<T extends (...args: any[]) => Promise<any>>(
       try {
         return await fn(...args);
       } catch (error) {
-        lastError = parseApiError(error);
+        // 注意：这里在非组件中使用 useTranslation 可能会有问题
+        const { t } = useTranslation();
+        lastError = parseApiError(error, t);
         
         // 如果是最后一次尝试或不满足重试条件，直接抛出错误
         if (attempt === maxRetries || !retryCondition(lastError)) {

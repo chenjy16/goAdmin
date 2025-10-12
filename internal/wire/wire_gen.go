@@ -13,7 +13,8 @@ import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
 	"go-springAi/internal/dto"
-	"go-springAi/internal/handler"
+	"go-springAi/internal/errors"
+	"go-springAi/internal/i18n"
 	"go-springAi/internal/provider"
 	"go-springAi/internal/repository"
 	"go-springAi/internal/service"
@@ -38,6 +39,11 @@ func InitializeApp(configPath string) (*App, func(), error) {
 		return nil, nil, err
 	}
 	jwtManager := ProvideJWTManager(config)
+	manager, err := ProvideI18nManager()
+	if err != nil {
+		return nil, nil, err
+	}
+	errorHandler := ProvideErrorHandler(manager)
 	customValidator := utils.NewCustomValidator()
 	repositoryManager := repository.NewRepositoryManager(db)
 	mcpService := ProvideMCPService(repositoryManager, logger)
@@ -49,14 +55,15 @@ func InitializeApp(configPath string) (*App, func(), error) {
 	apiKeyService := ProvideAPIKeyService(repositoryManager)
 	internalMCPClient := ProvideInternalMCPClient(mcpService)
 	stockAnalysisService := ProvideStockAnalysisService(internalMCPClient, logger)
-	manager := ProvideProviderManager(openAIService, googleAIService, logger)
-	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, manager, stockAnalysisService, logger)
-	mcpController := ProvideMCPController(mcpService, logger)
-	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger)
-	stockHandler := ProvideStockHandler(stockAnalysisService, logger)
-	aiController := ProvideAIController(manager, apiKeyService, logger)
-	engine := ProvideRouter(logger, jwtManager, mcpController, aiController, aiAssistantController, stockHandler)
-	app, cleanup := NewApp(config, logger, db, jwtManager, customValidator, repositoryManager, mcpService, openAIService, googleAIService, apiKeyService, stockAnalysisService, aiAssistantService, mcpController, aiAssistantController, stockHandler, manager, aiController, engine)
+	providerManager := ProvideProviderManager(openAIService, googleAIService, logger)
+	aiAssistantService := ProvideAIAssistantService(mcpService, openAIService, providerManager, stockAnalysisService, logger)
+	mcpController := ProvideMCPController(mcpService, logger, errorHandler)
+	aiAssistantController := ProvideAIAssistantController(aiAssistantService, logger, errorHandler)
+	testI18nController := ProvideTestI18nController()
+	stockController := ProvideStockController(stockAnalysisService, logger, errorHandler)
+	aiController := ProvideAIController(providerManager, apiKeyService, logger, errorHandler)
+	engine := ProvideRouter(logger, jwtManager, mcpController, aiController, aiAssistantController, stockController, testI18nController, manager)
+	app, cleanup := NewApp(config, logger, db, jwtManager, manager, errorHandler, customValidator, repositoryManager, mcpService, openAIService, googleAIService, apiKeyService, stockAnalysisService, aiAssistantService, mcpController, aiAssistantController, testI18nController, stockController, providerManager, aiController, engine)
 	return app, func() {
 		cleanup()
 	}, nil
@@ -70,6 +77,8 @@ type App struct {
 	Logger                *zap.Logger
 	DB                    *database.DB
 	JWTManager            *utils.JWTManager
+	I18nManager           *i18n.Manager
+	ErrorHandler          *errors.ErrorHandler
 	Validator             *utils.CustomValidator
 	RepoManager           repository.RepositoryManager
 	MCPService            service.MCPService
@@ -80,7 +89,8 @@ type App struct {
 	AIAssistantService    *service.AIAssistantService
 	MCPController         *controllers.MCPController
 	AIAssistantController *controllers.AIAssistantController
-	StockHandler          *handler.StockHandler
+	TestI18nController    *controllers.TestI18nController
+	StockController       *controllers.StockController
 	ProviderManager       *provider.Manager
 	AIController          *controllers.AIController
 	Router                *gin.Engine
@@ -91,6 +101,8 @@ func NewApp(config2 *config.Config,
 	logger *zap.Logger,
 	db *database.DB,
 	jwtManager *utils.JWTManager,
+	i18nManager *i18n.Manager,
+	errorHandler *errors.ErrorHandler,
 	validator *utils.CustomValidator,
 	repoManager repository.RepositoryManager,
 	mcpService service.MCPService,
@@ -101,7 +113,8 @@ func NewApp(config2 *config.Config,
 	aiAssistantService *service.AIAssistantService,
 	mcpController *controllers.MCPController,
 	aiAssistantController *controllers.AIAssistantController,
-	stockHandler *handler.StockHandler,
+	testI18nController *controllers.TestI18nController,
+	stockController *controllers.StockController,
 	providerManager *provider.Manager,
 	aiController *controllers.AIController,
 	router *gin.Engine,
@@ -111,6 +124,8 @@ func NewApp(config2 *config.Config,
 		Logger:                logger,
 		DB:                    db,
 		JWTManager:            jwtManager,
+		I18nManager:           i18nManager,
+		ErrorHandler:          errorHandler,
 		Validator:             validator,
 		RepoManager:           repoManager,
 		MCPService:            mcpService,
@@ -121,7 +136,8 @@ func NewApp(config2 *config.Config,
 		AIAssistantService:    aiAssistantService,
 		MCPController:         mcpController,
 		AIAssistantController: aiAssistantController,
-		StockHandler:          stockHandler,
+		TestI18nController:    testI18nController,
+		StockController:       stockController,
 		ProviderManager:       providerManager,
 		AIController:          aiController,
 		Router:                router,

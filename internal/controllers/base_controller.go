@@ -15,11 +15,15 @@ import (
 )
 
 // BaseController 基础控制器，包含公共方法
-type BaseController struct{}
+type BaseController struct{
+	errorHandler *errors.ErrorHandler
+}
 
 // NewBaseController 创建基础控制器实例
-func NewBaseController() *BaseController {
-	return &BaseController{}
+func NewBaseController(errorHandler *errors.ErrorHandler) *BaseController {
+	return &BaseController{
+		errorHandler: errorHandler,
+	}
 }
 
 // HandleValidationError 处理验证错误，提供更友好的错误信息
@@ -119,5 +123,10 @@ func (bc *BaseController) ParsePaginationParams(c *gin.Context) (page, limit, of
 
 // HandleError 统一的错误处理
 func (bc *BaseController) HandleError(c *gin.Context, err error) {
-	c.Error(err)
+	if bc.errorHandler != nil {
+		bc.errorHandler.HandleError(c, err)
+	} else {
+		// 回退到原始方法
+		c.Error(err)
+	}
 }

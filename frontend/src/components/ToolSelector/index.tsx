@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Radio, Row, Col, Space, Typography } from 'antd';
 import { ToolOutlined } from '@ant-design/icons';
 import type { MCPTool } from '../../types/api';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -18,6 +19,34 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
   onToolChange,
   className
 }) => {
+  const { t } = useTranslation();
+
+  // 工具名称映射函数
+  const getToolNameKey = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      '雅虎财经': 'yahoo_finance',
+      '股票分析': 'stock_analysis', 
+      '股票对比': 'stock_compare',
+      '股票投资建议': 'stock_advice',
+    };
+    return nameMap[name] || name;
+  };
+
+  // 获取国际化的工具名称
+  const getLocalizedToolName = (name: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolNames.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : name;
+  };
+
+  // 获取国际化的工具描述
+  const getLocalizedToolDescription = (name: string, originalDescription: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolDescriptions.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : originalDescription;
+  };
   return (
     <Card 
       className={className}
@@ -25,7 +54,7 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
       title={
         <Space size="middle">
           <ToolOutlined style={{ color: '#fa8c16' }} />
-          <span style={{ fontSize: '15px', fontWeight: 500 }}>工具选择</span>
+          <span style={{ fontSize: '15px', fontWeight: 500 }}>{t('toolSelector.title')}</span>
         </Space>
       }
       style={{ 
@@ -35,9 +64,9 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
       bodyStyle={{ padding: '20px' }}
     >
       <div style={{ marginBottom: '16px' }}>
-        <Text strong style={{ fontSize: '14px', color: '#262626' }}>可用工具</Text>
+        <Text strong style={{ fontSize: '14px', color: '#262626' }}>{t('toolSelector.availableTools')}</Text>
         <Text type="secondary" style={{ marginLeft: '12px', fontSize: '13px' }}>
-          (选择要使用的MCP工具)
+          ({t('toolSelector.selectPrompt')})
         </Text>
       </div>
       
@@ -51,7 +80,7 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
           border: '1px dashed #d9d9d9'
         }}>
           <ToolOutlined style={{ fontSize: '24px', marginBottom: '8px' }} />
-          <div>暂无可用的MCP工具</div>
+          <div>{t('toolSelector.noToolsAvailable')}</div>
         </div>
       ) : (
         <Radio.Group
@@ -86,7 +115,7 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
                         lineHeight: '20px',
                         display: 'block'
                       }}>
-                        {tool.name}
+                        {getLocalizedToolName(tool.name)}
                       </Text>
                       <Text type="secondary" style={{ 
                         fontSize: '12px',
@@ -94,7 +123,7 @@ const ToolSelector: React.FC<ToolSelectorProps> = ({
                         display: 'block',
                         wordBreak: 'break-word'
                       }}>
-                        {tool.description}
+                        {getLocalizedToolDescription(tool.name, tool.description)}
                       </Text>
                     </div>
                   </Radio>

@@ -89,7 +89,7 @@ export function createAsyncSlice<T, P = void>(config: AsyncSliceConfig<T, P>) {
         })
         .addCase(fetchData.rejected, (state, action) => {
           state.loading = false;
-          state.error = action.error.message || '操作失败';
+          state.error = action.error.message || 'errors.operationFailed';
         });
     },
   });

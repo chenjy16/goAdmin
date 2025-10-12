@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"go-springAi/internal/dto"
+	"go-springAi/internal/errors"
 	"go-springAi/internal/logger"
 	"go-springAi/internal/middleware"
 	"go-springAi/internal/provider"
@@ -24,9 +25,9 @@ type AIController struct {
 }
 
 // NewAIController 创建统一AI控制器
-func NewAIController(providerManager *provider.Manager, apiKeyService service.APIKeyService, logger *zap.Logger) *AIController {
+func NewAIController(providerManager *provider.Manager, apiKeyService service.APIKeyService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *AIController {
 	return &AIController{
-		BaseController:  *NewBaseController(),
+		BaseController:  *NewBaseController(errorHandler),
 		providerManager: providerManager,
 		apiKeyService:   apiKeyService,
 		logger:          logger,

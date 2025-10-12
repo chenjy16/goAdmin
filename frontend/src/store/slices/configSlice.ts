@@ -179,7 +179,7 @@ const configSlice = createSlice({
       })
       .addCase(loadConfigData.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || '加载配置数据失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       
       // 加载提供商
@@ -187,7 +187,7 @@ const configSlice = createSlice({
         state.data.providers = action.payload;
       })
       .addCase(loadProviders.rejected, (state, action) => {
-        state.error = action.error.message || '加载提供商失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       
       // 加载模型
@@ -196,7 +196,7 @@ const configSlice = createSlice({
         state.data.models[provider] = models;
       })
       .addCase(loadModels.rejected, (state, action) => {
-        state.error = action.error.message || '加载模型失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       
       // 加载工具
@@ -204,7 +204,7 @@ const configSlice = createSlice({
         state.data.tools = action.payload;
       })
       .addCase(loadTools.rejected, (state, action) => {
-        state.error = action.error.message || '加载工具失败';
+        state.error = action.error.message || 'errors.loadFailed';
       });
   },
 });

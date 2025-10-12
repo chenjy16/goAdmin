@@ -3,6 +3,8 @@ package googleai
 import (
 	"context"
 	"io"
+	
+	"go-springAi/internal/types"
 )
 
 // Message 聊天消息
@@ -65,14 +67,8 @@ type StreamResponse struct {
 	Choices []StreamChoice `json:"choices"`
 }
 
-// ErrorResponse 错误响应
-type ErrorResponse struct {
-	Error struct {
-		Message string `json:"message"`
-		Type    string `json:"type"`
-		Code    string `json:"code"`
-	} `json:"error"`
-}
+// ErrorResponse GoogleAI错误响应，使用统一的错误类型
+type ErrorResponse = types.CommonErrorResponse
 
 // ModelConfig 模型配置
 type ModelConfig struct {

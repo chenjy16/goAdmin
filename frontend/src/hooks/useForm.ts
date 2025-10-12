@@ -137,7 +137,7 @@ export function useForm<T extends Record<string, any>>(config: UseFormConfig<T> 
         try {
           await rule.validator(value);
         } catch (error) {
-          return error instanceof Error ? error.message : rule.message || '验证失败';
+          return error instanceof Error ? error.message : rule.message || 'Validation failed';
         }
       }
     }

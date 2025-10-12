@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { BaseState } from '../../types/base';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 基础Hook组件属性接口
@@ -41,8 +42,8 @@ export function useBaseState(initialProps?: Partial<BaseState>) {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
-  const handleError = useCallback((error: Error) => {
-    const errorMessage = error.message || '未知错误';
+  const handleError = useCallback((error: Error, t?: (key: string) => string) => {
+    const errorMessage = error.message || (t ? t('common.unknownError') : 'Unknown Error');
     setError(errorMessage);
     console.error('Component error:', error);
   }, [setError]);
@@ -162,16 +163,18 @@ export function withBaseComponent<P extends Record<string, any>>(
       }
     }, [propError, error, onError]);
 
+    const { t } = useTranslation();
+
     const renderLoading = useCallback(() => (
-      <div className="loading">加载中...</div>
-    ), []);
+      <div className="loading">{t('common.loading')}</div>
+    ), [t]);
 
     const renderError = useCallback(() => (
       <div className="error">
-        <p>发生错误: {error}</p>
-        <button onClick={clearError}>重试</button>
+        <p>{t('common.errorOccurred')}: {error}</p>
+        <button onClick={clearError}>{t('common.retry')}</button>
       </div>
-    ), [error, clearError]);
+    ), [error, clearError, t]);
 
     const containerProps = useMemo(() => ({
       className: `base-component ${className || ''}`,
@@ -216,15 +219,16 @@ export function BaseHookComponent({
 }: BaseHookComponentProps & { config?: BaseHookComponentConfig }) {
   const { showLoading = true, showError = true } = config;
   const { clearError } = useBaseState({ loading, error });
+  const { t } = useTranslation();
 
   const renderLoading = () => showLoading && loading && (
-    <div className="loading">加载中...</div>
+    <div className="loading">{t('common.loading')}</div>
   );
 
   const renderError = () => showError && error && (
     <div className="error">
-      <p>发生错误: {error}</p>
-      <button onClick={clearError}>重试</button>
+      <p>{t('common.errorOccurred')}: {error}</p>
+      <button onClick={clearError}>{t('common.retry')}</button>
     </div>
   );
 

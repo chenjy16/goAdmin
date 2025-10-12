@@ -34,6 +34,7 @@ import {
   checkMCPStatus,
 } from '../store/slices/mcpSlice';
 import AssistantConfigPanel from '../components/AssistantConfigPanel';
+import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '../types/api';
 
 const { TextArea } = Input;
@@ -41,6 +42,7 @@ const { Text, Paragraph } = Typography;
 const { Content } = Layout;
 
 const AssistantPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const {
     conversations,
@@ -57,6 +59,18 @@ const AssistantPage: React.FC = () => {
   const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 工具名称映射函数
+  const getToolDisplayName = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      '雅虎财经': 'yahoo_finance',
+      '股票分析': 'stock_analysis', 
+      '股票对比': 'stock_compare',
+      '股票投资建议': 'stock_advice',
+    };
+    const key = nameMap[name] || name;
+    return t(`mcpTools.toolNames.${key}`, name);
+  };
+
   useEffect(() => {
     // 加载配置数据
     dispatch(loadConfigData());
@@ -71,7 +85,7 @@ const AssistantPage: React.FC = () => {
     if (!isInitialized) {
       dispatch(initializeAssistant());
     } else if (!currentConversationId) {
-      dispatch(createAssistantConversation('新助手对话'));
+      dispatch(createAssistantConversation(t('assistant.newConversationName')));
     }
   }, [dispatch, isInitialized, currentConversationId]);
 
@@ -91,7 +105,7 @@ const AssistantPage: React.FC = () => {
 
     // 验证配置是否完整
     if (!config.selectedModel || !config.selectedProvider) {
-      message.error('请先在配置中选择AI提供商和模型');
+      message.error(t('assistant.selectProviderModel'));
       return;
     }
 
@@ -114,7 +128,7 @@ const AssistantPage: React.FC = () => {
         selectedTool: config.selectedTool,
       })).unwrap();
     } catch (err) {
-      message.error('发送消息失败');
+      message.error(t('assistant.sendFailed'));
     }
   };
 
@@ -127,11 +141,11 @@ const AssistantPage: React.FC = () => {
 
   const handleCopyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
-    message.success('已复制到剪贴板');
+    message.success(t('assistant.copySuccess'));
   };
 
   const handleNewConversation = () => {
-    dispatch(createAssistantConversation('新助手对话'));
+    dispatch(createAssistantConversation(t('assistant.newConversationName')));
   };
 
   const handleInitializeAssistant = () => {
@@ -161,7 +175,7 @@ const AssistantPage: React.FC = () => {
           }
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text strong>{isUser ? '用户' : 'AI助手'}</Text>
+              <Text strong>{isUser ? t('assistant.user') : t('assistant.ai')}</Text>
               <Space>
                 <Button
                   type="text"
@@ -190,7 +204,7 @@ const AssistantPage: React.FC = () => {
               </Paragraph>
               {msg.tool_calls && msg.tool_calls.length > 0 && (
                 <div style={{ marginTop: '8px' }}>
-                  <Tag color="blue">使用了工具调用</Tag>
+                  <Tag color="blue">{t('assistant.toolUsed')}</Tag>
                 </div>
               )}
             </div>
@@ -205,9 +219,9 @@ const AssistantPage: React.FC = () => {
       <div style={{ height: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Card style={{ textAlign: 'center', maxWidth: '400px' }}>
           <ExclamationCircleOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
-          <h3>AI助手未初始化</h3>
+          <h3>{t('assistant.notInitialized')}</h3>
           <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
-            请先初始化AI助手服务以开始对话
+            {t('assistant.initializePrompt')}
           </p>
           <Button
             type="primary"
@@ -216,11 +230,11 @@ const AssistantPage: React.FC = () => {
             onClick={handleInitializeAssistant}
             loading={isLoading}
           >
-            初始化助手
+            {t('assistant.initializeButton')}
           </Button>
           {error && (
             <div style={{ marginTop: '16px', color: '#ff4d4f', fontSize: '14px' }}>
-              初始化失败: {error}
+              {t('assistant.initializeFailed')}: {error}
             </div>
           )}
         </Card>
@@ -245,15 +259,15 @@ const AssistantPage: React.FC = () => {
             <Space>
               <RobotOutlined style={{ color: '#52c41a' }} />
               <Text strong style={{ fontSize: '16px' }}>
-                AI智能助手
+                {t('assistant.title')}
               </Text>
               <Tag color="green" icon={<CheckCircleOutlined />}>
-                已初始化
+                {t('assistant.initialized')}
               </Tag>
             </Space>
             {currentConversation && (
               <Text type="secondary" style={{ marginLeft: '16px' }}>
-                {currentConversation.messages.length} 条消息
+                {currentConversation.messages.length} {t('assistant.messagesCount')}
               </Text>
             )}
           </div>
@@ -262,9 +276,9 @@ const AssistantPage: React.FC = () => {
               icon={<SettingOutlined />}
               onClick={() => setConfigDrawerVisible(true)}
             >
-              配置
+              {t('assistant.configure')}
             </Button>
-            <Button onClick={handleNewConversation}>新建对话</Button>
+            <Button onClick={handleNewConversation}>{t('assistant.newConversation')}</Button>
           </Space>
         </div>
 
@@ -281,28 +295,28 @@ const AssistantPage: React.FC = () => {
               }}
             >
               <RobotOutlined style={{ fontSize: '48px', color: '#d9d9d9', marginBottom: '16px' }} />
-              <Text type="secondary">AI助手已准备就绪，开始对话吧！</Text>
+              <Text type="secondary">{t('assistant.ready')}</Text>
               <div style={{ marginTop: '16px', textAlign: 'center' }}>
                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {mcpInitialized && mcpTools.length > 0 ? 'AI助手工具：' : 'AI助手具备以下能力：'}
+                  {mcpInitialized && mcpTools.length > 0 ? t('assistant.toolsAvailable') : t('assistant.capabilities')}
                 </Text>
                 <div style={{ marginTop: '8px' }}>
                   {mcpInitialized && mcpTools.length > 0 ? (
                     mcpTools.slice(0, 4).map((tool) => (
                       <Tag key={tool.name} color="blue">
-                        {tool.name}
+                        {getToolDisplayName(tool.name)}
                       </Tag>
                     ))
                   ) : (
                     <>
-                      <Tag>智能对话</Tag>
-                      <Tag>工具调用</Tag>
-                      <Tag>代码生成</Tag>
-                      <Tag>问题解答</Tag>
+                      <Tag>{t('assistant.intelligentChat')}</Tag>
+                      <Tag>{t('assistant.toolCalling')}</Tag>
+                      <Tag>{t('assistant.codeGeneration')}</Tag>
+                      <Tag>{t('assistant.questionAnswering')}</Tag>
                     </>
                   )}
                   {mcpInitialized && mcpTools.length > 4 && (
-                    <Tag color="default">+{mcpTools.length - 4} 更多</Tag>
+                    <Tag color="default">+{mcpTools.length - 4} {t('assistant.moreTools')}</Tag>
                   )}
                 </div>
               </div>
@@ -316,7 +330,7 @@ const AssistantPage: React.FC = () => {
           )}
           {isLoading && (
             <div style={{ textAlign: 'center', padding: '16px' }}>
-              <Spin tip="AI助手正在思考中..." spinning={true}>
+              <Spin tip={t('assistant.thinking')} spinning={true}>
                 <div style={{ height: '40px' }} />
               </Spin>
             </div>
@@ -337,7 +351,7 @@ const AssistantPage: React.FC = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="向AI助手提问... (Shift+Enter 换行，Enter 发送)"
+              placeholder={t('assistant.placeholder')}
               autoSize={{ minRows: 1, maxRows: 4 }}
               style={{ flex: 1 }}
               disabled={isLoading || !isInitialized}
@@ -349,7 +363,7 @@ const AssistantPage: React.FC = () => {
               loading={isLoading}
               disabled={!inputValue.trim() || !isInitialized}
             >
-              发送
+              {t('assistant.send')}
             </Button>
           </div>
           {error && (
@@ -362,7 +376,7 @@ const AssistantPage: React.FC = () => {
       
       {/* 配置抽屉 */}
       <Drawer
-        title="AI助手配置"
+        title={t('assistant.configTitle')}
         placement="right"
         width={600}
         open={configDrawerVisible}

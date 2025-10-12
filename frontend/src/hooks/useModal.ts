@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Modal } from 'antd';
 import type { ModalProps } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 // 模态框配置
 export interface UseModalConfig extends Omit<ModalProps, 'open' | 'onOk' | 'onCancel'> {
@@ -138,12 +139,13 @@ export function useConfirmModal(config: {
   cancelText?: string;
   type?: 'info' | 'success' | 'error' | 'warning' | 'confirm';
 } = {}) {
+  const { t } = useTranslation();
   const {
-    title = '确认',
-    content = '确定要执行此操作吗？',
+    title = t('modals.confirm'),
+    content = t('modals.confirmAction'),
     onConfirm,
-    okText = '确定',
-    cancelText = '取消',
+    okText = t('modals.ok'),
+    cancelText = t('modals.cancel'),
     type = 'confirm',
   } = config;
 
@@ -263,15 +265,16 @@ export function useListModal<T = any>(config: {
   deleteTitle?: string;
   viewTitle?: string;
 } = {}) {
+  const { t } = useTranslation();
   const {
     onAdd,
     onEdit,
     onDelete,
     onView,
-    addTitle = '添加',
-    editTitle = '编辑',
-    deleteTitle = '删除',
-    viewTitle = '查看',
+    addTitle = t('modals.add'),
+    editTitle = t('modals.edit'),
+    deleteTitle = t('modals.delete'),
+    viewTitle = t('modals.view'),
   } = config;
 
   const [mode, setMode] = useState<'add' | 'edit' | 'delete' | 'view'>('add');
@@ -293,7 +296,7 @@ export function useListModal<T = any>(config: {
   // 删除确认模态框
   const deleteModal = useConfirmModal({
     title: deleteTitle,
-    content: '确定要删除此项吗？此操作不可撤销。',
+    content: t('modals.deleteConfirm'),
     onConfirm: async () => {
       if (currentItem && onDelete) {
         await onDelete(currentItem);
@@ -361,14 +364,15 @@ export function useBatchModal<T = any>(config: {
   onBatchEdit?: (items: T[], updates: Partial<T>) => Promise<any> | any;
   onBatchExport?: (items: T[]) => Promise<any> | any;
 } = {}) {
+  const { t } = useTranslation();
   const { onBatchDelete, onBatchEdit, onBatchExport } = config;
   
   const [selectedItems, setSelectedItems] = useState<T[]>([]);
 
   // 批量删除确认模态框
   const batchDeleteModal = useConfirmModal({
-    title: '批量删除',
-    content: `确定要删除选中的 ${selectedItems.length} 项吗？此操作不可撤销。`,
+    title: t('modals.batchDelete'),
+    content: t('modals.batchDeleteConfirm', { count: selectedItems.length }),
     onConfirm: async () => {
       if (onBatchDelete) {
         await onBatchDelete(selectedItems);
@@ -378,7 +382,7 @@ export function useBatchModal<T = any>(config: {
 
   // 批量编辑模态框
   const batchEditModal = useFormModal({
-    title: '批量编辑',
+    title: t('modals.batchEdit'),
     onSubmit: async (updates: Partial<T>) => {
       if (onBatchEdit) {
         await onBatchEdit(selectedItems, updates);
@@ -390,9 +394,9 @@ export function useBatchModal<T = any>(config: {
   const openBatchDelete = useCallback((items: T[]) => {
     setSelectedItems(items);
     batchDeleteModal.show({
-      content: `确定要删除选中的 ${items.length} 项吗？此操作不可撤销。`,
+      content: t('modals.batchDeleteConfirm', { count: items.length }),
     });
-  }, [batchDeleteModal]);
+  }, [batchDeleteModal, t]);
 
   // 打开批量编辑
   const openBatchEdit = useCallback((items: T[]) => {

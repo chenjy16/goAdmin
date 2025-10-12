@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 
 interface UseTableOperationsOptions<T> {
   searchFields?: (keyof T)[];
@@ -19,6 +20,7 @@ export function useTableOperations<T extends Record<string, any>>(
   dataSource: T[],
   options: UseTableOperationsOptions<T> = {}
 ) {
+  const { t } = useTranslation();
   const {
     searchFields = [],
     defaultPageSize = 10,
@@ -103,10 +105,10 @@ export function useTableOperations<T extends Record<string, any>>(
   // 批量操作
   const handleBatchOperation = useCallback((
     operation: (selectedItems: T[]) => Promise<void>,
-    operationName: string = '操作'
+    operationName: string = t('common.operation')
   ) => {
     if (state.selectedRowKeys.length === 0) {
-      message.warning(`请先选择要${operationName}的项目`);
+      message.warning(t('common.pleaseSelectItems', { operation: operationName }));
       return;
     }
 
@@ -151,7 +153,7 @@ export function useTableOperations<T extends Record<string, any>>(
     showSizeChanger: true,
     showQuickJumper: true,
     showTotal: (total: number, range: [number, number]) =>
-      `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+      t('common.paginationTotal', { start: range[0], end: range[1], total }),
     onChange: handlePageChange,
   };
 

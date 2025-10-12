@@ -8,8 +8,10 @@ import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/database"
 	"go-springAi/internal/dto"
+	"go-springAi/internal/errors"
 	"go-springAi/internal/googleai"
-	"go-springAi/internal/handler"
+
+	"go-springAi/internal/i18n"
 	"go-springAi/internal/logger"
 	"go-springAi/internal/mcp"
 	"go-springAi/internal/openai"
@@ -17,6 +19,7 @@ import (
 	"go-springAi/internal/repository"
 	"go-springAi/internal/route"
 	"go-springAi/internal/service"
+	"go-springAi/internal/types"
 	"go-springAi/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -76,8 +79,8 @@ func ProvideMCPService(repoManager repository.RepositoryManager, logger *zap.Log
 }
 
 // ProvideMCPController 提供MCP控制器
-func ProvideMCPController(mcpService service.MCPService, logger *zap.Logger) *controllers.MCPController {
-	return controllers.NewMCPController(mcpService, logger)
+func ProvideMCPController(mcpService service.MCPService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *controllers.MCPController {
+	return controllers.NewMCPController(mcpService, logger, errorHandler)
 }
 
 // ProvideOpenAIService 提供OpenAI服务
@@ -160,7 +163,7 @@ func ProvideProviderManager(openaiService *service.OpenAIService, googleaiServic
 	manager.RegisterProvider(googleaiProvider)
 	
 	// 创建并注册Mock Provider（用于测试）
-	mockProvider := provider.NewMockProvider("mock", provider.ProviderTypeMock)
+	mockProvider := provider.NewMockProvider("mock", types.ProviderTypeMock)
 	manager.RegisterProvider(mockProvider)
 	
 	return manager
@@ -172,8 +175,8 @@ func ProvideAPIKeyService(repoManager repository.RepositoryManager) service.APIK
 }
 
 // ProvideAIController 提供AI控制器
-func ProvideAIController(providerManager *provider.Manager, apiKeyService service.APIKeyService, logger *zap.Logger) *controllers.AIController {
-	return controllers.NewAIController(providerManager, apiKeyService, logger)
+func ProvideAIController(providerManager *provider.Manager, apiKeyService service.APIKeyService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *controllers.AIController {
+	return controllers.NewAIController(providerManager, apiKeyService, logger, errorHandler)
 }
 
 // ProvideAIAssistantService 提供AI助手服务
@@ -290,8 +293,8 @@ func (a *ProviderAdapter) ChatCompletion(ctx context.Context, request *service.P
 }
 
 // ProvideAIAssistantController 提供AI助手控制器
-func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService, logger *zap.Logger) *controllers.AIAssistantController {
-	return controllers.NewAIAssistantController(aiAssistantService, logger)
+func ProvideAIAssistantController(aiAssistantService *service.AIAssistantService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *controllers.AIAssistantController {
+	return controllers.NewAIAssistantController(aiAssistantService, logger, errorHandler)
 }
 
 // ProvideInternalMCPClient 提供内部MCP客户端
@@ -308,12 +311,28 @@ func ProvideStockAnalysisService(mcpClient mcp.InternalMCPClient, logger *zap.Lo
 	return service.NewStockAnalysisService(mcpClient, logger)
 }
 
-// ProvideStockHandler 提供股票处理器
-func ProvideStockHandler(stockAnalysisService *service.StockAnalysisService, logger *zap.Logger) *handler.StockHandler {
-	return handler.NewStockHandler(stockAnalysisService, logger)
+// ProvideStockController 提供股票控制器
+func ProvideStockController(stockAnalysisService *service.StockAnalysisService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *controllers.StockController {
+	return controllers.NewStockController(stockAnalysisService, logger, errorHandler)
+}
+
+// ProvideI18nManager 提供国际化管理器
+func ProvideI18nManager() (*i18n.Manager, error) {
+	supportedLangs := []string{"en", "zh"}
+	return i18n.NewManager("en", supportedLangs)
+}
+
+// ProvideErrorHandler 提供错误处理器
+func ProvideErrorHandler(i18nManager *i18n.Manager) *errors.ErrorHandler {
+	return errors.NewErrorHandler(i18nManager)
+}
+
+// ProvideTestI18nController 提供测试国际化控制器
+func ProvideTestI18nController() *controllers.TestI18nController {
+	return controllers.NewTestI18nController()
 }
 
 // ProvideRouter 提供路由器
-func ProvideRouter(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockHandler *handler.StockHandler) *gin.Engine {
-	return route.SetupRoutes(logger, jwtManager, mcpController, aiController, aiAssistantController, stockHandler)
+func ProvideRouter(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockController *controllers.StockController, testI18nController *controllers.TestI18nController, i18nManager *i18n.Manager) *gin.Engine {
+	return route.SetupRoutes(logger, jwtManager, mcpController, aiController, aiAssistantController, stockController, testI18nController, i18nManager)
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"go-springAi/internal/errors"
 	"go-springAi/internal/logger"
 	"go-springAi/internal/response"
 	"go-springAi/internal/service"
@@ -19,9 +20,9 @@ type AIAssistantController struct {
 }
 
 // NewAIAssistantController 创建AI助手控制器
-func NewAIAssistantController(aiAssistantService *service.AIAssistantService, logger *zap.Logger) *AIAssistantController {
+func NewAIAssistantController(aiAssistantService *service.AIAssistantService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *AIAssistantController {
 	return &AIAssistantController{
-		BaseController:     NewBaseController(),
+		BaseController:     NewBaseController(errorHandler),
 		aiAssistantService: aiAssistantService,
 		logger:             logger,
 	}

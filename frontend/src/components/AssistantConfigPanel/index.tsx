@@ -15,6 +15,7 @@ import {
   setMaxTokens,
   setTopP
 } from '../../store/slices/configSlice';
+import { useTranslation } from 'react-i18next';
 import ModelSelector from '../ModelSelector';
 import ToolSelector from '../ToolSelector';
 import ParameterSettings from '../ParameterSettings';
@@ -29,6 +30,7 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
   onConfigChange,
   className
 }) => {
+  const { t } = useTranslation();
   // 使用Redux store
   const dispatch = useAppDispatch();
   const config = useAppSelector(selectConfig);
@@ -81,7 +83,7 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
       <Card className={className} style={{ height: '100%' }}>
         <div style={{ textAlign: 'center', padding: '40px' }}>
           <Spin size="large" />
-          <div style={{ marginTop: '16px', color: '#666', fontSize: '14px' }}>加载配置中...</div>
+        <div style={{ marginTop: '16px', color: '#666', fontSize: '14px' }}>{t('assistant.loadingConfig')}</div>
         </div>
       </Card>
     );
@@ -92,9 +94,9 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
     return (
       <Card className={className} style={{ height: '100%' }}>
         <Alert
-          message="配置加载失败"
-          description={error}
           type="error"
+          message={t('assistant.configLoadFailed')}
+          description={error}
           showIcon
           style={{ margin: '20px' }}
         />
@@ -107,7 +109,7 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
     return (
       <Card className={className} style={{ height: '100%' }}>
         <div style={{ textAlign: 'center', padding: '40px' }}>
-          <div style={{ color: '#666', fontSize: '14px' }}>配置数据不可用</div>
+          <div style={{ color: '#666', fontSize: '14px' }}>{t('assistant.configUnavailable')}</div>
         </div>
       </Card>
     );
@@ -119,7 +121,7 @@ const AssistantConfigPanel: React.FC<AssistantConfigPanelProps> = ({
       title={
         <Space size="middle">
           <SettingOutlined style={{ color: '#1890ff' }} />
-          <span style={{ fontSize: '16px', fontWeight: 600 }}>AI助手配置</span>
+          <span style={{ fontSize: '16px', fontWeight: 600 }}>{t('assistant.configTitle')}</span>
         </Space>
       }
       style={{ 

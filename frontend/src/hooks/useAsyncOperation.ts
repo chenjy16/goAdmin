@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { message } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface UseAsyncOperationOptions {
   successMessage?: string;
@@ -17,9 +18,10 @@ export function useAsyncOperation<T extends any[], R>(
   asyncFunction: (...args: T) => Promise<R>,
   options: UseAsyncOperationOptions = {}
 ) {
+  const { t } = useTranslation();
   const {
     successMessage,
-    errorMessage = '操作失败',
+    errorMessage = t('common.operationFailed'),
     showSuccessMessage = true,
     showErrorMessage = true,
   } = options;

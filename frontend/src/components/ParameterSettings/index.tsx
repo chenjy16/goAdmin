@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Slider, InputNumber, Row, Col, Space, Typography, Divider } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 const { Text, Title } = Typography;
 
@@ -124,6 +125,7 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
   onTopPChange,
   className
 }) => {
+  const { t } = useTranslation();
   return (
     <Card 
       className={className}
@@ -138,7 +140,7 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
             fontWeight: 600,
             color: '#262626'
           }}>
-            高级设置
+{t('parameterSettings.title')}
           </span>
         </Space>
       }
@@ -161,8 +163,8 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
       <Row gutter={[24, 24]} style={{ minHeight: '200px' }}>
         <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
-            label="Temperature"
-            description="创造性: 0-2"
+            label={t('settings.temperature')}
+            description={t('parameterSettings.temperatureDesc')}
             value={temperature}
             min={0}
             max={2}
@@ -174,8 +176,8 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
 
         <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
-            label="Max Tokens"
-            description="最大输出长度"
+            label={t('settings.maxTokens')}
+            description={t('parameterSettings.maxTokensDesc')}
             value={maxTokens}
             min={1}
             max={32768}
@@ -188,8 +190,8 @@ const ParameterSettings: React.FC<ParameterSettingsProps> = ({
 
         <Col xs={24} sm={24} md={8} lg={8} xl={8}>
           <ParameterControl
-            label="Top-p"
-            description="多样性: 0-1"
+            label={t('settings.topP')}
+            description={t('parameterSettings.topPDesc')}
             value={topP}
             min={0}
             max={1}

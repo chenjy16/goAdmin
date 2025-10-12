@@ -2,6 +2,7 @@ import React from 'react';
 import type { FormInstance } from 'antd/es/form';
 import FormModal from './FormModal';
 import FormField from './FormField';
+import { useTranslation } from 'react-i18next';
 
 interface APIKeyFormProps {
   provider: string;
@@ -20,27 +21,28 @@ const APIKeyForm: React.FC<APIKeyFormProps> = ({
   form,
   loading = false,
 }) => {
+  const { t } = useTranslation();
   return (
     <FormModal
-      title={`设置 ${provider} API密钥`}
+      title={t('providers.setAPIKey', { provider })}
       open={open}
       onCancel={onCancel}
       onFinish={onFinish}
       form={form}
       loading={loading}
-      okText="保存"
+      okText={t('common.save')}
     >
       <FormField
-        name="apiKey"
-        label="API密钥"
-        type="password"
-        placeholder="请输入API密钥"
-        required
-        rules={[
-          { min: 10, message: 'API密钥长度至少10个字符' },
-        ]}
-        tooltip="请确保API密钥的安全性，不要在不安全的环境中使用"
-      />
+          name="apiKey"
+          label={t('providers.apiKey')}
+          required
+          placeholder={t('providers.enterAPIKey')}
+          type="password"
+          rules={[
+            { min: 10, message: t('providers.apiKeyMinLength') },
+          ]}
+          tooltip={t('providers.apiKeySecurity')}
+        />
     </FormModal>
   );
 };

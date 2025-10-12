@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import type { ReactNode } from 'react';
 import type { IInitializable, IConfigurable, BaseState } from '../../types/base';
+import { withTranslation } from 'react-i18next';
+import type { WithTranslation } from 'react-i18next';
 
 /**
  * 基础组件属性接口
  */
-export interface BaseComponentProps {
+export interface BaseComponentProps extends WithTranslation {
   className?: string;
   style?: React.CSSProperties;
   loading?: boolean;
@@ -119,7 +121,7 @@ export abstract class BaseComponent<P extends BaseComponentProps = BaseComponent
    * 处理错误
    */
   protected handleError(error: Error): void {
-    const errorMessage = error.message || '未知错误';
+    const errorMessage = error.message || this.props.t('common.unknownError');
     this.setState({ 
       error: errorMessage, 
       loading: false 
@@ -156,7 +158,7 @@ export abstract class BaseComponent<P extends BaseComponentProps = BaseComponent
    * 渲染加载状态
    */
   protected renderLoading(): ReactNode {
-    return <div className="loading">加载中...</div>;
+    return <div className="loading">{this.props.t('common.loading')}</div>;
   }
 
   /**
@@ -165,8 +167,8 @@ export abstract class BaseComponent<P extends BaseComponentProps = BaseComponent
   protected renderError(): ReactNode {
     return (
       <div className="error">
-        <p>发生错误: {this.state.error}</p>
-        <button onClick={() => this.clearError()}>重试</button>
+        <p>{this.props.t('common.errorOccurred')}: {this.state.error}</p>
+        <button onClick={() => this.clearError()}>{this.props.t('common.retry')}</button>
       </div>
     );
   }

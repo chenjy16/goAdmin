@@ -135,7 +135,7 @@ const mcpSlice = createSlice({
       })
       .addCase(initializeMCP.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'MCP初始化失败';
+        state.error = action.error.message || 'errors.initFailed';
       })
       // fetchMCPTools
       .addCase(fetchMCPTools.pending, (state) => {
@@ -148,7 +148,7 @@ const mcpSlice = createSlice({
       })
       .addCase(fetchMCPTools.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '获取工具列表失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       // executeMCPTool
       .addCase(executeMCPTool.pending, (state) => {
@@ -162,14 +162,14 @@ const mcpSlice = createSlice({
       })
       .addCase(executeMCPTool.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '工具执行失败';
+        state.error = action.error.message || 'errors.executeFailed';
       })
       // fetchMCPLogs
       .addCase(fetchMCPLogs.fulfilled, (state, action) => {
         state.logs = Array.isArray(action.payload) ? action.payload : [];
       })
       .addCase(fetchMCPLogs.rejected, (state, action) => {
-        state.error = action.error.message || '获取日志失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       // checkMCPStatus
       .addCase(checkMCPStatus.pending, (state) => {
@@ -181,7 +181,7 @@ const mcpSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(checkMCPStatus.rejected, (state, action) => {
-        state.error = action.error.message || '检查MCP状态失败';
+        state.error = action.error.message || 'errors.loadFailed';
         state.isLoading = false;
       });
   },

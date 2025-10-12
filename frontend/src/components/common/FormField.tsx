@@ -2,6 +2,7 @@ import React from 'react';
 import { Form, Input, Select, Switch, InputNumber, Slider } from 'antd';
 import type { Rule } from 'antd/es/form';
 import { colors, spacing, borderRadius, shadows, theme, combine } from '../../styles';
+import { useTranslation } from 'react-i18next';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -69,14 +70,15 @@ export type FormFieldProps =
   | SliderFieldProps;
 
 const FormField: React.FC<FormFieldProps> = (props) => {
-  const { 
-    name, 
-    label, 
-    type, 
-    placeholder, 
-    rules, 
-    disabled, 
-    required, 
+  const { t } = useTranslation();
+  const {
+    name,
+    label,
+    type,
+    placeholder,
+    rules,
+    disabled = false,
+    required = false,
     tooltip,
     className = '',
     style,
@@ -84,7 +86,7 @@ const FormField: React.FC<FormFieldProps> = (props) => {
     variant = 'outlined'
   } = props;
 
-  const baseRules = required ? [{ required: true, message: `请输入${label}` }, ...(rules || [])] : rules;
+  const baseRules = required ? [{ required: true, message: `${t('common.pleaseEnter')}${label}` }, ...(rules || [])] : rules;
 
   // 创建自定义样式
   const getFieldStyle = () => {

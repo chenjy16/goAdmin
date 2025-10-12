@@ -1,0 +1,132 @@
+{
+  "server.starting": "Server starting",
+  "server.started": "Server started successfully",
+  "server.stopping": "Server stopping",
+  "server.stopped": "Server stopped",
+  "server.error": "Server error",
+
+  "database.connecting": "Connecting to database",
+  "database.connected": "Database connected successfully",
+  "database.disconnected": "Database disconnected",
+  "database.error": "Database operation error",
+  "database.query.start": "Database query started",
+  "database.query.complete": "Database query completed",
+  "database.transaction": "Database transaction",
+
+  "auth.login": "User login attempt",
+  "auth.login.success": "User login successful",
+  "auth.login.failed": "User login failed",
+  "auth.logout": "User logout",
+  "auth.token.generated": "JWT token generated",
+  "auth.token.validated": "JWT token validated",
+  "auth.token.expired": "JWT token expired",
+  "auth.unauthorized": "Unauthorized access attempt",
+
+  "user.created": "User created",
+  "user.updated": "User updated",
+  "user.deleted": "User deleted",
+  "user.not.found": "User not found",
+  "user.validation": "User validation",
+
+  "api.request": "API request received",
+  "api.response": "API response sent",
+  "api.error": "API error occurred",
+  "api.validation": "API validation error",
+  "api.rate.limit": "API rate limit exceeded",
+
+  "config.loaded": "Configuration loaded",
+  "config.error": "Configuration error",
+  "config.missing": "Configuration missing",
+
+  "middleware.start": "Middleware processing started",
+  "middleware.end": "Middleware processing completed",
+  "middleware.error": "Middleware error",
+
+  "business.logic": "Business logic processing",
+  "validation": "Data validation",
+  "processing": "Data processing",
+
+  "error.internal": "Internal Server Error",
+  "error.conflict": "Conflict",
+  "error.not.found": "Not Found",
+  "error.bad.request": "Bad Request",
+  "error.timeout": "Timeout",
+  "error.rate.limit": "Rate Limit Exceeded",
+  "error.unauthorized": "Unauthorized",
+  "error.forbidden": "Forbidden",
+  "error.token.expired": "Token Expired",
+  "error.token.invalid": "Invalid Token",
+  "error.login.failed": "Login Failed",
+  "error.password.weak": "Password Too Weak",
+  "error.account.locked": "Account Locked",
+  "error.account.disabled": "Account Disabled",
+  "error.user.not.found": "User Not Found",
+  "error.user.exists": "User Already Exists",
+  "error.user.inactive": "User Inactive",
+  "error.email.exists": "Email Already Exists",
+  "error.username.exists": "Username Already Exists",
+  "error.database.query": "Database Query Error",
+  "error.database.connection": "Database Connection Error",
+  "error.database.transaction": "Database Transaction Error",
+  "error.database.constraint": "Database Constraint Error",
+  "error.database.deadlock": "Database Deadlock Error",
+  "error.validation.failed": "Validation Failed",
+  "error.invalid.format": "Invalid Format",
+  "error.missing.field": "Missing Required Field",
+  "error.invalid.value": "Invalid Value",
+  "error.business.logic": "Business Logic Error",
+  "error.operation.failed": "Operation Failed",
+  "error.resource.busy": "Resource Busy",
+  "error.quota.exceeded": "Quota Exceeded",
+  "error.network": "Network Error",
+  "error.service.unavailable": "Service Unavailable",
+  "error.external.service": "External Service Error",
+  "error.file.not.found": "File Not Found",
+  "error.file.upload.failed": "File Upload Failed",
+  "error.storage": "Storage Error",
+  "error.file.too.large": "File Too Large",
+
+  "response.success": "Operation successful",
+  "response.models.retrieved": "Models retrieved successfully",
+  "response.providers.retrieved": "Providers retrieved successfully",
+  "response.config.retrieved": "Configuration retrieved successfully",
+  "response.model.enabled": "Model enabled successfully",
+  "response.model.disabled": "Model disabled successfully",
+  "response.api.key.validated": "API key validated successfully",
+  "response.api.key.set": "API key set successfully",
+  "response.api.key.status": "API key status retrieved successfully",
+
+  "provider.invalid": "Invalid provider",
+  "provider.openai": "OpenAI",
+  "provider.googleai": "Google AI",
+  "provider.mock": "Mock Provider",
+
+  "model.not.found": "Model not found",
+  "model.already.enabled": "Model already enabled",
+  "model.already.disabled": "Model already disabled",
+
+  "api.key.required": "API key is required",
+  "api.key.invalid": "Invalid API key",
+  "api.key.not.found": "API key not found",
+
+  "mcp.tool.not.found": "MCP tool not found",
+  "mcp.execution.failed": "MCP execution failed",
+  "mcp.connection.failed": "MCP connection failed",
+  "mcp.initialization.failed": "MCP initialization failed",
+
+  "welcome_message": {
+    "other": "Welcome to our application!"
+  },
+  "test_success": {
+    "other": "Test successful"
+  },
+  "success": {
+    "other": "Success"
+  },
+  "error_demo": {
+    "other": "Internal error occurred"
+  },
+  "validation_error": {
+    "other": "Validation failed"
+  }
+}

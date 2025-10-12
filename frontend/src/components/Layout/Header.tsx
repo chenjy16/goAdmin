@@ -7,38 +7,41 @@ import {
   UserOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { toggleSidebar } from '../../store/slices/uiSlice';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { token } = theme.useToken();
   const { sidebarCollapsed } = useAppSelector(state => state.ui);
 
-  // 用户下拉菜单
+  // User dropdown menu
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+      label: t('header.profile'),
     },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t('header.logout'),
     },
   ];
 
-  // 处理用户菜单点击
+  // Handle user menu click
   const handleUserMenuClick = ({ key }: { key: string }) => {
     switch (key) {
       case 'profile':
-        // 处理个人资料
+        // Handle profile
         break;
       case 'logout':
-        // 处理退出登录
+        // Handle logout
         break;
     }
   };
@@ -66,7 +69,10 @@ const Header: React.FC = () => {
       />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* 用户信息 */}
+        {/* Language switcher */}
+        <LanguageSwitcher />
+        
+        {/* User info */}
         <Dropdown
           menu={{
             items: userMenuItems,
@@ -76,7 +82,7 @@ const Header: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
             <Avatar icon={<UserOutlined />} />
-            <span style={{ marginLeft: '8px' }}>用户</span>
+            <span style={{ marginLeft: '8px' }}>{t('header.user')}</span>
           </div>
         </Dropdown>
       </div>

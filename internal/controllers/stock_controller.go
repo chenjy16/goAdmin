@@ -1,10 +1,11 @@
-package handler
+package controllers
 
 import (
 	"context"
 	"net/http"
 
 	"go-springAi/internal/dto"
+	"go-springAi/internal/errors"
 	"go-springAi/internal/response"
 	"go-springAi/internal/service"
 
@@ -12,40 +13,42 @@ import (
 	"go.uber.org/zap"
 )
 
-// StockHandler 股票处理器
-type StockHandler struct {
+// StockController 股票控制器
+type StockController struct {
+	BaseController
 	stockAnalysisService *service.StockAnalysisService
 	logger               *zap.Logger
 }
 
-// NewStockHandler 创建新的股票处理器
-func NewStockHandler(stockAnalysisService *service.StockAnalysisService, logger *zap.Logger) *StockHandler {
-	return &StockHandler{
+// NewStockController 创建新的股票控制器
+func NewStockController(stockAnalysisService *service.StockAnalysisService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *StockController {
+	return &StockController{
+		BaseController:       *NewBaseController(errorHandler),
 		stockAnalysisService: stockAnalysisService,
 		logger:               logger,
 	}
 }
 
 // AnalyzeStock 分析股票
-func (h *StockHandler) AnalyzeStock(c *gin.Context) {
+func (sc *StockController) AnalyzeStock(c *gin.Context) {
 	var req dto.StockAnalysisRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("绑定股票分析请求失败", zap.Error(err))
-		response.Error(c, http.StatusBadRequest, "请求参数无效", err.Error())
+		sc.logger.Error("绑定股票分析请求失败", zap.Error(err))
+		sc.HandleError(c, errors.NewValidationError("请求参数无效").WithDetails(err.Error()))
 		return
 	}
 
 	// 验证必需字段
 	if req.Symbol == "" {
-		response.Error(c, http.StatusBadRequest, "股票代码不能为空", "")
+		sc.HandleError(c, errors.NewValidationError("股票代码不能为空"))
 		return
 	}
 
 	// 调用股票分析服务
-	result, err := h.stockAnalysisService.AnalyzeStock(context.Background(), &req)
+	result, err := sc.stockAnalysisService.AnalyzeStock(context.Background(), &req)
 	if err != nil {
-		h.logger.Error("股票分析失败", zap.Error(err), zap.String("symbol", req.Symbol))
-		response.Error(c, http.StatusInternalServerError, "股票分析失败", err.Error())
+		sc.logger.Error("股票分析失败", zap.Error(err), zap.String("symbol", req.Symbol))
+		sc.HandleError(c, errors.NewInternalError("股票分析失败").WithCause(err))
 		return
 	}
 
@@ -53,25 +56,25 @@ func (h *StockHandler) AnalyzeStock(c *gin.Context) {
 }
 
 // CompareStocks 对比股票
-func (h *StockHandler) CompareStocks(c *gin.Context) {
+func (sc *StockController) CompareStocks(c *gin.Context) {
 	var req dto.StockCompareRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error("绑定股票对比请求失败", zap.Error(err))
-		response.Error(c, http.StatusBadRequest, "请求参数无效", err.Error())
+		sc.logger.Error("绑定股票对比请求失败", zap.Error(err))
+		sc.HandleError(c, errors.NewValidationError("请求参数无效").WithDetails(err.Error()))
 		return
 	}
 
 	// 验证必需字段
 	if len(req.Symbols) < 2 {
-		response.Error(c, http.StatusBadRequest, "至少需要两个股票代码进行对比", "")
+		sc.HandleError(c, errors.NewValidationError("至少需要两个股票代码进行对比"))
 		return
 	}
 
 	// 调用股票对比服务
-	result, err := h.stockAnalysisService.CompareStocks(context.Background(), &req)
+	result, err := sc.stockAnalysisService.CompareStocks(context.Background(), &req)
 	if err != nil {
-		h.logger.Error("股票对比失败", zap.Error(err), zap.Strings("symbols", req.Symbols))
-		response.Error(c, http.StatusInternalServerError, "股票对比失败", err.Error())
+		sc.logger.Error("股票对比失败", zap.Error(err), zap.Strings("symbols", req.Symbols))
+		sc.HandleError(c, errors.NewInternalError("股票对比失败").WithCause(err))
 		return
 	}
 
@@ -79,10 +82,10 @@ func (h *StockHandler) CompareStocks(c *gin.Context) {
 }
 
 // GetStockQuote 获取股票报价
-func (h *StockHandler) GetStockQuote(c *gin.Context) {
+func (sc *StockController) GetStockQuote(c *gin.Context) {
 	symbol := c.Param("symbol")
 	if symbol == "" {
-		response.Error(c, http.StatusBadRequest, "股票代码不能为空", "")
+		sc.HandleError(c, errors.NewValidationError("股票代码不能为空"))
 		return
 	}
 
@@ -94,10 +97,10 @@ func (h *StockHandler) GetStockQuote(c *gin.Context) {
 	}
 
 	// 调用股票分析服务获取基本信息
-	result, err := h.stockAnalysisService.AnalyzeStock(context.Background(), req)
+	result, err := sc.stockAnalysisService.AnalyzeStock(context.Background(), req)
 	if err != nil {
-		h.logger.Error("获取股票报价失败", zap.Error(err), zap.String("symbol", symbol))
-		response.Error(c, http.StatusInternalServerError, "获取股票报价失败", err.Error())
+		sc.logger.Error("获取股票报价失败", zap.Error(err), zap.String("symbol", symbol))
+		sc.HandleError(c, errors.NewInternalError("获取股票报价失败").WithCause(err))
 		return
 	}
 
@@ -113,10 +116,10 @@ func (h *StockHandler) GetStockQuote(c *gin.Context) {
 }
 
 // GetStockHistory 获取股票历史数据
-func (h *StockHandler) GetStockHistory(c *gin.Context) {
+func (sc *StockController) GetStockHistory(c *gin.Context) {
 	symbol := c.Param("symbol")
 	if symbol == "" {
-		response.Error(c, http.StatusBadRequest, "股票代码不能为空", "")
+		sc.HandleError(c, errors.NewValidationError("股票代码不能为空"))
 		return
 	}
 
@@ -130,7 +133,7 @@ func (h *StockHandler) GetStockHistory(c *gin.Context) {
 		"6mo": true, "1y": true, "2y": true, "5y": true, "10y": true,
 	}
 	if !validPeriods[period] {
-		response.Error(c, http.StatusBadRequest, "无效的时间周期", "")
+		sc.HandleError(c, errors.NewValidationError("无效的时间周期"))
 		return
 	}
 
@@ -142,10 +145,10 @@ func (h *StockHandler) GetStockHistory(c *gin.Context) {
 	}
 
 	// 调用股票分析服务
-	result, err := h.stockAnalysisService.AnalyzeStock(context.Background(), req)
+	result, err := sc.stockAnalysisService.AnalyzeStock(context.Background(), req)
 	if err != nil {
-		h.logger.Error("获取股票历史数据失败", zap.Error(err), zap.String("symbol", symbol))
-		response.Error(c, http.StatusInternalServerError, "获取股票历史数据失败", err.Error())
+		sc.logger.Error("获取股票历史数据失败", zap.Error(err), zap.String("symbol", symbol))
+		sc.HandleError(c, errors.NewInternalError("获取股票历史数据失败").WithCause(err))
 		return
 	}
 
@@ -153,7 +156,7 @@ func (h *StockHandler) GetStockHistory(c *gin.Context) {
 }
 
 // GetMarketSummary 获取市场概览
-func (h *StockHandler) GetMarketSummary(c *gin.Context) {
+func (sc *StockController) GetMarketSummary(c *gin.Context) {
 	// 主要市场指数
 	majorIndices := []string{"^GSPC", "^DJI", "^IXIC", "^RUT"}
 	
@@ -166,9 +169,9 @@ func (h *StockHandler) GetMarketSummary(c *gin.Context) {
 			AnalysisType: "basic",
 		}
 		
-		result, err := h.stockAnalysisService.AnalyzeStock(context.Background(), req)
+		result, err := sc.stockAnalysisService.AnalyzeStock(context.Background(), req)
 		if err != nil {
-			h.logger.Warn("获取市场指数失败", zap.Error(err), zap.String("symbol", symbol))
+			sc.logger.Warn("获取市场指数失败", zap.Error(err), zap.String("symbol", symbol))
 			continue
 		}
 		

@@ -6,6 +6,7 @@ import (
 
 	"go-springAi/internal/openai"
 	"go-springAi/internal/service"
+	"go-springAi/internal/types"
 )
 
 // OpenAIProvider OpenAI提供商实现
@@ -22,7 +23,7 @@ func NewOpenAIProvider(service *service.OpenAIService) *OpenAIProvider {
 
 // GetType 获取提供商类型
 func (p *OpenAIProvider) GetType() ProviderType {
-	return ProviderTypeOpenAI
+	return types.ProviderTypeOpenAI
 }
 
 // GetName 获取提供商名称

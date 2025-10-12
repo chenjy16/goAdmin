@@ -126,7 +126,7 @@ export function createConfigSlice<T>(
         })
         .addCase(loadConfig.rejected, (state, action) => {
           state.loading = false;
-          state.error = action.error.message || '加载配置失败';
+          state.error = action.error.message || 'errors.loadFailed';
         })
         // 保存配置
         .addCase(saveConfig.pending, (state) => {
@@ -141,7 +141,7 @@ export function createConfigSlice<T>(
         })
         .addCase(saveConfig.rejected, (state, action) => {
           state.loading = false;
-          state.error = action.error.message || '保存配置失败';
+          state.error = action.error.message || 'errors.saveFailed';
         });
     },
   });

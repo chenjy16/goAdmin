@@ -1,6 +1,8 @@
 import React from 'react';
 import { Modal, Form, Button, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { FormInstance } from 'antd/es/form';
+import type { ModalProps } from 'antd/es/modal';
 
 interface FormModalProps {
   title: string;
@@ -25,10 +27,11 @@ const FormModal: React.FC<FormModalProps> = ({
   loading = false,
   width = 520,
   children,
-  okText = '确定',
-  cancelText = '取消',
+  okText,
+  cancelText,
   destroyOnHidden = true,
 }) => {
+  const { t } = useTranslation();
   const handleCancel = () => {
     form.resetFields();
     onCancel();
@@ -53,10 +56,10 @@ const FormModal: React.FC<FormModalProps> = ({
         <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
           <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
             <Button onClick={handleCancel}>
-              {cancelText}
+              {cancelText || t('common.cancel')}
             </Button>
             <Button type="primary" htmlType="submit" loading={loading}>
-              {okText}
+              {okText || t('common.confirm')}
             </Button>
           </Space>
         </Form.Item>

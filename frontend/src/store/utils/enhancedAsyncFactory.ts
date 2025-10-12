@@ -33,7 +33,7 @@ export function createAsyncOperation<TData, TParams = void, TResult = TData>(
         const result = await operation(params);
         return transform ? transform(result) : (result as unknown as TData);
       } catch (error) {
-        const message = error instanceof Error ? error.message : '操作失败';
+        const message = error instanceof Error ? error.message : 'errors.operationFailed';
         return rejectWithValue(message);
       }
     }
@@ -139,7 +139,7 @@ export function createBatchAsyncSlice<T>(config: BatchAsyncConfig<T>) {
           })
           .addCase(thunk.rejected, (state, action) => {
             state.loading = false;
-            state.error = action.payload as string || '操作失败';
+            state.error = action.payload as string || 'errors.operationFailed';
             
             // 执行自定义错误回调
             if (operationConfig.onError) {

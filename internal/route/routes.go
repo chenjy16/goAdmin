@@ -3,7 +3,8 @@ package route
 import (
 	"go-springAi/internal/controllers"
 	"go-springAi/internal/dto"
-	"go-springAi/internal/handler"
+
+	"go-springAi/internal/i18n"
 	"go-springAi/internal/middleware"
 	"go-springAi/internal/utils"
 
@@ -12,7 +13,7 @@ import (
 )
 
 // SetupRoutes 设置路由
-func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockHandler *handler.StockHandler) *gin.Engine {
+func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController *controllers.MCPController, aiController *controllers.AIController, aiAssistantController *controllers.AIAssistantController, stockController *controllers.StockController, testI18nController *controllers.TestI18nController, i18nManager *i18n.Manager) *gin.Engine {
 	// 创建Gin引擎
 	r := gin.New()
 
@@ -22,6 +23,7 @@ func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController
 	r.Use(middleware.ErrorHandler(logger)) // 错误处理中间件
 	r.Use(middleware.Recovery())           // 恢复中间件
 	r.Use(middleware.CORS())               // 跨域中间件
+	r.Use(middleware.I18nMiddleware(i18nManager)) // 国际化中间件
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
@@ -92,19 +94,32 @@ func SetupRoutes(logger *zap.Logger, jwtManager *utils.JWTManager, mcpController
 		stockGroup := v1.Group("/stock")
 		{
 			// 股票分析
-			stockGroup.POST("/analyze", stockHandler.AnalyzeStock)
+			stockGroup.POST("/analyze", stockController.AnalyzeStock)
 			
 			// 股票比较
-			stockGroup.POST("/compare", stockHandler.CompareStocks)
+			stockGroup.POST("/compare", stockController.CompareStocks)
 			
 			// 股票报价
-			stockGroup.GET("/quote/:symbol", stockHandler.GetStockQuote)
+			stockGroup.GET("/quote/:symbol", stockController.GetStockQuote)
 			
 			// 股票历史数据
-			stockGroup.GET("/history/:symbol", stockHandler.GetStockHistory)
+			stockGroup.GET("/history/:symbol", stockController.GetStockHistory)
 			
 			// 市场摘要
-			stockGroup.GET("/market/summary", stockHandler.GetMarketSummary)
+			stockGroup.GET("/market/summary", stockController.GetMarketSummary)
+		}
+
+		// 国际化测试端点
+		testGroup := v1.Group("/test")
+		{
+			// 测试成功响应
+			testGroup.GET("/success", testI18nController.TestSuccess)
+			
+			// 测试错误响应
+			testGroup.GET("/error", testI18nController.TestError)
+			
+			// 测试翻译功能
+			testGroup.GET("/translation", testI18nController.TestTranslation)
 		}
 	}
 

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Card, Select, Space, Typography, Tag, Spin, Row, Col } from 'antd';
 import { RobotOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { ProviderInfo, ModelInfo } from '../../types/api';
 
 const { Text } = Typography;
@@ -27,6 +28,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onModelChange,
   className
 }) => {
+  const { t } = useTranslation();
   // 获取健康的提供商
   const healthyProviders = useMemo(() => {
     return (providers || []).filter((provider: ProviderInfo) => provider.healthy);
@@ -58,7 +60,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       title={
         <Space size="middle">
           <RobotOutlined style={{ color: '#1890ff' }} />
-          <span style={{ fontSize: '16px', fontWeight: 600 }}>模型选择</span>
+          <span style={{ fontSize: '16px', fontWeight: 600 }}>{t('modelSelector.title')}</span>
         </Space>
       }
       style={{ 
@@ -72,15 +74,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         {/* AI提供商选择 */}
         <Col span={24}>
           <div style={{ marginBottom: '8px' }}>
-            <Text strong>AI提供商</Text>
+            <Text strong>{t('modelSelector.aiProvider')}</Text>
             <Text type="secondary" style={{ marginLeft: '8px' }}>
-              ({healthyProviders.length} 个可用)
+              ({healthyProviders.length} {t('modelSelector.available')})
             </Text>
           </div>
           <Select
             value={selectedProvider}
             onChange={onProviderChange}
-            placeholder="选择AI提供商"
+            placeholder={t('modelSelector.selectProvider')}
             style={{ width: '100%' }}
             loading={loading}
             disabled={loading || healthyProviders.length === 0}
@@ -90,7 +92,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               <Option key={provider.type} value={provider.type}>
                 <Space>
                   <span>{provider.name}</span>
-                  <Tag color="green">健康</Tag>
+                  <Tag color="green">{t('modelSelector.healthy')}</Tag>
                 </Space>
               </Option>
             ))}
@@ -100,15 +102,15 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         {/* 模型选择 */}
         <Col span={24}>
           <div style={{ marginBottom: '8px' }}>
-            <Text strong>模型</Text>
+            <Text strong>{t('modelSelector.model')}</Text>
             <Text type="secondary" style={{ marginLeft: '8px' }}>
-              ({availableModels.length} 个可用)
+              ({availableModels.length} {t('modelSelector.available')})
             </Text>
           </div>
           <Select
             value={selectedModel}
             onChange={onModelChange}
-            placeholder="选择模型"
+            placeholder={t('modelSelector.selectModel')}
             style={{ width: '100%' }}
             loading={loading}
             disabled={loading || !selectedProvider || availableModels.length === 0}
@@ -119,9 +121,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                 <Space>
                   <span>{model.display_name || model.name}</span>
                   {model.enabled ? (
-                    <Tag color="green">启用</Tag>
+                    <Tag color="green">{t('modelSelector.enabled')}</Tag>
                   ) : (
-                    <Tag color="red">禁用</Tag>
+                    <Tag color="red">{t('modelSelector.disabled')}</Tag>
                   )}
                 </Space>
               </Option>

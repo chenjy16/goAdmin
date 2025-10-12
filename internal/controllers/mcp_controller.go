@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go-springAi/internal/dto"
+	"go-springAi/internal/errors"
 	"go-springAi/internal/logger"
 	"go-springAi/internal/response"
 	"go-springAi/internal/service"
@@ -25,9 +26,9 @@ type MCPController struct {
 }
 
 // NewMCPController 创建MCP控制器
-func NewMCPController(mcpService service.MCPService, logger *zap.Logger) *MCPController {
+func NewMCPController(mcpService service.MCPService, logger *zap.Logger, errorHandler *errors.ErrorHandler) *MCPController {
 	return &MCPController{
-		BaseController: NewBaseController(),
+		BaseController: NewBaseController(errorHandler),
 		mcpService:     mcpService,
 		logger:         logger,
 	}

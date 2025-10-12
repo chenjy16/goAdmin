@@ -1,10 +1,8 @@
-// API响应基础类型
-export interface ApiResponse<T = any> {
-  data?: T;
-  message?: string;
-  status?: string;
-  error?: string;
-}
+// 导入基础响应接口
+import type { BaseApiResponse } from './base';
+
+// 使用基础响应接口
+export interface ApiResponse<T = any> extends BaseApiResponse<T> {}
 
 
 

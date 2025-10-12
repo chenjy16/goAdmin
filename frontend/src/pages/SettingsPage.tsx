@@ -48,12 +48,41 @@ import {
 } from '../store/slices/mcpSlice';
 import type { ProviderInfo, ModelInfo, MCPTool } from '../types/api';
 import { SearchableTable, APIKeyForm } from '../components/common';
+import { useTranslation } from 'react-i18next';
 
 
 const { Title, Text } = Typography;
 
 const SettingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
+
+  // 工具名称映射函数
+  const getToolNameKey = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      '雅虎财经': 'yahoo_finance',
+      '股票分析': 'stock_analysis', 
+      '股票对比': 'stock_compare',
+      '股票投资建议': 'stock_advice',
+    };
+    return nameMap[name] || name;
+  };
+
+  // 获取国际化的工具名称
+  const getLocalizedToolName = (name: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolNames.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : name;
+  };
+
+  // 获取国际化的工具描述
+  const getLocalizedToolDescription = (name: string, originalDescription: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolDescriptions.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : originalDescription;
+  };
   const settings = useAppSelector(state => state.settings);
   const { providers, models, apiKeyStatus, isLoading: providersLoading } = useAppSelector(state => state.providers);
   const { 
@@ -115,7 +144,7 @@ const SettingsPage: React.FC = () => {
         }
       }
     }).catch((error) => {
-      console.error('检查MCP状态失败:', error);
+      console.error('Check MCP status failed:', error);
     });
   }, [dispatch]);
 
@@ -140,13 +169,13 @@ const SettingsPage: React.FC = () => {
       
       await dispatch(validateAPIKey(selectedProvider)).unwrap();
 
-      message.success('API密钥设置成功');
+      message.success(t('settings.settingsSaved'));
       setApiKeyModalVisible(false);
       apiKeyForm.resetFields();
       dispatch(fetchProviders()); // 刷新提供商状态
       dispatch(fetchAPIKeyStatus()); // 刷新API密钥状态
     } catch (err) {
-      message.error('API密钥设置失败');
+      message.error(t('errors.saveFailed'));
     }
   };
 
@@ -180,7 +209,7 @@ const SettingsPage: React.FC = () => {
         }, 5000);
         
       } catch (err) {
-        message.error('获取API密钥失败');
+        message.error(t('errors.loadFailed'));
       }
     }
   };
@@ -192,9 +221,9 @@ const SettingsPage: React.FC = () => {
         model: modelId,
         enabled,
       })).unwrap();
-      message.success(`模型${enabled ? '启用' : '禁用'}成功`);
+      message.success(enabled ? t('success.enabled') : t('success.disabled'));
     } catch (err) {
-      message.error(`模型${enabled ? '启用' : '禁用'}失败`);
+      message.error(enabled ? t('errors.updateFailed') : t('errors.updateFailed'));
     }
   };
 
@@ -228,9 +257,10 @@ const SettingsPage: React.FC = () => {
       });
       
       await Promise.all(promises);
-      message.success(`批量${action === 'enable' ? '启用' : '禁用'}成功，共处理 ${selectedModels.length} 个模型`);
+      const actionText = action === 'enable' ? t('common.enable') : t('common.disable');
+      message.success(`${t('common.success')} ${actionText} ${selectedModels.length} ${t('providers.models')}`);
     } catch (err) {
-      message.error(`批量操作失败`);
+      message.error(t('errors.updateFailed'));
     }
   };
 
@@ -262,7 +292,7 @@ const SettingsPage: React.FC = () => {
   // 提供商表格列定义
   const providerColumns: ColumnsType<ProviderInfo> = [
     {
-      title: '提供商',
+      title: t('providers.name'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: ProviderInfo) => (
@@ -273,30 +303,30 @@ const SettingsPage: React.FC = () => {
       ),
     },
     {
-      title: '描述',
+      title: t('common.description'),
       dataIndex: 'description',
       key: 'description',
     },
     {
-      title: '状态',
+      title: t('common.status'),
       dataIndex: 'healthy',
       key: 'healthy',
       render: (healthy: boolean) => (
         <Tag color={healthy ? 'green' : 'red'} icon={healthy ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}>
-          {healthy ? '正常' : '异常'}
+          {healthy ? t('providers.healthy') : t('providers.unhealthy')}
         </Tag>
       ),
     },
     {
-      title: '模型数量',
+      title: t('providers.models'),
       dataIndex: 'model_count',
       key: 'model_count',
       render: (count: number) => (
-        <Statistic value={count} suffix="个" />
+        <Statistic value={count} />
       ),
     },
     {
-      title: 'API密钥',
+      title: t('providers.apiKey'),
       key: 'apiKey',
       render: (_, record: ProviderInfo) => {
         const keyInfo = apiKeyStatus && apiKeyStatus[record.type];
@@ -309,7 +339,7 @@ const SettingsPage: React.FC = () => {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Tag color={hasKey ? 'green' : 'orange'}>
-                {hasKey ? '已配置' : '未配置'}
+                {hasKey ? t('providers.configured') : t('providers.notConfigured')}
               </Tag>
               {hasKey && (
                 <Button
@@ -317,7 +347,7 @@ const SettingsPage: React.FC = () => {
                   size="small"
                   icon={isShowingPlain ? <EyeInvisibleOutlined /> : <EyeOutlined />}
                   onClick={() => handleTogglePlainText(record.type)}
-                  title={isShowingPlain ? '隐藏明文' : '显示明文'}
+                  title={isShowingPlain ? t('common.hide') : t('common.view')}
                 />
               )}
             </div>
@@ -343,7 +373,7 @@ const SettingsPage: React.FC = () => {
       },
     },
     {
-      title: '操作',
+      title: t('common.action'),
       key: 'actions',
       render: (_, record: ProviderInfo) => (
         <Space>
@@ -356,14 +386,14 @@ const SettingsPage: React.FC = () => {
               setApiKeyModalVisible(true);
             }}
           >
-            设置密钥
+            {t('settings.addApiKey')}
           </Button>
           <Button
             size="small"
             icon={<SettingOutlined />}
             onClick={() => setSelectedProvider(record.type)}
           >
-            管理模型
+            {t('providers.configure')}
           </Button>
         </Space>
       ),
@@ -373,32 +403,32 @@ const SettingsPage: React.FC = () => {
   // 模型表格列定义
   const modelColumns: ColumnsType<ModelInfo> = [
     {
-      title: '模型名称',
+      title: t('providers.modelName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => <span style={{ fontWeight: 'bold' }}>{name}</span>,
     },
     {
-      title: '显示名称',
+      title: t('providers.displayName'),
       dataIndex: 'display_name',
       key: 'display_name',
     },
     {
-      title: '最大令牌',
+      title: t('providers.maxTokens'),
       dataIndex: 'max_tokens',
       key: 'max_tokens',
       render: (tokens: number) => tokens.toLocaleString(),
     },
     {
-      title: '状态',
+      title: t('common.status'),
       dataIndex: 'enabled',
       key: 'enabled',
       render: (enabled: boolean, record: ModelInfo) => (
         <Switch
           checked={enabled}
           onChange={(checked) => handleToggleModel(selectedProvider!, record.name, checked)}
-          checkedChildren="启用"
-          unCheckedChildren="禁用"
+          checkedChildren={t('common.enable')}
+          unCheckedChildren={t('common.disable')}
         />
       ),
     },
@@ -407,21 +437,22 @@ const SettingsPage: React.FC = () => {
   // MCP工具表格列定义
   const toolColumns: ColumnsType<MCPTool> = [
     {
-      title: '工具名称',
+      title: t('mcpTools.toolName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => (
         <Space>
           <ToolOutlined />
-          <span style={{ fontWeight: 'bold' }}>{name}</span>
+          <span style={{ fontWeight: 'bold' }}>{getLocalizedToolName(name)}</span>
         </Space>
       ),
     },
     {
-      title: '描述',
+      title: t('common.description'),
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
+      render: (description: string, record: MCPTool) => getLocalizedToolDescription(record.name, description),
     },
   ];
 
@@ -435,7 +466,7 @@ const SettingsPage: React.FC = () => {
         <div>
           <Title level={4} style={{ margin: 0 }}>
             <ToolOutlined style={{ marginRight: '8px' }} />
-            MCP工具系统
+            {t('mcpTools.title')}
           </Title>
         </div>
         <Space>
@@ -446,7 +477,7 @@ const SettingsPage: React.FC = () => {
               onClick={handleInitializeMCP}
               loading={mcpLoading}
             >
-              初始化MCP
+              {t('mcpTools.initialize')}
             </Button>
           )}
         </Space>
@@ -457,9 +488,9 @@ const SettingsPage: React.FC = () => {
         <Card key={`uninitialized-${forceRender}`}>
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <ExclamationCircleOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
-            <h3>MCP工具系统未初始化</h3>
+            <h3>{t('mcpTools.notInitialized')}</h3>
             <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
-              请先初始化MCP工具系统以使用相关功能
+              {t('mcpTools.initializePrompt')}
             </p>
             <Button
               type="primary"
@@ -468,7 +499,7 @@ const SettingsPage: React.FC = () => {
               onClick={handleInitializeMCP}
               loading={mcpLoading}
             >
-              立即初始化
+              {t('mcpTools.initializeNow')}
             </Button>
           </div>
         </Card>
@@ -481,11 +512,11 @@ const SettingsPage: React.FC = () => {
             rowKey="name"
             loading={mcpLoading}
             searchFields={['name', 'description']}
-            searchPlaceholder="搜索工具..."
+            searchPlaceholder={t('mcpTools.searchPlaceholder')}
             showRefresh={true}
             onRefresh={() => dispatch(fetchMCPTools())}
             refreshLoading={mcpLoading}
-            title="可用工具"
+            title={t('mcpTools.availableTools')}
           />
 
 
@@ -496,7 +527,7 @@ const SettingsPage: React.FC = () => {
 
       {mcpError && (
         <Alert
-          message="错误"
+          message={t('common.error')}
           description={mcpError}
           type="error"
           showIcon
@@ -514,9 +545,9 @@ const SettingsPage: React.FC = () => {
       <div style={{ marginBottom: '24px' }}>
         <Title level={4} style={{ margin: 0 }}>
           <CloudOutlined style={{ marginRight: '8px' }} />
-          AI大模型管理
+          {t('providers.title')}
         </Title>
-        <Text type="secondary">配置和管理AI服务提供商</Text>
+        <Text type="secondary">{t('providers.description')}</Text>
       </div>
 
 
@@ -528,11 +559,11 @@ const SettingsPage: React.FC = () => {
         rowKey="name"
         loading={providersLoading}
         searchFields={['name', 'description']}
-        searchPlaceholder="搜索提供商..."
+        searchPlaceholder={t('providers.searchPlaceholder')}
         showRefresh={true}
         onRefresh={handleRefreshProviders}
         refreshLoading={providersLoading}
-        title="AI提供商列表"
+        title={t('providers.list')}
       />
 
       {/* 模型管理 */}
@@ -540,8 +571,8 @@ const SettingsPage: React.FC = () => {
         <Card
           title={
             <Space>
-              <span>模型管理 - {getProviderDisplayName(selectedProvider)}</span>
-              <Tag color="blue">{models[selectedProvider]?.length || 0} 个模型</Tag>
+              <span>{t('providers.modelManagement')} - {getProviderDisplayName(selectedProvider)}</span>
+              <Tag color="blue">{models[selectedProvider]?.length || 0} {t('providers.models')}</Tag>
             </Space>
           }
           extra={
@@ -549,7 +580,7 @@ const SettingsPage: React.FC = () => {
               size="small"
               onClick={() => setSelectedProvider(null)}
             >
-              关闭
+              {t('common.close')}
             </Button>
           }
         >
@@ -559,14 +590,14 @@ const SettingsPage: React.FC = () => {
             rowKey="name"
             loading={providersLoading}
             searchFields={['name', 'display_name']}
-            searchPlaceholder="搜索模型..."
+            searchPlaceholder={t('providers.searchModels')}
             showRefresh={true}
             onRefresh={() => selectedProvider && dispatch(fetchAllModels(selectedProvider))}
             refreshLoading={providersLoading}
             enableBatchSelection={true}
             batchActions={[
-              { key: 'enable', label: '批量启用' },
-              { key: 'disable', label: '批量禁用' },
+              { key: 'enable', label: t('providers.batchEnable') },
+              { key: 'disable', label: t('providers.batchDisable') },
             ]}
             onBatchAction={handleBatchModelAction}
           />
@@ -586,24 +617,24 @@ const SettingsPage: React.FC = () => {
   );
 
   const aboutInfo = (
-    <Card title="关于" style={{ marginBottom: 16 }}>
+    <Card title={t('navigation.about')} style={{ marginBottom: 16 }}>
       <List>
         <List.Item>
           <List.Item.Meta
-            title="应用版本"
+            title={t('settings.appVersion')}
             description="Go-SpringAI v1.0.0"
           />
         </List.Item>
         <List.Item>
           <List.Item.Meta
-            title="构建时间"
+            title={t('settings.buildTime')}
             description={new Date().toLocaleDateString()}
           />
         </List.Item>
         <List.Item>
           <List.Item.Meta
             avatar={<GithubOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
-            title="开源地址"
+            title={t('settings.sourceCode')}
             description={
               <a 
                 href="https://github.com/chenjy16/go-springAi" 
@@ -626,9 +657,9 @@ const SettingsPage: React.FC = () => {
         <div>
           <Title level={2} style={{ margin: 0 }}>
             <SettingOutlined style={{ marginRight: '8px' }} />
-            设置
+            {t('navigation.settings')}
           </Title>
-          <Text type="secondary">配置应用程序的各项设置</Text>
+          <Text type="secondary">{t('settings.description')}</Text>
         </div>
 
       </div>
@@ -646,17 +677,17 @@ const SettingsPage: React.FC = () => {
           items={[
             {
               key: 'providers',
-              label: <span><CloudOutlined />AI大模型管理</span>,
+              label: <span><CloudOutlined />{t('providers.title')}</span>,
               children: providersManagement,
             },
             {
               key: 'mcp',
-              label: 'MCP工具',
+              label: t('mcpTools.title'),
               children: mcpSettings,
             },
             {
               key: 'about',
-              label: '关于',
+              label: t('navigation.about'),
               children: aboutInfo,
             },
           ]}

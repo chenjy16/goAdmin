@@ -141,7 +141,7 @@ const providersSlice = createSlice({
       })
       .addCase(fetchProviders.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '获取提供商列表失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       // fetchModels
       .addCase(fetchModels.pending, (state) => {
@@ -155,7 +155,7 @@ const providersSlice = createSlice({
       })
       .addCase(fetchModels.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '获取模型列表失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       // fetchAllModels
       .addCase(fetchAllModels.pending, (state) => {
@@ -169,14 +169,14 @@ const providersSlice = createSlice({
       })
       .addCase(fetchAllModels.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '获取所有模型列表失败';
+        state.error = action.error.message || 'errors.loadFailed';
       })
       // setAPIKey
       .addCase(setAPIKey.fulfilled, () => {
         // API密钥设置成功，可以更新相关状态
       })
       .addCase(setAPIKey.rejected, (state, action) => {
-        state.error = action.error.message || '设置API密钥失败';
+        state.error = action.error.message || 'errors.saveFailed';
       })
       // validateAPIKey
       .addCase(validateAPIKey.fulfilled, (state, action) => {
@@ -187,7 +187,7 @@ const providersSlice = createSlice({
         }
       })
       .addCase(validateAPIKey.rejected, (state, action) => {
-        state.error = action.error.message || '验证API密钥失败';
+        state.error = action.error.message || 'errors.saveFailed';
       })
       // toggleModel
       .addCase(toggleModel.fulfilled, (state, action) => {
@@ -201,14 +201,14 @@ const providersSlice = createSlice({
         }
       })
       .addCase(toggleModel.rejected, (state, action) => {
-        state.error = action.error.message || '切换模型状态失败';
+        state.error = action.error.message || 'errors.updateFailed';
       })
       // fetchAPIKeyStatus
       .addCase(fetchAPIKeyStatus.fulfilled, (state, action) => {
         state.apiKeyStatus = action.payload || {};
       })
       .addCase(fetchAPIKeyStatus.rejected, (state, action) => {
-        state.error = action.error.message || '获取API密钥状态失败';
+        state.error = action.error.message || 'errors.loadFailed';
       });
   },
 });

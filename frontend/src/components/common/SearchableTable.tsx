@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Input, Button, Space, Dropdown, message } from 'antd';
 import { SearchOutlined, ReloadOutlined, DownOutlined } from '@ant-design/icons';
-import type { TableProps } from 'antd/es/table';
-import type { MenuProps } from 'antd';
+import { useTranslation } from 'react-i18next';
+import type { TableProps, ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd/es/menu';
 
 const { Search } = Input;
 
@@ -30,7 +31,7 @@ function SearchableTable<T extends Record<string, any>>({
   dataSource,
   columns,
   searchFields = [],
-  searchPlaceholder = '搜索...',
+  searchPlaceholder,
   showRefresh = false,
   onRefresh,
   refreshLoading = false,
@@ -40,6 +41,7 @@ function SearchableTable<T extends Record<string, any>>({
   enableBatchSelection = false,
   ...tableProps
 }: SearchableTableProps<T>) {
+  const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
@@ -61,7 +63,7 @@ function SearchableTable<T extends Record<string, any>>({
   // 批量操作处理
   const handleBatchAction = (actionKey: string) => {
     if (selectedRowKeys.length === 0) {
-      message.warning('请先选择要操作的项目');
+      message.warning(t('common.pleaseSelectItems', { operation: t('common.operation') }));
       return;
     }
     
@@ -80,7 +82,7 @@ function SearchableTable<T extends Record<string, any>>({
   }));
 
   // 行选择配置
-  const rowSelection = enableBatchSelection ? {
+  const rowSelectionConfig = enableBatchSelection ? {
     selectedRowKeys,
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys);
@@ -104,7 +106,7 @@ function SearchableTable<T extends Record<string, any>>({
         <div>{title}</div>
         {enableBatchSelection && selectedRowKeys.length > 0 && (
           <div style={{ color: '#1890ff', fontSize: '14px' }}>
-            已选择 {selectedRowKeys.length} 项
+            {t('common.selectedItems', { count: selectedRowKeys.length })}
           </div>
         )}
       </div>
@@ -115,13 +117,13 @@ function SearchableTable<T extends Record<string, any>>({
             disabled={selectedRowKeys.length === 0}
           >
             <Button>
-              批量操作 <DownOutlined />
+              {t('common.batchOperation')} <DownOutlined />
             </Button>
           </Dropdown>
         )}
         {searchFields.length > 0 && (
           <Search
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder || t('common.search')}
             allowClear
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -135,7 +137,7 @@ function SearchableTable<T extends Record<string, any>>({
             onClick={onRefresh}
             loading={refreshLoading}
           >
-            刷新
+            {t('common.refresh')}
           </Button>
         )}
       </Space>
@@ -147,13 +149,13 @@ function SearchableTable<T extends Record<string, any>>({
       {...tableProps}
       dataSource={filteredData}
       columns={columns}
-      rowSelection={rowSelection}
+      rowSelection={rowSelectionConfig}
       title={title || showRefresh || searchFields.length > 0 || enableBatchSelection ? tableTitle : undefined}
       pagination={{
         pageSize: 10,
         showSizeChanger: true,
         showQuickJumper: true,
-        showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+        showTotal: (total, range) => t('common.paginationTotal', { start: range[0], end: range[1], total }),
         ...tableProps.pagination,
       }}
     />

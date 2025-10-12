@@ -3,11 +3,13 @@ package openai
 import (
 	"context"
 	"io"
+	
+	"go-springAi/internal/types"
 )
 
 // Message 聊天消息
 type Message struct {
-	Role    string `json:"role"`    // system, user, assistant
+	Role    string `json:"role"` // system, user, assistant
 	Content string `json:"content"`
 }
 
@@ -66,26 +68,20 @@ type StreamResponse struct {
 	Choices []StreamChoice `json:"choices"`
 }
 
-// ErrorResponse 错误响应
-type ErrorResponse struct {
-	Error struct {
-		Message string `json:"message"`
-		Type    string `json:"type"`
-		Code    string `json:"code"`
-	} `json:"error"`
-}
+// ErrorResponse OpenAI错误响应，使用统一的错误类型
+type ErrorResponse = types.CommonErrorResponse
 
 // Client OpenAI 客户端接口
 type Client interface {
 	// ChatCompletion 聊天完成
 	ChatCompletion(ctx context.Context, req *ChatRequest) (*ChatResponse, error)
-	
+
 	// ChatCompletionStream 流式聊天完成
 	ChatCompletionStream(ctx context.Context, req *ChatRequest) (io.ReadCloser, error)
-	
+
 	// ListModels 列出可用模型
 	ListModels(ctx context.Context) ([]string, error)
-	
+
 	// ValidateAPIKey 验证 API 密钥
 	ValidateAPIKey(ctx context.Context) error
 }
@@ -94,16 +90,16 @@ type Client interface {
 type ModelManager interface {
 	// GetModel 获取模型配置
 	GetModel(name string) (*ModelConfig, error)
-	
+
 	// ListModels 列出所有模型
 	ListModels() map[string]*ModelConfig
-	
+
 	// UpdateModel 更新模型配置
 	UpdateModel(name string, config *ModelConfig) error
-	
+
 	// EnableModel 启用模型
 	EnableModel(name string) error
-	
+
 	// DisableModel 禁用模型
 	DisableModel(name string) error
 }
@@ -112,16 +108,16 @@ type ModelManager interface {
 type KeyManager interface {
 	// SetAPIKey 设置 API 密钥
 	SetAPIKey(key string) error
-	
+
 	// GetAPIKey 获取 API 密钥
 	GetAPIKey() (string, error)
-	
+
 	// ValidateKey 验证密钥格式
 	ValidateKey(key string) error
-	
+
 	// EncryptKey 加密密钥
 	EncryptKey(key string) (string, error)
-	
+
 	// DecryptKey 解密密钥
 	DecryptKey(encryptedKey string) (string, error)
 }

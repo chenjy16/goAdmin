@@ -1,5 +1,7 @@
 package dto
 
+import "go-springAi/internal/types"
+
 // UnifiedMessage 统一的消息结构
 type UnifiedMessage struct {
 	Role    string `json:"role"`
@@ -16,14 +18,8 @@ type ProvidersResponse struct {
 	Providers []ProviderInfo `json:"providers"`
 }
 
-// ProviderInfo 提供商信息
-type ProviderInfo struct {
-	Type        string `json:"type"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Healthy     bool   `json:"healthy"`
-	ModelCount  int    `json:"model_count"`
-}
+// 使用共享的提供商信息类型
+type ProviderInfo = types.CommonProviderInfo
 
 // ModelsResponse 模型列表响应
 type ModelsResponse struct {

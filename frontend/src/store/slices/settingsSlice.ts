@@ -4,7 +4,7 @@ import { createConfigSlice, createLocalStorageManager } from '../utils/configMan
 // 默认设置配置
 const defaultSettings: SettingsState = {
   theme: 'light',
-  language: 'zh',
+  language: 'en',
   apiKeys: {},
   defaultProvider: 'openai',
   defaultModel: {

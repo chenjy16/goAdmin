@@ -1,0 +1,132 @@
+{
+  "server.starting": "服务器启动中",
+  "server.started": "服务器启动成功",
+  "server.stopping": "服务器停止中",
+  "server.stopped": "服务器已停止",
+  "server.error": "服务器错误",
+
+  "database.connecting": "连接数据库中",
+  "database.connected": "数据库连接成功",
+  "database.disconnected": "数据库已断开连接",
+  "database.error": "数据库操作错误",
+  "database.query.start": "数据库查询开始",
+  "database.query.complete": "数据库查询完成",
+  "database.transaction": "数据库事务",
+
+  "auth.login": "用户登录尝试",
+  "auth.login.success": "用户登录成功",
+  "auth.login.failed": "用户登录失败",
+  "auth.logout": "用户登出",
+  "auth.token.generated": "JWT令牌已生成",
+  "auth.token.validated": "JWT令牌已验证",
+  "auth.token.expired": "JWT令牌已过期",
+  "auth.unauthorized": "未授权访问尝试",
+
+  "user.created": "用户已创建",
+  "user.updated": "用户已更新",
+  "user.deleted": "用户已删除",
+  "user.not.found": "用户未找到",
+  "user.validation": "用户验证",
+
+  "api.request": "API请求已接收",
+  "api.response": "API响应已发送",
+  "api.error": "API错误发生",
+  "api.validation": "API验证错误",
+  "api.rate.limit": "API速率限制超出",
+
+  "config.loaded": "配置已加载",
+  "config.error": "配置错误",
+  "config.missing": "配置缺失",
+
+  "middleware.start": "中间件处理开始",
+  "middleware.end": "中间件处理完成",
+  "middleware.error": "中间件错误",
+
+  "business.logic": "业务逻辑处理",
+  "validation": "数据验证",
+  "processing": "数据处理",
+
+  "error.internal": "内部服务器错误",
+  "error.conflict": "冲突",
+  "error.not.found": "未找到",
+  "error.bad.request": "错误的请求",
+  "error.timeout": "超时",
+  "error.rate.limit": "速率限制超出",
+  "error.unauthorized": "未授权",
+  "error.forbidden": "禁止访问",
+  "error.token.expired": "令牌已过期",
+  "error.token.invalid": "无效令牌",
+  "error.login.failed": "登录失败",
+  "error.password.weak": "密码强度不够",
+  "error.account.locked": "账户已锁定",
+  "error.account.disabled": "账户已禁用",
+  "error.user.not.found": "用户未找到",
+  "error.user.exists": "用户已存在",
+  "error.user.inactive": "用户未激活",
+  "error.email.exists": "邮箱已存在",
+  "error.username.exists": "用户名已存在",
+  "error.database.query": "数据库查询错误",
+  "error.database.connection": "数据库连接错误",
+  "error.database.transaction": "数据库事务错误",
+  "error.database.constraint": "数据库约束错误",
+  "error.database.deadlock": "数据库死锁错误",
+  "error.validation.failed": "验证失败",
+  "error.invalid.format": "格式无效",
+  "error.missing.field": "缺少必填字段",
+  "error.invalid.value": "无效值",
+  "error.business.logic": "业务逻辑错误",
+  "error.operation.failed": "操作失败",
+  "error.resource.busy": "资源忙碌",
+  "error.quota.exceeded": "配额超出",
+  "error.network": "网络错误",
+  "error.service.unavailable": "服务不可用",
+  "error.external.service": "外部服务错误",
+  "error.file.not.found": "文件未找到",
+  "error.file.upload.failed": "文件上传失败",
+  "error.storage": "存储错误",
+  "error.file.too.large": "文件过大",
+
+  "response.success": "操作成功",
+  "response.models.retrieved": "模型列表获取成功",
+  "response.providers.retrieved": "提供商列表获取成功",
+  "response.config.retrieved": "配置获取成功",
+  "response.model.enabled": "模型已启用",
+  "response.model.disabled": "模型已禁用",
+  "response.api.key.validated": "API密钥验证成功",
+  "response.api.key.set": "API密钥设置成功",
+  "response.api.key.status": "API密钥状态获取成功",
+
+  "provider.invalid": "无效的提供商",
+  "provider.openai": "OpenAI",
+  "provider.googleai": "Google AI",
+  "provider.mock": "模拟提供商",
+
+  "model.not.found": "模型未找到",
+  "model.already.enabled": "模型已启用",
+  "model.already.disabled": "模型已禁用",
+
+  "api.key.required": "API密钥是必需的",
+  "api.key.invalid": "无效的API密钥",
+  "api.key.not.found": "API密钥未找到",
+
+  "mcp.tool.not.found": "MCP工具未找到",
+  "mcp.execution.failed": "MCP执行失败",
+  "mcp.connection.failed": "MCP连接失败",
+  "mcp.initialization.failed": "MCP初始化失败",
+
+  "welcome_message": {
+    "other": "欢迎使用我们的应用程序！"
+  },
+  "test_success": {
+    "other": "测试成功"
+  },
+  "success": {
+    "other": "成功"
+  },
+  "error_demo": {
+    "other": "发生内部错误"
+  },
+  "validation_error": {
+    "other": "验证失败"
+  }
+}

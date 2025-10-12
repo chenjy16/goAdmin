@@ -40,12 +40,41 @@ import {
   createActionColumn,
   mergeColumns 
 } from '../utils/tableColumns';
+import { useTranslation } from 'react-i18next';
 
 const { TextArea } = Input;
 const { Text, Paragraph } = Typography;
 
 const MCPToolsPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
+
+  // 工具名称映射函数
+  const getToolNameKey = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      '雅虎财经': 'yahoo_finance',
+      '股票分析': 'stock_analysis', 
+      '股票对比': 'stock_compare',
+      '股票投资建议': 'stock_advice',
+    };
+    return nameMap[name] || name;
+  };
+
+  // 获取国际化的工具名称
+  const getLocalizedToolName = (name: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolNames.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : name;
+  };
+
+  // 获取国际化的工具描述
+  const getLocalizedToolDescription = (name: string, originalDescription: string): string => {
+    const key = getToolNameKey(name);
+    const translationKey = `mcpTools.toolDescriptions.${key}`;
+    const translated = t(translationKey);
+    return translated !== translationKey ? translated : originalDescription;
+  };
   const {
     tools,
     logs,
@@ -83,8 +112,8 @@ const MCPToolsPage: React.FC = () => {
   const initializeOperation = useAsyncOperation(
     () => dispatch(initializeMCP()),
     {
-      successMessage: 'MCP初始化成功',
-      errorMessage: 'MCP初始化失败'
+      successMessage: t('mcpTools.initializeSuccess'),
+      errorMessage: t('mcpTools.initializeFailed')
     }
   );
 
@@ -100,8 +129,8 @@ const MCPToolsPage: React.FC = () => {
       dispatch(fetchMCPLogs()); // 刷新日志
     },
     {
-      successMessage: '工具执行成功',
-      errorMessage: '工具执行失败'
+      successMessage: t('mcpTools.executeSuccess'),
+      errorMessage: t('mcpTools.executeFailed')
     }
   );
 
@@ -116,7 +145,7 @@ const MCPToolsPage: React.FC = () => {
 
   const renderInputSchema = (schema: any) => {
     if (!schema || !schema.properties) {
-      return <Text type="secondary">无参数</Text>;
+      return <Text type="secondary">{t('mcpTools.noParameters')}</Text>;
     }
 
     return (
@@ -125,7 +154,7 @@ const MCPToolsPage: React.FC = () => {
         items={[
           {
             key: 'schema',
-            label: '参数结构',
+            label: t('mcpTools.parameterStructure'),
             children: (
               <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
                 {JSON.stringify(schema, null, 2)}
@@ -139,7 +168,7 @@ const MCPToolsPage: React.FC = () => {
 
   const renderExecutionForm = (schema: any) => {
     if (!schema || !schema.properties) {
-      return <Alert message="此工具无需参数" type="info" />;
+      return <Alert message={t('mcpTools.noParametersRequired')} type="info" />;
     }
 
     const properties = schema.properties;
@@ -155,14 +184,14 @@ const MCPToolsPage: React.FC = () => {
             rules={[
               {
                 required: required.includes(key),
-                message: `请输入${prop.title || key}`,
+                message: `${t('common.pleaseEnter')}${prop.title || key}`,
               },
             ]}
             tooltip={prop.description}
           >
             {prop.type === 'string' && prop.enum ? (
               <Select
-                placeholder={`选择${prop.title || key}`}
+                placeholder={`${t('common.pleaseSelect')}${prop.title || key}`}
                 options={prop.enum.map((value: string) => ({
                   label: value,
                   value,
@@ -170,20 +199,20 @@ const MCPToolsPage: React.FC = () => {
               />
             ) : prop.type === 'boolean' ? (
               <Select
-                placeholder={`选择${prop.title || key}`}
+                placeholder={`${t('common.pleaseSelect')}${prop.title || key}`}
                 options={[
-                  { label: '是', value: true },
-                  { label: '否', value: false },
+                  { label: t('common.yes'), value: true },
+                  { label: t('common.no'), value: false },
                 ]}
               />
             ) : prop.type === 'number' || prop.type === 'integer' ? (
               <Input
                 type="number"
-                placeholder={prop.description || `输入${prop.title || key}`}
+                placeholder={prop.description || `${t('common.pleaseEnter')}${prop.title || key}`}
               />
             ) : (
               <TextArea
-                placeholder={prop.description || `输入${prop.title || key}`}
+                placeholder={prop.description || `${t('common.pleaseEnter')}${prop.title || key}`}
                 autoSize={{ minRows: 2, maxRows: 6 }}
               />
             )}
@@ -195,23 +224,25 @@ const MCPToolsPage: React.FC = () => {
 
   const toolColumns = mergeColumns<MCPTool>([
     {
-      title: '工具名称',
+      title: t('mcpTools.toolName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => (
         <Space>
           <ToolOutlined />
-          <span style={{ fontWeight: 'bold' }}>{name}</span>
+          <span style={{ fontWeight: 'bold' }}>{getLocalizedToolName(name)}</span>
         </Space>
       ),
     },
-    createTextColumn({
-      title: '描述',
-      dataIndex: 'description',
-      ellipsis: true,
-    }),
     {
-      title: '参数结构',
+      title: t('common.description'),
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+      render: (description: string, record: MCPTool) => getLocalizedToolDescription(record.name, description),
+    },
+    {
+      title: t('mcpTools.parameterStructure'),
       dataIndex: 'inputSchema',
       key: 'inputSchema',
       render: (schema: any) => renderInputSchema(schema),
@@ -220,7 +251,7 @@ const MCPToolsPage: React.FC = () => {
       actions: [
         {
           key: 'execute',
-          label: '执行',
+          label: t('mcpTools.execute'),
           type: 'primary',
           icon: <PlayCircleOutlined />,
           onClick: (record: MCPTool) => {
@@ -230,11 +261,11 @@ const MCPToolsPage: React.FC = () => {
         },
         {
           key: 'view-schema',
-          label: '查看结构',
+          label: t('mcpTools.viewStructure'),
           icon: <CodeOutlined />,
           onClick: (record: MCPTool) => {
             Modal.info({
-              title: `${record.name} - 参数结构`,
+              title: `${record.name} - ${t('mcpTools.parameterStructure')}`,
               content: (
                 <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '16px', borderRadius: '4px' }}>
                   {JSON.stringify(record.inputSchema, null, 2)}
@@ -266,7 +297,7 @@ const MCPToolsPage: React.FC = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1>MCP工具系统</h1>
+        <h1>{t('mcpTools.systemTitle')}</h1>
         {!isInitialized && (
           <Button
             type="primary"
@@ -274,7 +305,7 @@ const MCPToolsPage: React.FC = () => {
             onClick={handleInitializeMCP}
             loading={isLoading}
           >
-            初始化MCP
+            {t('mcpTools.initializeMCP')}
           </Button>
         )}
       </div>
@@ -282,21 +313,38 @@ const MCPToolsPage: React.FC = () => {
 
 
       {!isInitialized ? (
-        <Card>
-          <div style={{ textAlign: 'center', padding: '40px' }}>
+        <Card
+          title={
+            <Space>
+              <ToolOutlined />
+              {t('mcpTools.title')}
+            </Space>
+          }
+          extra={
+            <Button
+              type="primary"
+              icon={<SettingOutlined />}
+              onClick={() => dispatch(initializeMCP())}
+              loading={isLoading}
+            >
+              {t('mcpTools.initializeMCP')}
+            </Button>
+          }
+        >
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <ExclamationCircleOutlined style={{ fontSize: '48px', color: '#faad14', marginBottom: '16px' }} />
-            <h3>MCP工具系统未初始化</h3>
-            <p style={{ color: '#8c8c8c', marginBottom: '24px' }}>
-              请先初始化MCP工具系统以使用相关功能
+            <h3>{t('mcpTools.notInitialized')}</h3>
+            <p style={{ color: '#666', marginBottom: '24px' }}>
+              {t('mcpTools.initializePrompt')}
             </p>
             <Button
               type="primary"
               size="large"
               icon={<SettingOutlined />}
-              onClick={handleInitializeMCP}
+              onClick={() => dispatch(initializeMCP())}
               loading={isLoading}
             >
-              立即初始化
+              {t('mcpTools.initializeNow')}
             </Button>
           </div>
         </Card>
@@ -309,17 +357,17 @@ const MCPToolsPage: React.FC = () => {
             rowKey="name"
             loading={isLoading}
             searchFields={['name', 'description']}
-            searchPlaceholder="搜索工具..."
+            searchPlaceholder={t('mcpTools.searchTools')}
             showRefresh={true}
             onRefresh={() => dispatch(fetchMCPTools())}
             refreshLoading={isLoading}
-            title="可用工具"
+            title={t('mcpTools.availableTools')}
           />
 
           {/* 执行日志 */}
-          <Card title="执行日志" extra={
+          <Card title={t('mcpTools.executionLogs')} extra={
             <Button size="small" onClick={() => dispatch(fetchMCPLogs())}>
-              刷新日志
+              {t('mcpTools.refreshLogs')}
             </Button>
           }>
             <List
@@ -345,7 +393,7 @@ const MCPToolsPage: React.FC = () => {
                             items={[
                               {
                                 key: 'data',
-                                label: '详细数据',
+                                label: t('mcpTools.detailedData'),
                                 children: (
                                   <pre style={{ fontSize: '12px', backgroundColor: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
                                     {JSON.stringify(log.data, null, 2)}
@@ -372,7 +420,7 @@ const MCPToolsPage: React.FC = () => {
 
       {/* 工具执行模态框 */}
       <FormModal
-        title={`执行工具: ${selectedTool?.name}`}
+        title={`${t('mcpTools.executeTool')}: ${selectedTool ? getLocalizedToolName(selectedTool.name) : ''}`}
         open={executeModalVisible}
         onCancel={() => {
           setExecuteModalVisible(false);
@@ -383,8 +431,8 @@ const MCPToolsPage: React.FC = () => {
         form={form}
         loading={isLoading}
         width={600}
-        okText="执行工具"
-        cancelText="取消"
+        okText={t('mcpTools.executeTool')}
+        cancelText={t('common.cancel')}
       >
         {selectedTool && (
           <div>
@@ -397,7 +445,7 @@ const MCPToolsPage: React.FC = () => {
 
       {error && (
         <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff2f0', border: '1px solid #ffccc7', borderRadius: '6px' }}>
-          <span style={{ color: '#ff4d4f' }}>错误: {error}</span>
+          <span style={{ color: '#ff4d4f' }}>{t('common.error')}: {error}</span>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { notification, message } from 'antd';
 import type { NotificationArgsProps } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 // 通知类型
 export type NotificationType = 'success' | 'info' | 'warning' | 'error';
@@ -130,33 +131,34 @@ export function useMessage() {
 
 // 操作反馈hook
 export function useOperationFeedback() {
+  const { t } = useTranslation();
   const notification = useNotification();
   const message = useMessage();
 
   // 操作成功反馈
   const operationSuccess = useCallback((operation: string, details?: string) => {
     notification.success({
-      message: `${operation}成功`,
+      message: `${operation}${t('common.success')}`,
       description: details,
     });
-  }, [notification]);
+  }, [notification, t]);
 
   // 操作失败反馈
   const operationError = useCallback((operation: string, error: any) => {
-    const errorMessage = error?.message || error?.toString() || '操作失败';
+    const errorMessage = error?.message || error?.toString() || t('notifications.operationFailed');
     notification.error({
-      message: `${operation}失败`,
+      message: `${operation}${t('common.failed')}`,
       description: errorMessage,
     });
-  }, [notification]);
+  }, [notification, t]);
 
   // 操作警告反馈
   const operationWarning = useCallback((operation: string, warning: string) => {
     notification.warning({
-      message: `${operation}警告`,
+      message: `${operation}${t('notifications.warning')}`,
       description: warning,
     });
-  }, [notification]);
+  }, [notification, t]);
 
   // 简单成功消息
   const simpleSuccess = useCallback((text: string) => {
@@ -174,9 +176,9 @@ export function useOperationFeedback() {
   }, [message]);
 
   // 加载反馈
-  const loadingFeedback = useCallback((text: string = '加载中...') => {
+  const loadingFeedback = useCallback((text: string = t('notifications.loading')) => {
     return message.loading(text, 0);
-  }, [message]);
+  }, [message, t]);
 
   return {
     operationSuccess,
@@ -190,73 +192,73 @@ export function useOperationFeedback() {
 }
 
 // API操作反馈hook
-export function useApiFeedback() {
-  const feedback = useOperationFeedback();
+export const useApiFeedback = () => {
+  const { t } = useTranslation();
+  
+  const showApiError = useCallback((error: any, defaultMessage?: string) => {
+    const message = error?.response?.data?.message || 
+                   error?.message || 
+                   defaultMessage || 
+                   t('notifications.defaultError');
+    
+    notification.error({
+      message: t('common.error'),
+      description: message,
+      placement: 'topRight',
+      duration: 4,
+    });
+  }, [t]);
 
-  // 创建操作反馈
-  const createFeedback = useCallback((resourceName: string) => ({
-    success: (details?: string) => feedback.operationSuccess(`创建${resourceName}`, details),
-    error: (error: any) => feedback.operationError(`创建${resourceName}`, error),
-  }), [feedback]);
-
-  // 更新操作反馈
-  const updateFeedback = useCallback((resourceName: string) => ({
-    success: (details?: string) => feedback.operationSuccess(`更新${resourceName}`, details),
-    error: (error: any) => feedback.operationError(`更新${resourceName}`, error),
-  }), [feedback]);
-
-  // 删除操作反馈
-  const deleteFeedback = useCallback((resourceName: string) => ({
-    success: (details?: string) => feedback.operationSuccess(`删除${resourceName}`, details),
-    error: (error: any) => feedback.operationError(`删除${resourceName}`, error),
-  }), [feedback]);
-
-  // 获取操作反馈
-  const fetchFeedback = useCallback((resourceName: string) => ({
-    success: (details?: string) => feedback.operationSuccess(`获取${resourceName}`, details),
-    error: (error: any) => feedback.operationError(`获取${resourceName}`, error),
-  }), [feedback]);
-
-  // 批量操作反馈
-  const batchFeedback = useCallback((operation: string, resourceName: string) => ({
-    success: (count: number) => feedback.operationSuccess(`批量${operation}${resourceName}`, `成功处理 ${count} 项`),
-    error: (error: any) => feedback.operationError(`批量${operation}${resourceName}`, error),
-  }), [feedback]);
+  const showApiSuccess = useCallback((message?: string, description?: string) => {
+    notification.success({
+      message: message || t('common.success'),
+      description,
+      placement: 'topRight',
+      duration: 3,
+    });
+  }, [t]);
 
   return {
-    createFeedback,
-    updateFeedback,
-    deleteFeedback,
-    fetchFeedback,
-    batchFeedback,
+    showApiError,
+    showApiSuccess,
   };
-}
+};
 
 // 表单验证反馈hook
-export function useValidationFeedback() {
-  const message = useMessage();
+export const useValidationFeedback = () => {
+  const { t } = useTranslation();
+  
+  const validationError = useCallback((message?: string) => {
+    notification.error({
+      message: t('notifications.formValidationFailed'),
+      description: message || t('notifications.defaultWarning'),
+      placement: 'topRight',
+      duration: 4,
+    });
+  }, [t]);
 
-  // 验证失败反馈
-  const validationError = useCallback((field: string, error: string) => {
-    message.error(`${field}: ${error}`);
-  }, [message]);
+  const submitError = useCallback((error: any) => {
+    const message = error?.message || error?.toString() || t('notifications.defaultError');
+    notification.error({
+      message: t('common.error'),
+      description: message,
+      placement: 'topRight',
+      duration: 4,
+    });
+  }, [t]);
 
-  // 表单提交失败反馈
-  const submitError = useCallback((errors: Record<string, string>) => {
-    const errorMessages = Object.entries(errors)
-      .map(([field, error]) => `${field}: ${error}`)
-      .join('; ');
-    message.error(`表单验证失败: ${errorMessages}`);
-  }, [message]);
-
-  // 表单提交成功反馈
-  const submitSuccess = useCallback((text: string = '提交成功') => {
-    message.success(text);
-  }, [message]);
+  const submitSuccess = useCallback((message?: string) => {
+    notification.success({
+      message: t('notifications.submitSuccess'),
+      description: message,
+      placement: 'topRight',
+      duration: 3,
+    });
+  }, [t]);
 
   return {
     validationError,
     submitError,
     submitSuccess,
   };
-}
+};

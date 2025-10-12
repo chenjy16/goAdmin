@@ -1,6 +1,8 @@
 import { getProviderService, getMCPService } from './ServiceFactory';
 import type { ProviderInfo, ModelInfo, MCPTool } from '../types/api';
 import type { IConfigurable, IValidatable, ValidationResult, ValidationError } from '../types/base';
+import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 
 export interface ConfigData {
   providers: ProviderInfo[];
@@ -206,7 +208,7 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
     return {
       selectedProvider: '',
       selectedModel: '',
-      selectedTool: '股票分析',
+      selectedTool: 'stock_analysis',
       temperature: 0.7,
       maxTokens: 2048,
       topP: 1.0
@@ -218,57 +220,83 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
     return this.validateConfig(config);
   }
 
-  validateConfig(config: ConfigState, configData?: ConfigData): ValidationResult {
-    const errors: ValidationError[] = [];
+  // 创建国际化验证函数
+  private createValidateConfigWithI18n(t: (key: string, options?: any) => string) {
+    return (config: ConfigState, configData?: ConfigData): ValidationResult => {
+      const errors: ValidationError[] = [];
 
-    if (!config.selectedProvider) {
-      errors.push({ field: 'selectedProvider', message: '请选择AI提供商' });
-    }
-
-    if (!config.selectedModel) {
-      errors.push({ field: 'selectedModel', message: '请选择模型' });
-    }
-
-    if (config.temperature < 0 || config.temperature > 2) {
-      errors.push({ field: 'temperature', message: '温度值必须在0-2之间' });
-    }
-
-    if (config.maxTokens < 1 || config.maxTokens > 32000) {
-      errors.push({ field: 'maxTokens', message: '最大令牌数必须在1-32000之间' });
-    }
-
-    if (config.topP < 0 || config.topP > 1) {
-      errors.push({ field: 'topP', message: 'Top P值必须在0-1之间' });
-    }
-
-    // 如果提供了配置数据，进行更详细的验证
-    if (configData) {
-      const provider = configData.providers.find(p => p.type === config.selectedProvider);
-      if (!provider) {
-        errors.push({ field: 'selectedProvider', message: '选择的提供商不存在' });
+      if (!config.selectedProvider) {
+        errors.push({ field: 'selectedProvider', message: t('configValidation.selectProvider') });
       }
 
-      const models = configData.models[config.selectedProvider] || [];
-      const model = models.find(m => m.name === config.selectedModel);
-      if (!model) {
-        errors.push({ field: 'selectedModel', message: '选择的模型不存在' });
-      } else if (!model.enabled) {
-        errors.push({ field: 'selectedModel', message: '选择的模型未启用' });
+      if (!config.selectedModel) {
+        errors.push({ field: 'selectedModel', message: t('configValidation.selectModel') });
       }
 
-      // 验证选择的工具是否存在
-      if (config.selectedTool) {
-        const availableTools = configData.tools.map(t => t.name);
-        if (!availableTools.includes(config.selectedTool)) {
-          errors.push({ field: 'selectedTool', message: `选择的工具不存在: ${config.selectedTool}` });
+      if (config.temperature < 0 || config.temperature > 2) {
+        errors.push({ field: 'temperature', message: t('configValidation.temperatureRange') });
+      }
+
+      if (config.maxTokens < 1 || config.maxTokens > 32000) {
+        errors.push({ field: 'maxTokens', message: t('configValidation.maxTokensRange') });
+      }
+
+      if (config.topP < 0 || config.topP > 1) {
+        errors.push({ field: 'topP', message: t('configValidation.topPRange') });
+      }
+
+      // 如果提供了配置数据，进行更详细的验证
+      if (configData) {
+        const provider = configData.providers.find(p => p.type === config.selectedProvider);
+        if (!provider) {
+          errors.push({ field: 'selectedProvider', message: t('configValidation.providerNotExists') });
+        }
+
+        const models = configData.models[config.selectedProvider] || [];
+        const model = models.find(m => m.name === config.selectedModel);
+        if (!model) {
+          errors.push({ field: 'selectedModel', message: t('configValidation.modelNotExists') });
+        } else if (!model.enabled) {
+          errors.push({ field: 'selectedModel', message: t('configValidation.modelNotEnabled') });
+        }
+
+        // 验证选择的工具是否存在
+        if (config.selectedTool) {
+          const availableTools = configData.tools.map(t => t.name);
+          if (!availableTools.includes(config.selectedTool)) {
+            errors.push({ 
+              field: 'selectedTool', 
+              message: t('configValidation.toolNotExists', { tool: config.selectedTool }) 
+            });
+          }
         }
       }
-    }
 
-    return {
-      isValid: errors.length === 0,
-      errors
+      return {
+        isValid: errors.length === 0,
+        errors
+      };
     };
+  }
+
+  validateConfig(config: ConfigState, configData?: ConfigData): ValidationResult {
+    // 使用默认的中文消息作为后备
+    const defaultT = (key: string, options?: any) => {
+      const messages: Record<string, string> = {
+        'configValidation.selectProvider': 'Please select an AI provider',
+        'configValidation.selectModel': 'Please select a model',
+        'configValidation.temperatureRange': 'Temperature must be between 0-2',
+        'configValidation.maxTokensRange': 'Max tokens must be between 1-32000',
+        'configValidation.topPRange': 'Top P value must be between 0-1',
+        'configValidation.providerNotExists': 'Selected provider does not exist',
+        'configValidation.modelNotExists': 'Selected model does not exist',
+        'configValidation.modelNotEnabled': 'Selected model is not enabled',
+        'configValidation.toolNotExists': `Selected tool does not exist: ${options?.tool || ''}`,
+      };
+      return messages[key] || key;
+    };
+
+    return this.createValidateConfigWithI18n(defaultT)(config, configData);
   }
 
   // IConfigurable接口实现
@@ -326,4 +354,19 @@ class ConfigService implements IConfigurable, IValidatable<ConfigState> {
 }
 
 export const configService = new ConfigService();
+
+// Hook for config service with internationalization
+export const useConfigService = () => {
+  const { t } = useTranslation();
+
+  const validateConfigWithI18n = useMemo(() => {
+    return configService['createValidateConfigWithI18n'](t);
+  }, [t]);
+
+  return {
+    ...configService,
+    validateConfig: validateConfigWithI18n,
+  };
+};
+
 export default configService;

@@ -12,10 +12,10 @@ import (
 
 // OpenAIService OpenAI 服务
 type OpenAIService struct {
+	*BaseProviderService
 	client       openai.Client
 	keyManager   openai.KeyManager
 	modelManager openai.ModelManager
-	logger       logger.Logger
 }
 
 // NewOpenAIService 创建新的 OpenAI 服务
@@ -25,11 +25,16 @@ func NewOpenAIService(
 	modelManager openai.ModelManager,
 	log logger.Logger,
 ) *OpenAIService {
+	// 创建适配器
+	keyAdapter := &openaiKeyManagerAdapter{keyManager}
+	modelAdapter := &openaiModelManagerAdapter{modelManager}
+	
+	baseService := NewBaseProviderService("openai", client, keyAdapter, modelAdapter, log)
 	return &OpenAIService{
-		client:       client,
-		keyManager:   keyManager,
-		modelManager: modelManager,
-		logger:       log,
+		BaseProviderService: baseService,
+		client:              client,
+		keyManager:          keyManager,
+		modelManager:        modelManager,
 	}
 }
 
@@ -200,82 +205,14 @@ func (s *OpenAIService) ListAllModels(ctx context.Context) (map[string]*openai.M
 	return models, nil
 }
 
-// ValidateAPIKey 验证 API 密钥
-func (s *OpenAIService) ValidateAPIKey(ctx context.Context) error {
-	s.logger.Info("Validating OpenAI API key")
-	
-	err := s.client.ValidateAPIKey(ctx)
-	if err != nil {
-		s.logger.Error("API key validation failed", logger.ZapError(err))
-		return fmt.Errorf("API key validation failed: %w", err)
-	}
-	
-	s.logger.Info("API key validation successful")
-	return nil
-}
-
-// SetAPIKey 设置 API 密钥
-func (s *OpenAIService) SetAPIKey(key string) error {
-	s.logger.Info("Setting OpenAI API key")
-	
-	err := s.keyManager.SetAPIKey(key)
-	if err != nil {
-		s.logger.Error("Failed to set API key", logger.ZapError(err))
-		return fmt.Errorf("failed to set API key: %w", err)
-	}
-	
-	s.logger.Info("API key set successfully")
-	return nil
-}
-
-// GetModelConfig 获取模型配置
+// GetModelConfig 获取模型配置 (类型安全的包装方法)
 func (s *OpenAIService) GetModelConfig(name string) (*openai.ModelConfig, error) {
 	return s.modelManager.GetModel(name)
 }
 
-// UpdateModelConfig 更新模型配置
+// UpdateModelConfig 更新模型配置 (类型安全的包装方法)
 func (s *OpenAIService) UpdateModelConfig(name string, config *openai.ModelConfig) error {
-	s.logger.Info("Updating model config", logger.String("model", name))
-	
-	err := s.modelManager.UpdateModel(name, config)
-	if err != nil {
-		s.logger.Error("Failed to update model config",
-			logger.String("model", name),
-			logger.ZapError(err),
-		)
-		return fmt.Errorf("failed to update model config: %w", err)
-	}
-	
-	s.logger.Info("Model config updated successfully", logger.String("model", name))
-	return nil
-}
-
-// EnableModel 启用模型
-func (s *OpenAIService) EnableModel(name string) error {
-	s.logger.Info("Enabling model", logger.String("model", name))
-	
-	err := s.modelManager.EnableModel(name)
-	if err != nil {
-		s.logger.Error("Failed to enable model", logger.String("model", name), logger.ZapError(err))
-		return fmt.Errorf("failed to enable model: %w", err)
-	}
-	
-	s.logger.Info("Model enabled successfully", logger.String("model", name))
-	return nil
-}
-
-// DisableModel 禁用模型
-func (s *OpenAIService) DisableModel(name string) error {
-	s.logger.Info("Disabling model", logger.String("model", name))
-	
-	err := s.modelManager.DisableModel(name)
-	if err != nil {
-		s.logger.Error("Failed to disable model", logger.String("model", name), logger.ZapError(err))
-		return fmt.Errorf("failed to disable model: %w", err)
-	}
-	
-	s.logger.Info("Model disabled successfully", logger.String("model", name))
-	return nil
+	return s.modelManager.UpdateModel(name, config)
 }
 
 // applyModelConfig 应用模型配置到请求
@@ -302,8 +239,45 @@ func (s *OpenAIService) applyModelConfig(openaiReq *openai.ChatRequest, modelCon
 	}
 	
 	// 应用频率惩罚
-	openaiReq.FrequencyPenalty = modelConfig.FrequencyPenalty
+	if modelConfig.FrequencyPenalty != 0 {
+		openaiReq.FrequencyPenalty = modelConfig.FrequencyPenalty
+	}
 	
 	// 应用存在惩罚
-	openaiReq.PresencePenalty = modelConfig.PresencePenalty
+	if modelConfig.PresencePenalty != 0 {
+		openaiReq.PresencePenalty = modelConfig.PresencePenalty
+	}
+}
+
+// openaiKeyManagerAdapter 适配器，将 openai.KeyManager 适配为 ProviderKeyManager
+type openaiKeyManagerAdapter struct {
+	openai.KeyManager
+}
+
+// openaiModelManagerAdapter 适配器，将 openai.ModelManager 适配为 ProviderModelManager
+type openaiModelManagerAdapter struct {
+	openai.ModelManager
+}
+
+// GetModel 实现 ProviderModelManager 接口
+func (a *openaiModelManagerAdapter) GetModel(name string) (interface{}, error) {
+	return a.ModelManager.GetModel(name)
+}
+
+// ListModels 实现 ProviderModelManager 接口
+func (a *openaiModelManagerAdapter) ListModels() map[string]interface{} {
+	models := a.ModelManager.ListModels()
+	result := make(map[string]interface{})
+	for k, v := range models {
+		result[k] = v
+	}
+	return result
+}
+
+// UpdateModel 实现 ProviderModelManager 接口
+func (a *openaiModelManagerAdapter) UpdateModel(name string, config interface{}) error {
+	if openaiConfig, ok := config.(*openai.ModelConfig); ok {
+		return a.ModelManager.UpdateModel(name, openaiConfig)
+	}
+	return fmt.Errorf("invalid config type for OpenAI model")
 }

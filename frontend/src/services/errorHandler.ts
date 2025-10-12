@@ -1,4 +1,6 @@
 import { message, notification } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
 
 export interface ErrorInfo {
   code?: string;
@@ -20,6 +22,29 @@ export interface ErrorHandlerOptions {
 class ErrorHandler {
   private errorLog: ErrorInfo[] = [];
   private maxLogSize = 100;
+  private t?: (key: string) => string;
+
+  // 设置翻译函数
+  setTranslation(t: (key: string) => string): void {
+    this.t = t;
+  }
+
+  // 获取国际化消息
+  private getMessage(key: string): string {
+    if (this.t) {
+      return this.t(`errorHandler.messages.${key}`);
+    }
+    // 默认中文消息
+    const defaultMessages: Record<string, string> = {
+      requestFailed: '请求失败',
+      networkConnectionFailed: '网络连接失败，请检查网络设置',
+      sseConnectionError: 'SSE连接错误',
+      dataValidationFailed: '数据验证失败',
+      unknownError: '未知错误',
+      reportErrorFailed: '上报错误失败'
+    };
+    return defaultMessages[key] || '未知错误';
+  }
 
   // 处理错误的主要方法
   handle(error: any, options: ErrorHandlerOptions = {}): void {
@@ -77,7 +102,7 @@ class ErrorHandler {
     if (error?.response) {
       return {
         code: error.response.status?.toString(),
-        message: error.response.data?.message || error.message || '请求失败',
+        message: error.response.data?.message || error.message || this.getMessage('requestFailed'),
         details: error.response.data,
         timestamp,
         source: 'api',
@@ -89,7 +114,7 @@ class ErrorHandler {
     if (error?.code === 'NETWORK_ERROR' || error?.message?.includes('Network Error')) {
       return {
         code: 'NETWORK_ERROR',
-        message: '网络连接失败，请检查网络设置',
+        message: this.getMessage('networkConnectionFailed'),
         details: error,
         timestamp,
         source: 'network',
@@ -101,7 +126,7 @@ class ErrorHandler {
     if (error?.type === 'error' && error?.target instanceof EventSource) {
       return {
         code: 'SSE_ERROR',
-        message: 'SSE连接错误',
+        message: this.getMessage('sseConnectionError'),
         details: error,
         timestamp,
         source: 'sse',
@@ -113,7 +138,7 @@ class ErrorHandler {
     if (error?.name === 'ValidationError') {
       return {
         code: 'VALIDATION_ERROR',
-        message: error.message || '数据验证失败',
+        message: error.message || this.getMessage('dataValidationFailed'),
         details: error,
         timestamp,
         source: 'validation',
@@ -145,7 +170,7 @@ class ErrorHandler {
 
     // 默认错误
     return {
-      message: '未知错误',
+      message: this.getMessage('unknownError'),
       details: error,
       timestamp,
       source: 'unknown',
@@ -234,16 +259,17 @@ class ErrorHandler {
 
   // 获取通知标题
   private getNotificationTitle(severity?: string): string {
-    switch (severity) {
-      case 'critical':
-        return '严重错误';
-      case 'high':
-        return '错误';
-      case 'medium':
-        return '警告';
-      default:
-        return '提示';
+    if (this.t) {
+      return this.t(`errorHandler.notificationTitles.${severity}`);
     }
+    // 默认中文标题
+    const defaultTitles: Record<string, string> = {
+      critical: '严重错误',
+      high: '错误',
+      medium: '警告',
+      low: '提示'
+    };
+    return defaultTitles[severity || 'low'] || '提示';
   }
 
   // 获取通知持续时间
@@ -271,8 +297,8 @@ class ErrorHandler {
         body: JSON.stringify(error),
       });
     } catch (reportError) {
-      console.error('上报错误失败:', reportError);
-    }
+        console.error(this.getMessage('reportErrorFailed'), reportError);
+      }
   }
 
   // 获取错误日志
@@ -301,8 +327,24 @@ class ErrorHandler {
   }
 }
 
-// 创建全局错误处理器实例
+// 导出单例实例
 export const errorHandler = new ErrorHandler();
+
+// 创建支持国际化的错误处理器工厂函数
+export function createErrorHandlerWithI18n(t: (key: string) => string): ErrorHandler {
+  const handler = new ErrorHandler();
+  handler.setTranslation(t);
+  return handler;
+}
+
+// React Hook 用于获取国际化的错误处理器
+export function useErrorHandler(): ErrorHandler {
+  const { t } = useTranslation();
+  
+  return useMemo(() => {
+    return createErrorHandlerWithI18n(t);
+  }, [t]);
+}
 
 // 便捷方法
 export const handleError = (error: any, options?: ErrorHandlerOptions) => {

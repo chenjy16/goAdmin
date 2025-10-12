@@ -57,7 +57,7 @@ export const sendAssistantMessage = createAsyncThunk(
     
     // 安全检查：确保response.choices存在且不为空
     if (!response.choices || response.choices.length === 0) {
-      throw new Error('API响应格式错误：缺少choices数据');
+      throw new Error('errors.formatError');
     }
     
     return {
@@ -143,7 +143,7 @@ const assistantSlice = createSlice({
       })
       .addCase(initializeAssistant.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '助手初始化失败';
+        state.error = action.error.message || 'errors.initFailed';
       })
       // createAssistantConversation
       .addCase(createAssistantConversation.fulfilled, (state, action) => {
@@ -166,7 +166,7 @@ const assistantSlice = createSlice({
       })
       .addCase(sendAssistantMessage.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || '发送消息失败';
+        state.error = action.error.message || 'errors.saveFailed';
       });
   },
 });

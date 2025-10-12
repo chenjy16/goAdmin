@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"go-springAi/internal/errors"
+	"go-springAi/internal/i18n"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,13 +23,20 @@ type TestRequest struct {
 	Age   int    `json:"age" validate:"min=1,max=120"`
 }
 
+func createTestErrorHandler() *errors.ErrorHandler {
+	i18nManager, _ := i18n.NewManager("en", []string{"en", "zh"})
+	return errors.NewErrorHandler(i18nManager)
+}
+
 func setupBaseController() *BaseController {
 	gin.SetMode(gin.TestMode)
-	return NewBaseController()
+	errorHandler := createTestErrorHandler()
+	return NewBaseController(errorHandler)
 }
 
 func TestBaseController_NewBaseController(t *testing.T) {
-	controller := NewBaseController()
+	errorHandler := createTestErrorHandler()
+	controller := NewBaseController(errorHandler)
 	assert.NotNil(t, controller)
 }
 
@@ -372,10 +380,19 @@ func TestBaseController_HandleError(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	
+	// 创建一个有效的HTTP请求
+	req, _ := http.NewRequest("GET", "/test", nil)
+	c.Request = req
 
 	testErr := fmt.Errorf("test error")
 	controller.HandleError(c, testErr)
 
-	assert.Len(t, c.Errors, 1)
-	assert.Equal(t, testErr, c.Errors[0].Err)
+	// 检查HTTP响应状态码
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	
+	// 检查响应体包含错误结构
+	responseBody := w.Body.String()
+	assert.Contains(t, responseBody, "error")
+	assert.Contains(t, responseBody, "INTERNAL_ERROR")
 }

@@ -129,7 +129,7 @@ export class AssistantService extends BaseService implements IInitializable, IVa
    */
   async createConversation(title?: string): Promise<BaseApiResponse<{ id: string; title: string }>> {
     return this.post<BaseApiResponse<{ id: string; title: string }>>('/api/v1/assistant/conversations', {
-      title: title || `Conversation ${new Date().toLocaleString()}`
+      title: title || `${new Date().toLocaleString()}`
     });
   }
 

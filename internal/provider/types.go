@@ -3,58 +3,15 @@ package provider
 import (
 	"context"
 	"io"
+	"go-springAi/internal/types"
 )
 
-// ProviderType 提供商类型
-type ProviderType string
-
-const (
-	ProviderTypeOpenAI   ProviderType = "openai"
-	ProviderTypeGoogleAI ProviderType = "googleai"
-	ProviderTypeMock     ProviderType = "mock"
-)
-
-// Message 统一的消息结构
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// Choice 统一的选择结构
-type Choice struct {
-	Index        int     `json:"index"`
-	Message      Message `json:"message"`
-	FinishReason string  `json:"finish_reason"`
-}
-
-// Usage 统一的使用情况结构
-type Usage struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
-}
-
-// ChatRequest 统一的聊天请求结构
-type ChatRequest struct {
-	Model       string                 `json:"model"`
-	Messages    []Message              `json:"messages"`
-	MaxTokens   *int                   `json:"max_tokens,omitempty"`
-	Temperature *float32               `json:"temperature,omitempty"`
-	TopP        *float32               `json:"top_p,omitempty"`
-	TopK        *int                   `json:"top_k,omitempty"` // Google AI 特有
-	Stream      bool                   `json:"stream,omitempty"`
-	Options     map[string]interface{} `json:"options,omitempty"`
-}
-
-// ChatResponse 统一的聊天响应结构
-type ChatResponse struct {
-	ID      string   `json:"id"`
-	Object  string   `json:"object"`
-	Created int64    `json:"created"`
-	Model   string   `json:"model"`
-	Choices []Choice `json:"choices"`
-	Usage   Usage    `json:"usage"`
-}
+// 使用共享的通用类型定义
+type Message = types.CommonMessage
+type Choice = types.CommonChoice
+type Usage = types.CommonUsage
+type ChatRequest = types.CommonChatRequest
+type ChatResponse = types.CommonChatResponse
 
 // ModelConfig 统一的模型配置结构
 type ModelConfig struct {
@@ -106,11 +63,6 @@ type Provider interface {
 	IsHealthy(ctx context.Context) bool
 }
 
-// ProviderInfo 提供商信息
-type ProviderInfo struct {
-	Type        ProviderType `json:"type"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Healthy     bool         `json:"healthy"`
-	ModelCount  int          `json:"model_count"`
-}
+// 使用共享的通用提供商信息类型
+type ProviderInfo = types.CommonProviderInfo
+type ProviderType = types.ProviderType

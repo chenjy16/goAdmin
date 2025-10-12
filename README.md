@@ -184,8 +184,7 @@ go-springAi/
 │   │   ├── model_manager.go  # Model management
 │   │   ├── stream.go     # Streaming response handling
 │   │   └── types.go      # Type definitions
-│   ├── handler/          # Business handlers
-│   │   └── stock_handler.go   # Stock analysis handler
+
 │   ├── logger/           # Logging system
 │   │   ├── constants.go  # Logging constants
 │   │   └── logger.go     # Logging implementation

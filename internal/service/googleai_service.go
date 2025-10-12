@@ -12,10 +12,10 @@ import (
 
 // GoogleAIService Google AI 服务
 type GoogleAIService struct {
+	*BaseProviderService
 	client       googleai.Client
 	keyManager   googleai.KeyManager
 	modelManager googleai.ModelManager
-	logger       logger.Logger
 }
 
 // NewGoogleAIService 创建新的 Google AI 服务
@@ -25,11 +25,16 @@ func NewGoogleAIService(
 	modelManager googleai.ModelManager,
 	log logger.Logger,
 ) *GoogleAIService {
+	// 创建适配器
+	keyAdapter := &googleaiKeyManagerAdapter{keyManager}
+	modelAdapter := &googleaiModelManagerAdapter{modelManager}
+	
+	baseService := NewBaseProviderService("googleai", client, keyAdapter, modelAdapter, log)
 	return &GoogleAIService{
-		client:       client,
-		keyManager:   keyManager,
-		modelManager: modelManager,
-		logger:       log,
+		BaseProviderService: baseService,
+		client:              client,
+		keyManager:          keyManager,
+		modelManager:        modelManager,
 	}
 }
 
@@ -201,86 +206,14 @@ func (s *GoogleAIService) ListAllModels(ctx context.Context) (map[string]*google
 	return models, nil
 }
 
-// ValidateAPIKey 验证 API 密钥
-func (s *GoogleAIService) ValidateAPIKey(ctx context.Context) error {
-	s.logger.Info("Validating Google AI API key")
-	
-	err := s.client.ValidateAPIKey(ctx)
-	if err != nil {
-		s.logger.Error("API key validation failed", logger.ZapError(err))
-		return fmt.Errorf("API key validation failed: %w", err)
-	}
-	
-	s.logger.Info("API key validation successful")
-	return nil
-}
-
-// SetAPIKey 设置 API 密钥
-func (s *GoogleAIService) SetAPIKey(key string) error {
-	s.logger.Info("Setting Google AI API key")
-	
-	err := s.keyManager.SetAPIKey(key)
-	if err != nil {
-		s.logger.Error("Failed to set API key", logger.ZapError(err))
-		return fmt.Errorf("failed to set API key: %w", err)
-	}
-	
-	// 重置客户端，强制使用新的API密钥重新初始化
-	s.client.ResetClient()
-	s.logger.Info("Client reset after API key update")
-	
-	s.logger.Info("API key set successfully")
-	return nil
-}
-
-// GetModelConfig 获取模型配置
+// GetModelConfig 获取模型配置 (类型安全的包装方法)
 func (s *GoogleAIService) GetModelConfig(name string) (*googleai.ModelConfig, error) {
 	return s.modelManager.GetModel(name)
 }
 
-// UpdateModelConfig 更新模型配置
+// UpdateModelConfig 更新模型配置 (类型安全的包装方法)
 func (s *GoogleAIService) UpdateModelConfig(name string, config *googleai.ModelConfig) error {
-	s.logger.Info("Updating model config", logger.String("model", name))
-	
-	err := s.modelManager.UpdateModel(name, config)
-	if err != nil {
-		s.logger.Error("Failed to update model config",
-			logger.String("model", name),
-			logger.ZapError(err),
-		)
-		return fmt.Errorf("failed to update model config: %w", err)
-	}
-	
-	s.logger.Info("Model config updated successfully", logger.String("model", name))
-	return nil
-}
-
-// EnableModel 启用模型
-func (s *GoogleAIService) EnableModel(name string) error {
-	s.logger.Info("Enabling model", logger.String("model", name))
-	
-	err := s.modelManager.EnableModel(name)
-	if err != nil {
-		s.logger.Error("Failed to enable model", logger.String("model", name), logger.ZapError(err))
-		return fmt.Errorf("failed to enable model: %w", err)
-	}
-	
-	s.logger.Info("Model enabled successfully", logger.String("model", name))
-	return nil
-}
-
-// DisableModel 禁用模型
-func (s *GoogleAIService) DisableModel(name string) error {
-	s.logger.Info("Disabling model", logger.String("model", name))
-	
-	err := s.modelManager.DisableModel(name)
-	if err != nil {
-		s.logger.Error("Failed to disable model", logger.String("model", name), logger.ZapError(err))
-		return fmt.Errorf("failed to disable model: %w", err)
-	}
-	
-	s.logger.Info("Model disabled successfully", logger.String("model", name))
-	return nil
+	return s.modelManager.UpdateModel(name, config)
 }
 
 // applyModelConfig 应用模型配置到请求
@@ -312,4 +245,37 @@ func (s *GoogleAIService) applyModelConfig(googleaiReq *googleai.ChatRequest, mo
 	} else {
 		googleaiReq.TopK = modelConfig.TopK
 	}
+}
+
+// googleaiKeyManagerAdapter 适配器，将 googleai.KeyManager 适配为 ProviderKeyManager
+type googleaiKeyManagerAdapter struct {
+	googleai.KeyManager
+}
+
+// googleaiModelManagerAdapter 适配器，将 googleai.ModelManager 适配为 ProviderModelManager
+type googleaiModelManagerAdapter struct {
+	googleai.ModelManager
+}
+
+// GetModel 实现 ProviderModelManager 接口
+func (a *googleaiModelManagerAdapter) GetModel(name string) (interface{}, error) {
+	return a.ModelManager.GetModel(name)
+}
+
+// ListModels 实现 ProviderModelManager 接口
+func (a *googleaiModelManagerAdapter) ListModels() map[string]interface{} {
+	models := a.ModelManager.ListModels()
+	result := make(map[string]interface{})
+	for k, v := range models {
+		result[k] = v
+	}
+	return result
+}
+
+// UpdateModel 实现 ProviderModelManager 接口
+func (a *googleaiModelManagerAdapter) UpdateModel(name string, config interface{}) error {
+	if googleaiConfig, ok := config.(*googleai.ModelConfig); ok {
+		return a.ModelManager.UpdateModel(name, googleaiConfig)
+	}
+	return fmt.Errorf("invalid config type for GoogleAI model")
 }

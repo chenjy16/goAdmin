@@ -11,6 +11,7 @@ import (
 	"go-springAi/internal/dto"
 	"go-springAi/internal/mcp"
 	"go-springAi/internal/openai"
+	"go-springAi/internal/types"
 
 	"go.uber.org/zap"
 )
@@ -30,47 +31,12 @@ type ProviderInterface interface {
 	ChatCompletion(ctx context.Context, request *ProviderChatRequest) (*ProviderChatResponse, error)
 }
 
-// ProviderChatRequest 提供商聊天请求结构
-type ProviderChatRequest struct {
-	Model       string                 `json:"model"`
-	Messages    []ProviderMessage      `json:"messages"`
-	MaxTokens   *int                   `json:"max_tokens,omitempty"`
-	Temperature *float32               `json:"temperature,omitempty"`
-	TopP        *float32               `json:"top_p,omitempty"`
-	TopK        *int                   `json:"top_k,omitempty"`
-	Stream      bool                   `json:"stream,omitempty"`
-	Options     map[string]interface{} `json:"options,omitempty"`
-}
-
-// ProviderChatResponse 提供商聊天响应结构
-type ProviderChatResponse struct {
-	ID      string                `json:"id"`
-	Object  string                `json:"object"`
-	Created int64                 `json:"created"`
-	Model   string                `json:"model"`
-	Choices []ProviderChoice      `json:"choices"`
-	Usage   ProviderUsage         `json:"usage"`
-}
-
-// ProviderMessage 提供商消息结构
-type ProviderMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// ProviderChoice 提供商选择结构
-type ProviderChoice struct {
-	Index        int             `json:"index"`
-	Message      ProviderMessage `json:"message"`
-	FinishReason string          `json:"finish_reason"`
-}
-
-// ProviderUsage 提供商使用情况结构
-type ProviderUsage struct {
-	PromptTokens     int `json:"prompt_tokens"`
-	CompletionTokens int `json:"completion_tokens"`
-	TotalTokens      int `json:"total_tokens"`
-}
+// 使用共享的通用类型定义
+type ProviderChatRequest = types.CommonChatRequest
+type ProviderChatResponse = types.CommonChatResponse
+type ProviderMessage = types.CommonMessage
+type ProviderChoice = types.CommonChoice
+type ProviderUsage = types.CommonUsage
 
 // AIAssistantService AI助手服务，集成MCP客户端和Provider管理器
 type AIAssistantService struct {

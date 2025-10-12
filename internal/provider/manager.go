@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"go-springAi/internal/logger"
+	"go-springAi/internal/types"
 )
 
 // Manager Provider管理器
@@ -207,17 +208,17 @@ func (m *Manager) GetProviderByModel(modelName string) (Provider, error) {
 	
 	switch {
 	case strings.HasPrefix(modelName, "gpt-"):
-		providerType = ProviderTypeOpenAI
+		providerType = types.ProviderTypeOpenAI
 	case strings.HasPrefix(modelName, "gemini-"):
-		providerType = ProviderTypeGoogleAI
+		providerType = types.ProviderTypeGoogleAI
 	case strings.HasPrefix(modelName, "claude-"):
 		// 为未来的Claude支持预留
 		return nil, fmt.Errorf("claude provider not implemented yet")
 	case strings.HasPrefix(modelName, "mock-"):
-		providerType = ProviderTypeMock
+		providerType = types.ProviderTypeMock
 	default:
 		// 默认使用Mock提供商（免费）
-		providerType = ProviderTypeMock
+		providerType = types.ProviderTypeMock
 	}
 	
 	provider, exists := m.providers[providerType]

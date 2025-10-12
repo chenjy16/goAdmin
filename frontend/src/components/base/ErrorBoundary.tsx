@@ -2,11 +2,13 @@ import React, { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import type { ILogger } from '../../types/base';
 import { colors, spacing, borderRadius, shadows, theme, combine, layout } from '../../styles/utils';
+import { withTranslation } from 'react-i18next';
+import type { WithTranslation } from 'react-i18next';
 
 /**
  * 错误边界属性接口
  */
-export interface ErrorBoundaryProps {
+export interface ErrorBoundaryProps extends WithTranslation {
   children: ReactNode;
   fallback?: ReactNode | ((error: Error, errorInfo: ErrorInfo) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
@@ -283,9 +285,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return (
       <div style={errorBoundaryStyle}>
         <div style={containerStyle}>
-          <h2 style={titleStyle}>出现了一些问题</h2>
+          <h2 style={titleStyle}>{this.props.t('common.somethingWentWrong')}</h2>
           <p style={messageStyle}>
-            抱歉，应用程序遇到了意外错误。请尝试刷新页面或联系技术支持。
+            {this.props.t('common.unexpectedErrorMessage')}
           </p>
           
           <div style={actionsStyle}>
@@ -293,22 +295,22 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               style={primaryButtonStyle}
               onClick={this.resetErrorBoundary}
             >
-              重试
+              {this.props.t('common.retry')}
             </button>
             <button 
               style={secondaryButtonStyle}
               onClick={() => window.location.reload()}
             >
-              刷新页面
+              {this.props.t('common.refreshPage')}
             </button>
           </div>
 
           {isDevelopment && (
             <details style={detailsStyle}>
-              <summary>错误详情 (开发模式)</summary>
+              <summary>{this.props.t('common.errorDetails')}</summary>
               <div style={errorInfoStyle}>
-                <p><strong>错误ID:</strong> {errorId}</p>
-                <p><strong>错误信息:</strong> {error?.message}</p>
+                <p><strong>{this.props.t('common.errorId')}:</strong> {errorId}</p>
+                <p><strong>{this.props.t('common.errorMessage')}:</strong> {error?.message}</p>
                 <pre style={stackStyle}>
                   {error?.stack}
                 </pre>
@@ -479,3 +481,6 @@ export const errorBoundaryStyles = `
   margin: 8px 0;
 }
 `;
+
+// 导出国际化的ErrorBoundary组件
+export default withTranslation()(ErrorBoundary);

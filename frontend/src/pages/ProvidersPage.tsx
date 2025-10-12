@@ -38,11 +38,12 @@ import {
   commonActions,
   mergeColumns 
 } from '../utils/tableColumns';
+import { useTranslation } from 'react-i18next';
 
 const ProvidersPage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const { providers, models, apiKeyStatus, isLoading, error } = useAppSelector(state => state.providers);
-
+  const { providers, models, isLoading, error, apiKeyStatus } = useAppSelector(state => state.providers);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [apiKeyModalVisible, setApiKeyModalVisible] = useState(false);
   const [form] = Form.useForm();
@@ -57,8 +58,8 @@ const ProvidersPage: React.FC = () => {
       dispatch(fetchAPIKeyStatus());
     },
     {
-      successMessage: 'API密钥设置成功',
-      errorMessage: 'API密钥设置失败'
+      successMessage: t('settings.settingsSaved'),
+      errorMessage: t('errors.saveFailed')
     }
   );
 
@@ -68,7 +69,7 @@ const ProvidersPage: React.FC = () => {
     },
     {
       successMessage: '',
-      errorMessage: '操作失败'
+      errorMessage: t('errors.updateFailed')
     }
   );
 
@@ -97,7 +98,7 @@ const ProvidersPage: React.FC = () => {
     // 动态设置成功消息
     const result = await toggleModelOperation.execute(provider, modelId, enabled);
     if (result) {
-      message.success(`模型${enabled ? '启用' : '禁用'}成功`);
+      message.success(t('success.updated'));
     }
   };
 
@@ -110,7 +111,7 @@ const ProvidersPage: React.FC = () => {
 
   const providerColumns = mergeColumns([
     {
-      title: '提供商',
+      title: t('providers.providerName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: ProviderInfo) => (
@@ -121,36 +122,36 @@ const ProvidersPage: React.FC = () => {
       ),
     },
     createTextColumn<ProviderInfo>({
-      title: '描述',
+      title: t('providers.description'),
       dataIndex: 'description',
     }),
     createStatusColumn<ProviderInfo>({
-      title: '健康状态',
+      title: t('providers.healthStatus'),
       dataIndex: 'healthy',
       statusMap: {
-        true: { color: '#52c41a', text: '健康', icon: <CheckCircleOutlined /> },
-        false: { color: '#ff4d4f', text: '异常', icon: <ExclamationCircleOutlined /> }
+        true: { color: '#52c41a', text: t('providers.healthy'), icon: <CheckCircleOutlined /> },
+        false: { color: '#ff4d4f', text: t('providers.unhealthy'), icon: <ExclamationCircleOutlined /> }
       }
     }),
     {
-      title: '模型数量',
+      title: t('providers.modelCount'),
       dataIndex: 'model_count',
       key: 'model_count',
       render: (count: number) => (
-        <Statistic value={count} suffix="个" />
+        <Statistic value={count} suffix={t('common.items')} />
       ),
     },
     {
-      title: 'API密钥',
+      title: t('providers.apiKey'),
       key: 'api_key',
       render: (_: any, record: ProviderInfo) => {
         const status = apiKeyStatus[record.name];
         return (
           <div>
             {status?.configured ? (
-              <Tag color="green">已配置</Tag>
+              <Tag color="green">{t('providers.configured')}</Tag>
             ) : (
-              <Tag color="red">未配置</Tag>
+              <Tag color="red">{t('providers.notConfigured')}</Tag>
             )}
             {status?.configured && status.masked_key && (
               <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
@@ -165,7 +166,7 @@ const ProvidersPage: React.FC = () => {
       actions: [
         {
           key: 'setKey',
-          label: '设置密钥',
+          label: t('providers.setKey'),
           type: 'primary',
           icon: <KeyOutlined />,
           onClick: (record) => {
@@ -174,8 +175,8 @@ const ProvidersPage: React.FC = () => {
           }
         },
         {
-          key: 'manageModels',
-          label: '管理模型',
+          key: 'manage',
+          label: t('providers.manageModels'),
           icon: <SettingOutlined />,
           onClick: (record) => setSelectedProvider(record.name)
         }
@@ -185,41 +186,41 @@ const ProvidersPage: React.FC = () => {
 
   const modelColumns = mergeColumns([
     {
-      title: '模型名称',
+      title: t('providers.modelName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => <span style={{ fontWeight: 'bold' }}>{name}</span>,
     },
     createTextColumn<ModelInfo>({
-      title: '描述',
+      title: t('providers.description'),
       dataIndex: 'description',
     }),
     {
-      title: '最大令牌',
+      title: t('providers.maxTokens'),
       dataIndex: 'max_tokens',
       key: 'max_tokens',
       render: (tokens: number) => tokens.toLocaleString(),
     },
     {
-      title: '上下文窗口',
+      title: t('providers.contextWindow'),
       dataIndex: 'context_window',
       key: 'context_window',
       render: (window: number) => window ? window.toLocaleString() : '-',
     },
     {
-      title: '输入成本',
+      title: t('providers.inputCost'),
       dataIndex: 'input_cost',
       key: 'input_cost',
       render: (cost: number) => cost ? `$${cost}/1K tokens` : '-',
     },
     {
-      title: '输出成本',
+      title: t('providers.outputCost'),
       dataIndex: 'output_cost',
       key: 'output_cost',
       render: (cost: number) => cost ? `$${cost}/1K tokens` : '-',
     },
     createSwitchColumn<ModelInfo>({
-      title: '状态',
+      title: t('providers.status'),
       dataIndex: 'enabled',
       onChange: (checked, record) => handleToggleModel(selectedProvider!, record.name, checked)
     })
@@ -230,7 +231,7 @@ const ProvidersPage: React.FC = () => {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <h1>AI提供商管理</h1>
+        <h1>{t('providers.title')}</h1>
       </div>
 
 
@@ -242,11 +243,11 @@ const ProvidersPage: React.FC = () => {
         rowKey="name"
         loading={isLoading}
         searchFields={['name', 'description']}
-        searchPlaceholder="搜索提供商..."
+        searchPlaceholder={t('providers.searchProviders')}
         showRefresh={true}
         onRefresh={() => dispatch(fetchProviders())}
         refreshLoading={isLoading}
-        title="AI提供商列表"
+        title={t('providers.providerList')}
         onRow={(record) => ({
           onClick: () => {
             setSelectedProvider(record.name);
@@ -259,8 +260,8 @@ const ProvidersPage: React.FC = () => {
         <Card
           title={
             <Space>
-              <span>模型管理 - {selectedProvider}</span>
-              <Tag color="blue">{models[selectedProvider]?.length || 0} 个模型</Tag>
+              <span>{t('providers.modelManagement')} - {selectedProvider}</span>
+              <Tag color="blue">{models[selectedProvider]?.length || 0} {t('providers.modelsCount')}</Tag>
             </Space>
           }
           extra={
@@ -268,7 +269,7 @@ const ProvidersPage: React.FC = () => {
               size="small"
               onClick={() => setSelectedProvider(null)}
             >
-              关闭
+              {t('providers.close')}
             </Button>
           }
         >
@@ -278,7 +279,7 @@ const ProvidersPage: React.FC = () => {
             rowKey="id"
             loading={isLoading}
             searchFields={['name', 'description']}
-            searchPlaceholder="搜索模型..."
+            searchPlaceholder={t('providers.searchModels')}
             showRefresh={true}
             onRefresh={() => selectedProvider && dispatch(fetchAllModels(selectedProvider))}
             refreshLoading={isLoading}
@@ -298,7 +299,7 @@ const ProvidersPage: React.FC = () => {
 
       {error && (
         <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#fff2f0', border: '1px solid #ffccc7', borderRadius: '6px' }}>
-          <span style={{ color: '#ff4d4f' }}>错误: {error}</span>
+          <span style={{ color: '#ff4d4f' }}>{t('providers.error')}: {error}</span>
         </div>
       )}
     </div>

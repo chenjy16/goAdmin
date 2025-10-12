@@ -6,12 +6,14 @@ import {
   RobotOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { setCurrentPage } from '../../store/slices/uiSlice';
 
 const { Sider } = Layout;
 
 const Sidebar: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -22,12 +24,12 @@ const Sidebar: React.FC = () => {
     {
       key: 'assistant',
       icon: <RobotOutlined />,
-      label: 'AI助手',
+      label: t('navigation.assistant'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: t('navigation.settings'),
     },
   ];
 
@@ -52,12 +54,12 @@ const Sidebar: React.FC = () => {
         <RobotOutlined style={{ fontSize: '24px', color: token.colorPrimary }} />
         {!sidebarCollapsed && (
           <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-           股票分析AI助手
+           {t('assistant.title')}
           </span>
         )}
       </div>
 
-      {/* 导航菜单 */}
+      {/* Navigation menu */}
       <Menu
         mode="inline"
         selectedKeys={[currentPage]}
